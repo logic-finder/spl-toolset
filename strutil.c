@@ -4,6 +4,8 @@
 #include "strutil.h"
 #include "wrapper.h"
 
+const char *whitespaces = " \n\r\t\a\b\v\f";
+
 extern bool match(char ch, const char *scanset) {
    char cmp;
    bool ret;
@@ -167,7 +169,7 @@ extern char **split(const char *src, char *mark, int *retsiz) {
 
    siz = 0;
    max = 2;
-   arr = smalloc(max * sizeof (char *));
+   arr = smalloc(max * sizeof *arr);
 
    /*
    mark = "**"
@@ -246,3 +248,40 @@ extern void trim(char *src) {
    len -= i;
    memmove(src, src + i, len + 1);  /* 1 for \0 */
 }
+
+extern void translate(char *src, const char *from, const char *to) {
+   char ch, *pos;
+   ptrdiff_t idx;
+
+   for (int i = 0; (ch = src[i]); i++) {
+      pos = strchr(from, ch);
+      if (!pos) continue;
+      idx = pos - from;
+      src[i] = to[idx];
+   }
+}
+
+extern void normalize(char *src) {
+   char *buf, *tok;
+
+   buf = smalloc(strlen(src) + 1);
+   buf[0] = '\0';
+
+   tok = strtok(src, whitespaces);
+   if (!tok) {
+      strcat(buf, " ");
+      goto end;
+   }
+
+   while (tok) {
+      strcat(buf, tok);
+      strcat(buf, " ");
+      tok = strtok(NULL, whitespaces);
+   }
+   buf[strlen(buf) - 1] = '\0';
+
+   end: strcpy(src, buf);
+   free(buf);
+}
+
+extern char lastch(const char *line);

@@ -11,7 +11,7 @@ extern tree_t *tree_plant(void *data, size_t dsiz) {
    tree_t *ret;  /* my little sapling! */
 
    ret = smalloc(sizeof *ret);
-   ret->child = smalloc(sizeof (tree_t *) * CMAX_INIT);
+   ret->child = smalloc(CMAX_INIT * sizeof *ret->child);
    if (data)
       ret->data = smalloc(dsiz);
    else
@@ -34,7 +34,7 @@ extern void tree_addchild(tree_t *base, tree_t *incoming) {
    if (base->cmax == base->clen) {
       base->cmax *= 2;
       base->child = srealloc(
-         base->child, sizeof (tree_t *) * base->cmax);
+         base->child, base->cmax * sizeof *base->child);
    }
 
    incoming->parent = base;
@@ -53,4 +53,27 @@ extern void tree_prune(tree_t *root) {
    }
    for (int i = 0; i < root->clen; i++)
       tree_prune(root->child[i]);
+}
+
+extern tree_t *tree_graft(
+   tree_t *base,
+   void *data,
+   size_t dsiz,
+   const char *tag
+) {
+   tree_t *sapling;
+
+   sapling = tree_plant(data, dsiz);
+   strncpy(sapling->tag, tag, TAGLEN + 1);
+   tree_addchild(base, sapling);
+
+   return sapling;
+}
+
+extern tree_t *tree_sgraft(
+   tree_t *base,
+   const char *data,
+   const char *tag
+) {
+   return tree_graft(base, (void *) data, strlen(data) + 1, tag);
 }

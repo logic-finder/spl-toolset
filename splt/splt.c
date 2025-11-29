@@ -5,8 +5,11 @@
 #include "wrapper.h"
 #include "loadfile.h"
 #include "argparse.h"
+#include "msg.h"
 
 int main(int argc, const char **argv) {
+   init_msg();
+
    optflg_t of = {0};
    optval_t ov;
 
@@ -28,5 +31,6 @@ int main(int argc, const char **argv) {
    parse(&of, &ov, lines, cnt, pt);
 
    // prune pt
+   // unloadfl
    return 0;
 }

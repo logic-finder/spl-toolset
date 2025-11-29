@@ -3,7 +3,7 @@
 
 #include <stdbool.h>
 
-#define ROMAN_NUM "IVXLCDM"
+extern const char *whitespaces;
 
 bool match(char ch, const char *scanset);
 
@@ -19,5 +19,13 @@ extern char **split(const char *src, char *mark, int *retsiz);
 //void foreach(char **arr, int siz, void (*cb)(char *s, int i));
 
 extern void trim(char *src);
+
+void translate(char *src, const char *from, const char *to);
+
+void normalize(char *src);
+
+inline char lastch(const char *line) {
+   return line[strlen(line) - 1];
+}
 
 #endif
