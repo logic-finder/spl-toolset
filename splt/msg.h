@@ -5,7 +5,83 @@ typedef const char *msgstr_t;
 
 typedef struct errmsg {
    msgstr_t
-      eof,
+      lex_eof,
+
+      syn_eot,
+      syn_incomprehensible,
+
+      syn_title_incomp,
+
+      syn_dp_noname,
+      syn_dp_chardecl_incomp,
+      syn_dp_desc_incomp,
+      syn_dp_incomp,
+      syn_dp_nonext,
+
+      syn_act_incomp,
+      syn_act_badsyn,
+      syn_act_desc_incomp,
+      syn_act_noscene,
+
+      syn_scene_noact,
+      syn_scene_incomp,
+      syn_scene_badsyn,
+      syn_scene_desc_incomp,
+
+      syn_enter_noscene,
+      syn_enter_incomp,
+      syn_enter_nochar,
+
+      syn_exit_noscene,
+      syn_exit_incomp,
+      syn_exit_nochar,
+
+      syn_exeunt_noscene,
+      syn_exeunt_incomp,
+      syn_exeunt_onechar,
+
+      syn_line_noscene,
+      syn_line_name_incomp,
+      syn_line_incomp,
+
+      syn_const_incomp,
+      syn_const_deco,
+
+      syn_op_badop,
+      syn_op_incomp,
+      syn_op_badsyn,
+
+      syn_asgn_incomp,
+      syn_asgn_not_conj,
+      syn_asgn_noas,
+      syn_asgn_noadj,
+
+      syn_out_incomp,
+      syn_out_badsyn,
+      syn_out_unmatched,
+
+      syn_in_incomp,
+      syn_in_badsyn,
+      syn_in_unmatched,
+
+      syn_goto_incomp,
+      syn_goto_badsyn,
+      syn_goto_unmatched,
+
+      syn_cond_incomp,
+      syn_cond_unmatched,
+      syn_cond_badsyn,
+
+      syn_if_incomp,
+      syn_if_badsyn,
+
+      syn_push_incomp,
+      syn_push_badsyn,
+
+      syn_pop_incomp,
+
+
+
       inctok,
       notitle,
       ontitle,

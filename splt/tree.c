@@ -22,7 +22,7 @@ extern tree_t *tree_plant(void *data, size_t dsiz) {
    ret->clen = 0;
    ret->dsiz = dsiz;
    memcpy(ret->data, data, dsiz);
-   strcpy(ret->tag, "init");
+   strcpy(ret->tag, "(empty)");
 
    return ret;
 }
@@ -42,8 +42,8 @@ extern void tree_addchild(tree_t *base, tree_t *incoming) {
 }
 
 extern void tree_prune(tree_t *root) {
-   if (root->parent)
-      VERR("%s: arg1 is not a root node.", __func__);
+   // if (root->parent)
+   //    VERR("%s: arg1 is not a root node.", __func__);
 
    if (root->clen == 0) {
       free(root->child);
@@ -70,10 +70,21 @@ extern tree_t *tree_graft(
    return sapling;
 }
 
+// extern tree_t *tree_sgraft(
+//    tree_t *base,
+//    const char *data,
+//    const char *tag
+// ) {
+//    return tree_graft(
+//       base,
+//       (void *) data,
+//       strlen(data) + 1,
+//       tag
+//    );
+// }
+
 extern tree_t *tree_sgraft(
    tree_t *base,
    const char *data,
    const char *tag
-) {
-   return tree_graft(base, (void *) data, strlen(data) + 1, tag);
-}
+);

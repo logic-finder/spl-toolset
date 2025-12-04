@@ -1,10 +1,11 @@
+#include "global.h"
 #include "wrapper.h"
 #include "loadfile.h"
 #include "lineutil.h"
 
 #define INIT_SIZE 128
 
-extern line_t *loadfile(const char *filename, int *cnt) {
+extern line_t *loadfile(const char *filename, int *lc, int *wc) {
    FILE *fp;
 
    fp = sfopen(filename, "r");
@@ -12,34 +13,39 @@ extern line_t *loadfile(const char *filename, int *cnt) {
    line_t *lines;  // an array to contain lines
    char *run;  // the contents of a line
    int len;  // the length of the line
-   int num;  // the line number of it
+   int linecount;  // the line number of it
+   int wordcount;
    int max;
 
-   num = 0;
+   linecount = wordcount = 0;
    max = INIT_SIZE;
    lines = smalloc(max * sizeof *lines);
 
    while (!readln(fp, &run, &len)) {
-      if (num == max) {
+      if (linecount == max) {
          max *= 2;
          lines = srealloc(lines, max);
       }
-      lines[num].len = len;
-      lines[num].run = run;
-      lines[num].num = num + 1;
-      num++;
+      lines[linecount].len = len;
+      lines[linecount].run = run;
+      lines[linecount].num = linecount + 1;
+      linecount++;
+      wordcount += len;
    }
 
    // fixme: 막줄에 줄바꿈 없으면 줄바꿈 넣기 (재할당 필요할듯)
+   // 애초에 처음 할당받을때 한줄을 더 받으면 되지 않을까?
 
    sfclose(fp);
 
-   if (num == 0) {
-      free(lines);
-      *cnt = 0;
-      return NULL;
+   if (linecount == 0) {
+      // free(lines);
+      // *cnt = 0;
+      // return NULL;
+      ERR("source file empty");
    }
-   *cnt = num;
+   *lc = linecount;
+   *wc = wordcount;
    return lines;
 }
 

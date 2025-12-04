@@ -1,5 +1,4 @@
 #include <ctype.h>
-#include <string.h>
 #include <stddef.h>
 #include "strutil.h"
 #include "wrapper.h"

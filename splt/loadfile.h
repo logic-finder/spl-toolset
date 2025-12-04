@@ -8,7 +8,7 @@ typedef struct line {
    int len, num;
 } line_t;
 
-line_t *loadfile(const char *filename, int *cnt);
+line_t *loadfile(const char *filename, int *lc, int *wc);
 void unloadfl(line_t *lines, int cnt);
 
 #endif

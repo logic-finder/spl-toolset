@@ -2,6 +2,7 @@
 #define TREE_H
 
 #include <stddef.h>
+#include <string.h>
 
 #define TAGLEN 31
 
@@ -12,7 +13,7 @@ typedef struct tree {
    tree_t **child;
    int cmax;
    int clen;
-   void *data;
+   char *data;
    size_t dsiz;
    char tag[TAGLEN + 1];
 } tree_t;
@@ -26,10 +27,23 @@ tree_t *tree_graft(
    size_t dsiz,
    const char *tag
 );
-tree_t *tree_sgraft(
+// tree_t *tree_sgraft(
+//    tree_t *base,
+//    const char *data,
+//    const char *tag
+// );
+
+inline tree_t *tree_sgraft(
    tree_t *base,
    const char *data,
    const char *tag
-);
+) {
+   return tree_graft(
+      base,
+      (void *) data,
+      strlen(data) + 1,
+      tag
+   );
+}
 
 #endif

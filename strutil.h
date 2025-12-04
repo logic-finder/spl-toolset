@@ -1,6 +1,7 @@
 #ifndef STRUTIL_H
 #define STRUTIL_H
 
+#include <string.h>
 #include <stdbool.h>
 
 extern const char *whitespaces;

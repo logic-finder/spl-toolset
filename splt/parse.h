@@ -2,13 +2,13 @@
 #define PARSE_H
 
 #include "tree.h"
-#include "loadfile.h"
+#include "list.adt.h"
 #include "argparse.h"
 
-void parse(
-   optflg_t *of, optval_t *ov,
-   line_t *arr, int len,
-   tree_t *pt
+tree_t *parse(
+   optflg_t *of,
+   optval_t *ov,
+   list_t *tokens
 );
 
 #endif
