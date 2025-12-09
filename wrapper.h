@@ -18,6 +18,11 @@ void *smalloc(size_t siz);
 void *srealloc(void *ptr, size_t siz);
 
 /**
+ *
+ */
+void *srealloc_arr(void *arr, int cnt, size_t esiz);
+
+/**
  * @brief `scalloc` (safe calloc) is a wrapper for `calloc`.
  * @note exits in failure.
  */

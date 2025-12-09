@@ -32,7 +32,7 @@ extern int readln(FILE *fp, char **line, int *len) {
       if (eol) {
          buf[pos] = '\0';
          *line = buf;
-         *len = pos;
+         *len = pos;  /* i.e. len == strlen(buf) + 1 */
          return 0;
       }
 

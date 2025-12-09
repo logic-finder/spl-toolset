@@ -6,19 +6,26 @@
  ************/
 extern void *smalloc(size_t siz) {
    void *ret = malloc(siz);
-   if (!ret) fatal("proofread: malloc error.");
+   //printf("%zu\n", siz);
+   if (!ret) fatal("malloc error");
    return ret;
 }
 
 extern void *srealloc(void *ptr, size_t siz) {
    ptr = realloc(ptr, siz);
-   if (!ptr) fatal("proofread: realloc error.");
+   if (!ptr) fatal("realloc error");
    return ptr;
+}
+
+extern void *srealloc_arr(void *arr, int cnt, size_t esiz) {
+   arr = realloc(arr, cnt * esiz);
+   if (!arr) fatal("realloc error (arr)");
+   return arr;
 }
 
 extern void *scalloc(size_t n, size_t siz) {
    void *ret = calloc(n, siz);
-   if (!ret) fatal("proofread: calloc error.");
+   if (!ret) fatal("calloc error.");
    return ret;
 }
 
@@ -34,12 +41,12 @@ extern FILE *sfopen(const char *filename, const char *mode) {
 extern void sfclose(FILE *fp) {
    if (fclose(fp) != EOF)
       return;
-   fatal("proofread: unable to close a stream.");
+   fatal("unable to close a stream.");
 }
 
 extern void sfputs(FILE *stream, const char *line) {
    if (fputs(line, stream) == EOF)
-      fatal("proofread: fputs error.");
+      fatal("fputs error.");
 }
 
 extern void ffmtwrt(FILE *stream, const char *format, ...) {

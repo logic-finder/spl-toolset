@@ -5,12 +5,14 @@
  * IMPORTANT GLOBAL VARIABLES *
  ******************************/
 /* Line Access */
-line_t *ls;   // array of line_t
+/*
+extern arr_t *ls;    // array of line_t (see global.h)
+*/
 static int lls;      // length of ls
 
 static int p;        // line number
 static int q;        // position in line
-static line_t *l;    // l = &ls[p]
+static line_t *l;    // l = arr_peek(ls, p)
 
 static int tp;       // temp. var. for p
 static int tq;       // temp. var. for q
@@ -22,48 +24,45 @@ static int idx;      // position in buf
 static int max;      // size of buf
 
 /* Miscellaneous */
-static bool eoe_indicator = false;  // end-of-everything
-const char *sfname;   // name of source file
-static jmp_buf lex_env;
+static jmp_buf LONGJMP_ENV;  // for setjmp & longjmp
+static bool eoe;      // end-of-everything
+const tokkind_t tokkind;  // kinds of token
 
-extern list_t *lex(
+extern arr_t *lex(
    optflg_t *of,
    optval_t *ov,
-   line_t *arr,
-   int len
+   int lc
 ) {
    // Initialize global variables
-   ls = arr;
-   lls = len;
+   lls = lc;
    p = q = 0;
-   l = &ls[p];
+   l = arr_peek(ls, p);
    max = 128;
    buf = smalloc(max);
-   sfname = ov->src;
+   eoe = false;
 
    // Construct a stream of tokens
-   list_t *toks = list_create();
+   arr_t *toks = arr_create();
 
-   if (!setjmp(lex_env))
+   if (!setjmp(env_lex))
       goto tokenize;
    else
       goto cleanup;
 
    tokenize:
    for (;;) {
-      eoe()
-         ? longjmp(lex_env, 1)
-         : skip_space();
-      eoe()
-         ? longjmp(lex_env, 2)
-         : save_state(),
-           read_token(),
-           store_token(toks);
-      eoe()
-         ? longjmp(lex_env, 3)
-         : save_state(),
-           read_nchar(1),
-           store_punct(toks);
+      eoe ? JUMP(1)
+      : skip_space();
+
+      eoe ? JUMP(1)
+      : save_state(),
+        read_token(),
+        store_token(toks);
+
+      eoe ? JUMP(1)
+      : save_state(),
+        read_nchar(1),
+        store_punct(toks);
    }
 
    cleanup:
@@ -72,26 +71,39 @@ extern list_t *lex(
    return toks;
 }
 
-static void store_token(list_t *toks) {
+static void store_token(arr_t *toks) {
    if (idx == 0)
       return;
-   store_string(toks, TOK_TOK);
+   store_string(toks, TOKKIND_TOK);
 }
 
-static void store_punct(list_t *toks) {
+static void store_punct(arr_t *toks) {
    if (isspace(buf[0]))
       return;
-   store_string(toks, TOK_PNT);
+   store_string(toks, TOKKIND_PNT);
 }
 
-static void store_string(list_t *toks, const char *type) {
+static void store_string(arr_t *toks, tokkind_t kind) {
+   token_t tok;
+   char *run;
+   int len;
+
    buf[idx] = '\0';
-   (void) list_push(toks, buf, idx + 1, type, tp, tq);
+   len = idx + 1;
+   run = smalloc(len);
+   strcpy(run, buf);
+
+   tok.run = run;
+   tok.len = len;
+   tok.kind = kind;
+   tok.lnum = tp;
+   tok.lpos = tq;
+
+   arr_append(toks, &tok, sizeof tok);
 }
 
 static void skip_space(void) {
    iterate_lines(process_skip, check_space);
-
 }
 
 static void skip_nchar(int n) {
@@ -137,10 +149,8 @@ static int process_read(va_list *ap) {
       q++;
       return 1;
    }
-   else {
-      //buf[idx] = '\0';
+   else
       return 0;
-   }
 }
 
 static int check_space(va_list *_) {
@@ -180,40 +190,15 @@ static inline void iterate_lines(processor_t *process, ...) {
    while (p < lls) {
       while (q < l->len) {
          va_start(ap, process);
-         ret = process(&ap);
+         ret = (*process)(&ap);
          va_end(ap);
          if (!ret) goto end;
       }
       q = 0;
-      l = ls + ++p;
+      l = arr_peek(ls, ++p);
    }
-   eoe_indicator = true;
+   eoe = true;
    end:;
-}
-
-static void lexerr(teller_t *tell) {
-   err_template(tell, Cbblue, "<lexer error> ");
-}
-
-static void tell_eoe(void) {
-   l = ls + --p;
-   ffmtwrt(stderr,
-      "%s\n"
-      "[%s:%d:%d] " Cbwhite "note:" Creset " reached end of source file\n"
-      "%4d| %s" Cbblack "EOF" Creset "\n",
-      msgs.err.lex_eof,
-      sfname, l->num, l->len,
-      l->num, l->run
-   );
-}
-
-static bool eoe(void) {
-   return eoe_indicator ? true : false;
-   // if (p < lls - 1)
-   //    return false;
-   // if (q < l->len - 1)
-   //    return false;
-   // return true;
 }
 
 static inline void save_state(void) {

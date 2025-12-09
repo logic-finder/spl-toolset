@@ -1,78 +1,82 @@
-#include <ctype.h>
-#include <string.h>
-#include "msg.h"
-#include "lex.h"
-#include "parse.h"
-#include "global.h"
-#include "wrapper.h"
-#include "loadfile.h"
-#include "argparse.h"
-#include "colorcode.h"
+#include "splt.type.h"
 
-static void print_token(void *data, int _);
-static void traverse(tree_t *base, int level);
-static int count_tree_node(tree_t *root);
+arr_t *ls;  /* External Variable */
 
 int main(int argc, const char **argv) {
    optflg_t of = {0};
    optval_t ov;
-   line_t *lines;
    int lc, wc;
-   list_t *toks;
+   arr_t *toks;
    tree_t *pt;
 
    // Init
    init_msg();
    parse_args(argv, &of, &ov);
-   lines = loadfile(ov.src, &lc, &wc);
+   process_opts(argc, &of, &ov);
 
+   ls = loadfile(ov.src, &lc, &wc);
    fmtwrt(ENPREFIX
       "loaded the source file \033[0;32m%s\033[0m (total %d lines, %d chars)\n",
       ov.src, lc, wc);
 
    // Main logic
-   toks = lex(&of, &ov, lines, lc);
-   fmtwrt(ENPREFIX "scanning done (total %d tokens)\n", toks->size);
-   //list_foreach(toks, print_token);
+   toks = lex(&of, &ov, lc);
+   fmtwrt(ENPREFIX "scanning done (total %d tokens)\n", arr_size(toks));
+   // arr_foreach(toks, &print_token);
+
    pt = parse(&of, &ov, toks);
    fmtwrt(ENPREFIX "parsing done (total %d nodes)\n", count_tree_node(pt));
-   traverse(pt, 0);
+   tree_pre_traverse(pt, &print_node, 0);
 
    // Cleanup
+   tree_post_traverse(pt, &cleanup_node, 0);
    tree_prune(pt);
-   unloadfl(lines, lc);
+   unloadfl(ls, lc);
 
    return 0;
 }
 
-static void print_token(void *data, int idx) {
-   printf("idx = [%d], token = [%s]\n", idx, ((node_t *) data)->data);
+static void cleanup_node(void *data, int _) {
+   (void) _;
+   free(((node_t *) data)->run);
 }
 
-static void traverse(tree_t *base, int level) {
-   //static int level = 0;
+static void print_token(void *dat, int idx) {
+   printf("idx = [%d], token = [%s]\n", idx, ((token_t *) dat)->run);
+}
 
-   for (int i = 0; i < level; i++)
-      fputs("  ", stdout);
-   printf("[%s] = [%s]\n", base->tag,
-      base->dsiz ? (char *) base->data : Cbblack "(empty)" Creset);
+static void print_node(void *data, int lv) {
+   static char buf[128];
 
-   if (base->clen == 0)
-      return;  /* end of recursion */
+   node_t *n;
+   int cnt, total;
 
-   //level++;
-   for (int i = 0; i < base->clen; i++)
-      traverse(base->child[i], level + 1);
+   n = data;
+   cnt = sprintf(buf, "%d", lv);
+   buf[cnt] = '\0';
+   total = lv * strlen("  ");
+   total -= cnt;
+
+   fputs(buf, stdout);
+   for (int i = 0; i < total; i++)
+      putchar(' ');
+
+   // for (int i = 0; i < lv; i++)
+   //    fputs("  ", stdout);
+
+   printf("[%s] = [%s]\n", n->tag,
+      n->len ? (char *) n->run : Cbblack "(empty)" Creset);
 }
 
 static int count_tree_node(tree_t *root) {
+   int clen = tree_clen(root);
    int cnt = 0;
 
-   if (root->clen == 0)
+   if (clen == 0)
       return 1;
 
-   for (int i = 0; i < root->clen; i++)
-      cnt += count_tree_node(root->child[i]);
+   for (int i = 0; i < clen; i++)
+      cnt += count_tree_node(tree_child(root, i));
 
    return cnt + 1;
 }

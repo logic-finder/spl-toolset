@@ -1,18 +1,44 @@
 #ifndef LEX_H
 #define LEX_H
 
-#include "list.adt.h"
+#include "arr.adt.h"
 #include "loadfile.h"
 #include "argparse.h"
 
-#define TOK_TOK "TOKEN"
-#define TOK_PNT "PUNCT"
+/*
+ * `TOKKIND_TOK` - a token
+ * `TOKKIND_PNT` - a puntuation mark, i.e. `.,:[]?!` and whitespaces
+ */
+typedef enum tokkind {
+   TOKKIND_TOK,
+   TOKKIND_PNT
+} tokkind_t;
 
-list_t *lex(
+/*
+ * `run` - a string
+ * `len` - the length of run
+ * `tag` - the type of this token. 31 chars + \0
+ * `lnum` - the line number to which this token belongs
+ * `lpos` - the position in the line
+ */
+typedef struct token {
+   char *run;
+   int len;
+   tokkind_t kind;
+   int lnum, lpos;
+} token_t;
+
+/**
+ * `lex` processes the character stream from a source file
+ * and produces a token stream.
+ * @param of option flag
+ * @param ov option value
+ * @param lc the length of ls
+ */
+arr_t *lex(
    optflg_t *of,
    optval_t *ov,
-   line_t *arr,
-   int len
+   int lc
 );
 
 #endif

@@ -1,2 +1,24 @@
 // TODO: init opt, handle h,v (refer proofread)
-// argc 1 이면 오류
+#include "optprocessor.h"
+#include "optprocessor.type.h"
+
+const char *sfname;
+
+extern void process_opts(
+   int argc,
+   optflg_t *of,
+   optval_t *ov
+) {
+   validate_argc(argc);
+   init_extvar(ov);
+}
+
+static void validate_argc(int argc) {
+   if (argc == 1)
+      ERR("executed with no argument.\n"
+         "Note. type -h or --help to see a manual");
+}
+
+static void init_extvar(optval_t *ov) {
+   sfname = ov->src;
+}

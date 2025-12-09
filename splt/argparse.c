@@ -1,24 +1,9 @@
-#include <string.h>
-#include <stddef.h>
-#include "fatal.h"
-#include "global.h"
-#include "wrapper.h"
-#include "strutil.h"
 #include "argparse.h"
-
-typedef struct opt {
-   char *name;
-   void (*handler)(optflg_t *of, optval_t *ov, const char *arg);
-} opt_t;
+#include "argparse.type.h"
 
 static char *warnmsg =
    "\t* Should this be a filename, specify \"--\" first.\n"
    "\t* Type \"--\"help to see the manual page.";
-
-static void parse_endopt(optflg_t *of);
-static void parse_filenm(optval_t *ov, const char *arg);
-static void parse_shrtop(optflg_t *of, optval_t *_, const char *arg);
-static void parse_longop(optflg_t *of, optval_t *ov, const char *arg);
 
 extern void parse_args(const char **argv, optflg_t *of, optval_t *ov) {
    /*
@@ -75,15 +60,6 @@ static void parse_filenm(optval_t *ov, const char *arg) {
    ov->src = arg;
 }
 
-static void handle_exeopt(optflg_t *of, optval_t *_, const char *__);
-static void handle_imdopt(optflg_t *of, optval_t *_, const char *__);
-static void handle_dscopt(optflg_t *of, optval_t *_, const char *__);
-static void handle_kwiopt(optflg_t *of, optval_t *_, const char *__);
-static void handle_lngopt(optflg_t *of, optval_t *ov, const char *arg);
-static void handle_retopt(optflg_t *of, optval_t *ov, const char *arg);
-static void handle_hlpopt(optflg_t *of, optval_t *_, const char *__);
-static void handle_vsnopt(optflg_t *of, optval_t *_, const char *__);
-
 static void parse_shrtop(optflg_t *of, optval_t *_, const char *arg) {
    static const opt_t options[] = {
    //  .name   .handler
@@ -94,7 +70,7 @@ static void parse_shrtop(optflg_t *of, optval_t *_, const char *arg) {
       { "h", handle_hlpopt },
       { "v", handle_vsnopt }
    };
-   static const int len = sizeof options / sizeof options[0];
+   static const int len = ARRLEN(options);
 
    // iterate the string(=arg) and parse options
    char ch;
@@ -125,7 +101,7 @@ static void parse_longop(optflg_t *of, optval_t *ov, const char *arg) {
       { "help", handle_hlpopt },
       { "version", handle_vsnopt }
    };
-   static const int len = sizeof options / sizeof options[0];
+   static const int len = ARRLEN(options);
 
    arg += 2;  /* skips -- */
 
@@ -186,7 +162,7 @@ static void handle_lngopt(optflg_t *of, optval_t *ov, const char *arg) {
    const char *langs[] = {
       "en", "ko"
    };
-   const int len = sizeof langs / sizeof langs[0];
+   const int len = ARRLEN(langs);
    const char *val;
 
    for (int m = 0; m < len; m++) {

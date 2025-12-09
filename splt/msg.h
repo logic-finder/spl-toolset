@@ -2,145 +2,198 @@
 #define MSG_H
 
 typedef const char *msgstr_t;
+typedef struct msg msg_t;
 
-typedef struct errmsg {
+typedef struct msg_err msg_err_t;
+
+typedef struct msg_err_syn msg_err_syn_t;
+typedef struct msg_err_sem msg_err_sem_t;
+
+typedef struct msg_err_syn_title msg_err_syn_title_t;
+typedef struct msg_err_syn_dp msg_err_syn_dp_t;
+typedef struct msg_err_syn_act msg_err_syn_act_t;
+typedef struct msg_err_syn_scene msg_err_syn_scene_t;
+typedef struct msg_err_syn_enter msg_err_syn_enter_t;
+typedef struct msg_err_syn_exit msg_err_syn_exit_t;
+typedef struct msg_err_syn_exeunt msg_err_syn_exeunt_t;
+typedef struct msg_err_syn_line msg_err_syn_line_t;
+typedef struct msg_err_syn_const msg_err_syn_const_t;
+typedef struct msg_err_syn_op msg_err_syn_op_t;
+typedef struct msg_err_syn_asgn msg_err_syn_asgn_t;
+typedef struct msg_err_syn_out msg_err_syn_out_t;
+typedef struct msg_err_syn_in msg_err_syn_in_t;
+typedef struct msg_err_syn_goto msg_err_syn_goto_t;
+typedef struct msg_err_syn_cond msg_err_syn_cond_t;
+typedef struct msg_err_syn_if msg_err_syn_if_t;
+typedef struct msg_err_syn_push msg_err_syn_push_t;
+typedef struct msg_err_syn_pop msg_err_syn_pop_t;
+
+struct msg_err_syn_title {
    msgstr_t
-      lex_eof,
+      incomp;
+};
 
-      syn_eot,
-      syn_incomprehensible,
+struct msg_err_syn_dp {
+   msgstr_t
+      noname,
+      chardecl_incomp,
+      desc_incomp,
+      incomp,
+      nonext;
+};
 
-      syn_title_incomp,
+struct msg_err_syn_act {
+   msgstr_t
+      incomp,
+      badsyn,
+      desc_incomp,
+      noscene;
+};
 
-      syn_dp_noname,
-      syn_dp_chardecl_incomp,
-      syn_dp_desc_incomp,
-      syn_dp_incomp,
-      syn_dp_nonext,
+struct msg_err_syn_scene {
+   msgstr_t
+      incomp,
+      badsyn,
+      desc_incomp;
+};
 
-      syn_act_incomp,
-      syn_act_badsyn,
-      syn_act_desc_incomp,
-      syn_act_noscene,
+struct msg_err_syn_enter {
+   msgstr_t
+      incomp,
+      nochar;
+};
 
-      syn_scene_noact,
-      syn_scene_incomp,
-      syn_scene_badsyn,
-      syn_scene_desc_incomp,
+struct msg_err_syn_exit {
+   msgstr_t
+      incomp,
+      nochar;
+};
 
-      syn_enter_noscene,
-      syn_enter_incomp,
-      syn_enter_nochar,
+struct msg_err_syn_exeunt {
+   msgstr_t
+      incomp,
+      onechar;
+};
 
-      syn_exit_noscene,
-      syn_exit_incomp,
-      syn_exit_nochar,
+struct msg_err_syn_line {
+   msgstr_t
+      //name_incomp,
+      incomp,
+      nostmt;
+};
 
-      syn_exeunt_noscene,
-      syn_exeunt_incomp,
-      syn_exeunt_onechar,
+struct msg_err_syn_const {
+   msgstr_t
+      incomp,
+      deco;
+};
 
-      syn_line_noscene,
-      syn_line_name_incomp,
-      syn_line_incomp,
+struct msg_err_syn_op {
+   msgstr_t
+      //badop,
+      no_of,
+      no_btw,
+      incomp,
+      badsyn;
+};
 
-      syn_const_incomp,
-      syn_const_deco,
+struct msg_err_syn_asgn {
+   msgstr_t
+      incomp,
+      not_conj,
+      no_as,
+      no_adj;
+};
 
-      syn_op_badop,
-      syn_op_incomp,
-      syn_op_badsyn,
+struct msg_err_syn_out {
+   msgstr_t
+      incomp,
+      badsyn,
+      unmatched;
+};
 
-      syn_asgn_incomp,
-      syn_asgn_not_conj,
-      syn_asgn_noas,
-      syn_asgn_noadj,
+struct msg_err_syn_in {
+   msgstr_t
+      incomp,
+      badsyn,
+      unmatched;
+};
 
-      syn_out_incomp,
-      syn_out_badsyn,
-      syn_out_unmatched,
+struct msg_err_syn_goto {
+   msgstr_t
+      incomp,
+      badsyn,
+      unmatched,
+      misspell;
+};
 
-      syn_in_incomp,
-      syn_in_badsyn,
-      syn_in_unmatched,
+struct msg_err_syn_cond {
+   msgstr_t
+      incomp,
+      unmatched,
+      badsyn;
+};
 
-      syn_goto_incomp,
-      syn_goto_badsyn,
-      syn_goto_unmatched,
+struct msg_err_syn_if {
+   msgstr_t
+      incomp,
+      badsyn,
+      conseq_incomp,
+      bad_conseq,
+      conseq_cap;
+};
 
-      syn_cond_incomp,
-      syn_cond_unmatched,
-      syn_cond_badsyn,
+struct msg_err_syn_push {
+   msgstr_t
+      incomp,
+      badsyn;
+};
 
-      syn_if_incomp,
-      syn_if_badsyn,
+struct msg_err_syn_pop {
+   msgstr_t
+      incomp;
+};
 
-      syn_push_incomp,
-      syn_push_badsyn,
+struct msg_err_sem {
+   msgstr_t
+      badsyn;
+};
 
-      syn_pop_incomp,
+struct msg_err_syn {
+   msgstr_t
+      eot,
+      incomprehensible;
+   msg_err_syn_title_t title;
+   msg_err_syn_dp_t dp;
+   msg_err_syn_act_t act;
+   msg_err_syn_scene_t scene;
+   msg_err_syn_enter_t enter;
+   msg_err_syn_exit_t exit;
+   msg_err_syn_exeunt_t exeunt;
+   msg_err_syn_line_t line;
+   msg_err_syn_const_t cnst;
+   msg_err_syn_op_t op;
+   msg_err_syn_asgn_t asgn;
+   msg_err_syn_out_t out;
+   msg_err_syn_in_t in;
+   msg_err_syn_goto_t gt;
+   msg_err_syn_cond_t cond;
+   msg_err_syn_if_t ifstmt;
+   msg_err_syn_push_t push;
+   msg_err_syn_pop_t pop;
+};
 
+struct msg_err {
+   msg_err_syn_t syn;
+   msg_err_sem_t sem;
+};
 
-
-      inctok,
-      notitle,
-      ontitle,
-      onname,
-      onchardesc,
-      act_unfinished,
-      act_no_space,
-      act_no_colon,
-      act_desc_unfinished,
-      act_no_period,
-      onscenedesc,
-      enter_on_stmt,
-      noenterchar,
-      nowsafterenter,
-      enter_no_connective,
-      exit_on_stmt,
-      exit_no_char,
-      exit_no_space_after,
-      exeunt_on_stmt,
-      exeunt_no_space_after,
-      exeunt_no_connective,
-      exeunt_only_one_name,
-      asgn_i_unfinished,
-      asgn_ii_unfinished,
-      asgn_ii_no_space,
-      asgn_ii_invalid_adj,
-      asgn_ii_no_as,
-      out_i_unfinished,
-      out_i_wrong_syntax,
-      out_i_no_space,
-      out_ii_unfinished,
-      out_ii_wrong_syntax,
-      out_ii_no_space,
-      in_i_unfinished,
-      in_i_wrong_syntax,
-      in_i_no_space,
-      in_ii_unfinished,
-      in_ii_wrong_syntax,
-      goto_unfinished,
-      goto_synerr,
-      goto_no_space,
-      antec_unfinished,
-      antec_not_conjugated,
-      antec_no_space,
-      antec_bad_syntax,
-      conse_unfinished,
-      conse_bad_syntax,
-      push_unfinished,
-      push_bad_syntax,
-      pop_unfinished,
-      dummy;
-} errmsg_t;
-
-typedef struct msg {
-   errmsg_t err;
-} msg_t;
+struct msg {
+   msg_err_t err;
+};
 
 extern msg_t msgs;
-extern const char *reason;
+extern msgstr_t reason;
 
 void init_msg(void);
 

@@ -1,56 +1,48 @@
-#include "global.h"
-#include "wrapper.h"
 #include "loadfile.h"
-#include "lineutil.h"
+#include "loadfile.type.h"
 
-#define INIT_SIZE 128
-
-extern line_t *loadfile(const char *filename, int *lc, int *wc) {
+extern arr_t *loadfile(const char *filename, int *lc, int *wc) {
    FILE *fp;
+   arr_t *lines;
+   char *run;  // the contents of a line
+   int llen;   // the length of the line
+   int lcnt;   // line count
+   int wcnt;   // word count
+   line_t line;
 
    fp = sfopen(filename, "r");
+   lcnt = wcnt = 0;
+   lines = arr_create();
 
-   line_t *lines;  // an array to contain lines
-   char *run;  // the contents of a line
-   int len;  // the length of the line
-   int linecount;  // the line number of it
-   int wordcount;
-   int max;
-
-   linecount = wordcount = 0;
-   max = INIT_SIZE;
-   lines = smalloc(max * sizeof *lines);
-
-   while (!readln(fp, &run, &len)) {
-      if (linecount == max) {
-         max *= 2;
-         lines = srealloc(lines, max);
-      }
-      lines[linecount].len = len;
-      lines[linecount].run = run;
-      lines[linecount].num = linecount + 1;
-      linecount++;
-      wordcount += len;
+   while (!readln(fp, &run, &llen)) {
+      line.len = llen;
+      line.run = run;
+      line.num = ++lcnt;
+      wcnt += llen;
+      arr_append(lines, &line, sizeof line);
    }
 
-   // fixme: 막줄에 줄바꿈 없으면 줄바꿈 넣기 (재할당 필요할듯)
-   // 애초에 처음 할당받을때 한줄을 더 받으면 되지 않을까?
+   if (lcnt == 0)
+      ERR("empty source file");
+
+   line_t *last = arr_peek(lines, lcnt - 1);
+   char *r = last->run;
+
+   if (lastch(r) != '\n') {
+      r = last->run = srealloc(r, last->len + 1);
+      strcat(r, "\n");  /* \n\0 */
+      last->len++;
+   }
 
    sfclose(fp);
 
-   if (linecount == 0) {
-      // free(lines);
-      // *cnt = 0;
-      // return NULL;
-      ERR("source file empty");
-   }
-   *lc = linecount;
-   *wc = wordcount;
+   *lc = lcnt;
+   *wc = wcnt;
    return lines;
 }
 
-extern void unloadfl(line_t *lines, int cnt) {
-   for (int i = 0; i < cnt; i++)
-      free(lines[i].run);
+extern void unloadfl(arr_t *lines, int lc) {
+   for (int i = 0; i < lc; i++)
+      free(((line_t *) arr_peek(lines, i))->run);
    free(lines);
 }
