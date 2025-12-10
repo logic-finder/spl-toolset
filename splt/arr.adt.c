@@ -1,5 +1,5 @@
 #include "arr.adt.h"
-#include "arr.adt.types.h"
+#include "arr.adt.type.h"
 
 extern arr_t *arr_create(void) {
    arr_t *arr;

@@ -88,4 +88,7 @@ extern void init_msg(void) {
    msgs.err.syn.push.badsyn = "incorrect push statement syntax";
 
    msgs.err.syn.pop.incomp = "incomplete pop statement";
+
+   msgs.err.sem.bad_adj = "incomprehensible adjective";
+   msgs.err.sem.bad_noun = "incomprehensible noun";
 }

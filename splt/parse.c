@@ -1200,7 +1200,7 @@ static void tell(void) {
 
    lnum = etok->lnum;
    lpos = etok->lpos;
-   l = arr_peek(ls, etok->lnum - 1);
+   l = arr_peek(ls, lnum - 1);
 
    ffmtwrt(stderr,
       "%s\n"

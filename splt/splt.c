@@ -16,42 +16,45 @@ int main(int argc, const char **argv) {
 
    ls = loadfile(ov.src, &lc, &wc);
    fmtwrt(ENPREFIX
-      "loaded the source file \033[0;32m%s\033[0m (total %d lines, %d chars)\n",
+      "loaded the source file \033[0;32m%s\033[0m (total " Cbwhite "%d" Creset " lines, " Cbwhite "%d" Creset " chars)\n",
       ov.src, lc, wc);
 
    // Main logic
    toks = lex(&of, &ov, lc);
-   fmtwrt(ENPREFIX "scanning done (total %d tokens)\n", arr_size(toks));
-   // arr_foreach(toks, &print_token);
+   fmtwrt(ENPREFIX "scanning done (total " Cbwhite "%d" Creset " tokens)\n", arr_size(toks));
+   // arr_foreach(toks, print_token);
 
    pt = parse(&of, &ov, toks);
-   fmtwrt(ENPREFIX "parsing done (total %d nodes)\n", count_tree_node(pt));
-   // tree_pre_traverse(pt, &print_node, 0);
+   fmtwrt(ENPREFIX "parsing done (total " Cbwhite "%d" Creset " nodes)\n", count_tree_node(pt));
+   // tree_pre_traverse(pt, print_node, 0);
+
+   typecheck(&of, &ov, pt);
+   // tree_pre_traverse(pt, print_node, 0);
 
    // Cleanup
-   tree_post_traverse(pt, &cleanup_node, 0);
+   tree_post_traverse(pt, cleanup_node, 0);
    tree_prune(pt);
    unloadfl(ls, lc);
 
    return 0;
 }
 
-static void cleanup_node(void *data, int _) {
+static void cleanup_node(tree_t *t, int _) {
    (void) _;
-   free(((node_t *) data)->run);
+   free(((node_t *) tree_dat(t))->run);
 }
 
 static void print_token(void *dat, int idx) {
    printf("idx = [%d], token = [%s]\n", idx, ((token_t *) dat)->run);
 }
 
-static void print_node(void *data, int lv) {
+static void print_node(tree_t *t, int lv) {
    static char buf[128];
 
    node_t *n;
    int cnt, total;
 
-   n = data;
+   n = tree_dat(t);
    cnt = sprintf(buf, "%d", lv);
    buf[cnt] = '\0';
    total = lv * strlen("  ");
@@ -61,8 +64,9 @@ static void print_node(void *data, int lv) {
    for (int i = 0; i < total; i++)
       putchar(' ');
 
-   printf("[%s] = [%s]\n", n->tag,
+   printf("[%s] = [%s]", n->tag,
       n->len ? (char *) n->run : Cbblack "(empty)" Creset);
+   printf(" " Cbblack "(len = %d)" Creset "\n", n->len);
 }
 
 static int count_tree_node(tree_t *root) {

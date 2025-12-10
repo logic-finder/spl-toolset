@@ -63,17 +63,20 @@ static void tree_prune_cb(tree_t *t) {
 }
 
 extern void tree_pre_traverse(tree_t *t, tree_callback_t *cb, int lv) {
-   (*cb)(t->dat, lv);
+   (*cb)(t, lv);
    if (t->clen == 0) return;
    for (int i = 0; i < t->clen; i++)
       tree_pre_traverse(t->children[i], cb, lv + 1);
 }
 
 extern void tree_post_traverse(tree_t *t, tree_callback_t *cb, int lv) {
-   if (t->clen == 0) return;
+   if (t->clen == 0) {
+      (*cb)(t, lv);
+      return;
+   }
    for (int i = 0; i < t->clen; i++)
       tree_post_traverse(t->children[i], cb, lv + 1);
-   (*cb)(t->dat, lv);
+   (*cb)(t, lv);
 }
 
 extern int tree_clen(tree_t *t) {

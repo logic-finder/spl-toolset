@@ -1,5 +1,5 @@
-#ifndef ARR_ADT_TYPES_H
-#define ARR_ADT_TYPES_H
+#ifndef ARR_ADT_TYPE_H
+#define ARR_ADT_TYPE_H
 
 #include <string.h>
 #include <stdbool.h>

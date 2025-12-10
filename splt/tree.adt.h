@@ -8,7 +8,7 @@
  * TYPEDEFS *
  ************/
 typedef struct tree tree_t;
-typedef void tree_callback_t(void *data, int lv);
+typedef void tree_callback_t(tree_t *tree, int lv);
 typedef void tree_walker_t(tree_t *t, tree_callback_t *cb, int lv);
 
 /***********************

@@ -160,11 +160,6 @@ struct msg_err_syn_pop {
       incomp;
 };
 
-struct msg_err_sem {
-   msgstr_t
-      badsyn;
-};
-
 struct msg_err_syn {
    msgstr_t
       eot,
@@ -187,6 +182,12 @@ struct msg_err_syn {
    msg_err_syn_if_t ifstmt;
    msg_err_syn_push_t push;
    msg_err_syn_pop_t pop;
+};
+
+struct msg_err_sem {
+   msgstr_t
+      bad_adj,
+      bad_noun;
 };
 
 struct msg_err {

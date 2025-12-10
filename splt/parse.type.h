@@ -18,8 +18,6 @@
  **********/
 #define LONGJMP_ENV env_parse_stmt
 #define JUMP(v) LONGJMP_TEMPLET(LONGJMP_ENV, (v))
-#
-#define TREE_CHDAT(t,i) ((node_t *) tree_chdat((t),(i)))
 
 /************
  * TYPEDEFS *

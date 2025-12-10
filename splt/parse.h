@@ -6,6 +6,8 @@
 #include "argparse.h"
 
 #define NODE_TAG_LEN 31
+#
+#define TREE_CHDAT(t,i) ((node_t *) tree_chdat((t),(i)))
 
 typedef struct node {
    char *run;

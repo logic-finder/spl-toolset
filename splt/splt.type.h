@@ -10,6 +10,7 @@
 #include "wrapper.h"
 #include "loadfile.h"
 #include "argparse.h"
+#include "typecheck.h"
 #include "colorcode.h"
 #include "optprocessor.h"
 
