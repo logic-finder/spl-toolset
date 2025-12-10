@@ -1,24 +1,28 @@
 #include "loadfile.h"
 #include "loadfile.type.h"
 
-extern arr_t *loadfile(const char *filename, int *lc, int *wc) {
+extern arr_t *loadfile(
+   const char *filename,
+   int * restrict lc,
+   int * restrict wc
+) {
    FILE *fp;
    arr_t *lines;
-   char *run;  // the contents of a line
-   int llen;   // the length of the line
-   int lcnt;   // line count
-   int wcnt;   // word count
    line_t line;
+   char *run;  // the contents of a line
+   int rlen,   // the length of `run`
+       lcnt,   // line count
+       wcnt;   // word count
 
    fp = sfopen(filename, "r");
    lcnt = wcnt = 0;
    lines = arr_create();
 
-   while (!readln(fp, &run, &llen)) {
-      line.len = llen;
+   while (!readln(fp, &run, &rlen)) {
+      line.len = rlen;
       line.run = run;
       line.num = ++lcnt;
-      wcnt += llen;
+      wcnt += rlen;
       arr_append(lines, &line, sizeof line);
    }
 

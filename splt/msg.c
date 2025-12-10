@@ -1,5 +1,6 @@
 #include <stddef.h>
 #include "msg.h"
+#include "colorcode.h"
 
 /* External variables */
 msg_t msgs;
@@ -33,22 +34,27 @@ extern void init_msg(void) {
    msgs.err.syn.exit.incomp = "incomplete Exit";
    msgs.err.syn.exit.nochar = "Exit has no character specified";
 
-   msgs.err.syn.exeunt.incomp = "incomplete Exeunt";
-   msgs.err.syn.exeunt.onechar = "Exeunt can't have one character";
+   msgs.err.syn.exeunt.incomp = "incomplete " Cbyellow "Exeunt" Creset;
+   msgs.err.syn.exeunt.onechar = Cbyellow "Exeunt" Creset " must have either 0 or 2 characters; currently 1";
 
-   //msgs.err.syn.line.name_incomp = "Line has an incomplete name";
    msgs.err.syn.line.incomp = "incomplete Line";
    msgs.err.syn.line.nostmt = "no statement present in Line";
 
    msgs.err.syn.cnst.incomp = "incomplete constant";
    msgs.err.syn.cnst.deco = "incorrect use of possessive or article";
 
-   //msgs.err.syn.op.badop = "incomprehensible operator";
-   msgs.err.syn.op.no_of = "incorrect operator syntax; \"of\" required here";
-   msgs.err.syn.op.no_btw = "incorrect operator syntax; \"between\" required here";
    msgs.err.syn.op.incomp = "incomplete operator";
-   msgs.err.syn.op.badsyn = "incorrect operator syntax";
-
+   msgs.err.syn.op.sum  = "incorrect operator syntax; " Cbyellow "sum" Creset " needs '" Cbwhite "of" Creset "' here";
+   msgs.err.syn.op.diff = "incorrect operator syntax; " Cbyellow "difference" Creset " needs '" Cbwhite "between" Creset "' here";
+   msgs.err.syn.op.prod = "incorrect operator syntax; " Cbyellow "product" Creset " needs '" Cbwhite "of" Creset "' here";
+   msgs.err.syn.op.quot = "incorrect operator syntax; " Cbyellow "quotient" Creset " needs '" Cbwhite "between" Creset "' here";
+   msgs.err.syn.op.rem  = "incorrect operator syntax; " Cbyellow "remainder" Creset " needs '" Cbwhite "of" Creset "' here";
+   msgs.err.syn.op.sqrt = "incorrect operator syntax; " Cbyellow "square root" Creset " needs '" Cbwhite "of" Creset "' here";
+   msgs.err.syn.op.squr = "incorrect operator syntax; " Cbyellow "square" Creset " needs '" Cbwhite "of" Creset "' here";
+   msgs.err.syn.op.cube = "incorrect operator syntax; " Cbyellow "cube" Creset " needs '" Cbwhite "of" Creset "' here";
+   msgs.err.syn.op.fact = "incorrect operator syntax; " Cbyellow "factorial" Creset " needs '" Cbwhite "of" Creset "' here";
+   msgs.err.syn.op.rem_quot_1 = "incorrect " Cbyellow "remainder" Creset " operator syntax; '" Cbwhite "the" Creset "' required here";
+   msgs.err.syn.op.rem_quot_2 = "incorrect " Cbyellow "remainder" Creset " operator syntax; '" Cbwhite "quotient" Creset "' required here";
 
    msgs.err.syn.asgn.incomp = "incomplete assignment statement";
    msgs.err.syn.asgn.not_conj = "incorrect conjugation";

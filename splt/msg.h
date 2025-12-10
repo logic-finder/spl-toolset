@@ -77,7 +77,6 @@ struct msg_err_syn_exeunt {
 
 struct msg_err_syn_line {
    msgstr_t
-      //name_incomp,
       incomp,
       nostmt;
 };
@@ -90,11 +89,18 @@ struct msg_err_syn_const {
 
 struct msg_err_syn_op {
    msgstr_t
-      //badop,
-      no_of,
-      no_btw,
-      incomp,
-      badsyn;
+      sum,
+      diff,
+      prod,
+      quot,
+      rem,
+      rem_quot_1,
+      rem_quot_2,
+      sqrt,
+      squr,
+      cube,
+      fact,
+      incomp;
 };
 
 struct msg_err_syn_asgn {

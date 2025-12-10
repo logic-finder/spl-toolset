@@ -5,9 +5,7 @@
  * IMPORTANT GLOBAL VARIABLES *
  ******************************/
 /* Line Access */
-/*
 extern arr_t *ls;    // array of line_t (see global.h)
-*/
 static int lls;      // length of ls
 
 static int p;        // line number
@@ -25,8 +23,8 @@ static int max;      // size of buf
 
 /* Miscellaneous */
 static jmp_buf LONGJMP_ENV;  // for setjmp & longjmp
-static bool eoe;      // end-of-everything
-const tokkind_t tokkind;  // kinds of token
+static bool eoe;             // end-of-everything
+const tokkind_t tokkind;     // kind of token
 
 extern arr_t *lex(
    optflg_t *of,

@@ -19,15 +19,13 @@ extern void arr_destroy(arr_t *arr) {
 }
 
 extern void arr_append(arr_t *arr, const void *item, size_t siz) {
-   if (arr_full(arr))
-      arr_enlarge(arr);
+   void *p;
 
-   void *p = smalloc(siz);
+   if (arr_full(arr)) arr_enlarge(arr);
+
+   p = smalloc(siz);
    memcpy(p, item, siz);
    arr->arr[arr->len++] = p;
-   //*(arr->arr + arr->len) = p;
-   //arr->len++;
-
 }
 
 extern void *arr_peek(arr_t *arr, int idx) {

@@ -1,7 +1,7 @@
 #include "argparse.h"
 #include "argparse.type.h"
 
-static char *warnmsg =
+static const char *warnmsg =
    "\t* Should this be a filename, specify \"--\" first.\n"
    "\t* Type \"--\"help to see the manual page.";
 
@@ -21,10 +21,10 @@ extern void parse_args(const char **argv, optflg_t *of, optval_t *ov) {
     *    --ret=<name>
     */
 
-   // initialize ov
+   // Initialize ov
    ov->src = NULL;
 
-   // iterate argv and parse options.
+   // Iterate argv and parse options
    const char *arg;
 
    for (int i = 1; (arg = argv[i]); i++) {
@@ -54,35 +54,37 @@ static void parse_endopt(optflg_t *of) {
 }
 
 static void parse_filenm(optval_t *ov, const char *arg) {
-   // only one source file is allowed
+   // Only one source file is allowed
    if (ov->src != NULL)
       ERR("a source file already specified.");
    ov->src = arg;
 }
 
 static void parse_shrtop(optflg_t *of, optval_t *_, const char *arg) {
-   static const opt_t options[] = {
-   //  .name   .handler
-      { "e", handle_exeopt },
-      { "i", handle_imdopt },
-      { "d", handle_dscopt },
-      { "k", handle_kwiopt },
-      { "h", handle_hlpopt },
-      { "v", handle_vsnopt }
+   static const opt_t opts[] = {
+   //  .name    .handler
+      { "e" , handle_exeopt },
+      { "i" , handle_imdopt },
+      { "d" , handle_dscopt },
+      { "k" , handle_kwiopt },
+      { "h" , handle_hlpopt },
+      { "v" , handle_vsnopt }
    };
-   static const int len = ARRLEN(options);
+   static const int opts_len = ARRLEN(opts);
 
-   // iterate the string(=arg) and parse options
+   // Iterate the string(=arg) and parse options
+   const opt_t *opt;
    char ch;
    int p, q;
 
-   // arg be like -eidk; read one letter at a time.
+   // `arg` be like -eidk; read one letter at a time.
    for (p = 1; (ch = arg[p]); p++) {
-      // iterate the options array
-      for (q = 0; q < len; q++) {
-         if (ch != options[q].name[0])
+      // iterate the `opts` array
+      for (q = 0; q < opts_len; q++) {
+         opt = opts + q;
+         if (ch != opt->name[0])
             continue;
-         options[q].handler(of, _, arg);
+         (*opt->handler)(of, _, arg);
          goto next;
       }
       VERR("unable to recognize this option: -%c.\n%s", ch, warnmsg);
@@ -91,28 +93,30 @@ static void parse_shrtop(optflg_t *of, optval_t *_, const char *arg) {
 }
 
 static void parse_longop(optflg_t *of, optval_t *ov, const char *arg) {
-   static const opt_t options[] = {
-      { "exe", handle_exeopt },
-      { "keep-intermediate", handle_imdopt },
-      { "describe", handle_dscopt },
-      { "kawaii", handle_kwiopt },
-      { "lang", handle_lngopt },
-      { "ret", handle_retopt },
-      { "help", handle_hlpopt },
-      { "version", handle_vsnopt }
+   static const opt_t opts[] = {
+      { "exe"               , handle_exeopt },
+      { "keep-intermediate" , handle_imdopt },
+      { "describe"          , handle_dscopt },
+      { "kawaii"            , handle_kwiopt },
+      { "lang"              , handle_lngopt },
+      { "ret"               , handle_retopt },
+      { "help"              , handle_hlpopt },
+      { "version"           , handle_vsnopt }
    };
-   static const int len = ARRLEN(options);
+   static const int len = ARRLEN(opts);
 
    arg += 2;  /* skips -- */
 
-   // iterate the options array
+   // Iterate the options array
+   const opt_t *opt;
    const char *name;
 
    for (int k = 0; k < len; k++) {
-      name = options[k].name;
+      opt = opts + k;
+      name = opt->name;
       if (strncmp(arg, name, strlen(name)))
          continue;
-      options[k].handler(of, ov, arg);
+      (*opt->handler)(of, ov, arg);
       goto next;
    }
    VERR("unable to recognize this option: --%s.\n%s", arg, warnmsg);

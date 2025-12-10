@@ -6,7 +6,6 @@
  ************/
 extern void *smalloc(size_t siz) {
    void *ret = malloc(siz);
-   //printf("%zu\n", siz);
    if (!ret) fatal("malloc error");
    return ret;
 }

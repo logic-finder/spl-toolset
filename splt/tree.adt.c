@@ -36,8 +36,6 @@ static bool tree_full(tree_t *t) {
 
 static void tree_enlarge(tree_t *t) {
    t->cmax *= 2;
-   // t->children = srealloc(
-   //    t->children, t->cmax * sizeof *t->children);
    t->children = srealloc_arr(
       t->children,
       t->cmax,

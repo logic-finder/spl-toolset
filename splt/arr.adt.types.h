@@ -10,8 +10,7 @@
 #define INIT_MAX 128
 
 struct arr {
-   int len;
-   int max;
+   int len, max;
    void **arr;
 };
 

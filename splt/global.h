@@ -17,7 +17,7 @@
 #define ESIZ(arr) (sizeof (arr)[0])
 #define ARRLEN(arr) (sizeof (arr) / ESIZ(arr))
 #
-#define LONGJMP_TEMPLET(e,v) longjmp((e), (v))
+#define LONGJMP_TEMPLET(e,v) longjmp((e),(v))
 
 /************
  * TYPEDEFS *
@@ -27,7 +27,11 @@ typedef void teller_t(void);
 /***********************
  * FUNCTION PROTOTYPES *
  ***********************/
-void err_template(teller_t *tell, const char *color, const char *msg);
+void err_template(
+   teller_t *tell,
+   const char * restrict color,
+   const char * restrict msg
+);
 
 /**********************
  * EXTERNAL VARIABLES *

@@ -4,11 +4,13 @@
 #include "wrapper.h"
 #include "lineutil.h"
 
-static char *errmsg = "%s: unable to read.";
+static const char *errmsg = "%s: unable to read.";
 
 extern int readln(FILE *fp, char **line, int *len) {
-   // tests whether there is nothing to read
-   int ch;
+   // Test whether there is nothing to read
+   int ch, pos, bufsiz;
+   bool eol;
+   char *buf;
 
    ch = getc(fp);
    if (ch == EOF) {
@@ -19,12 +21,9 @@ extern int readln(FILE *fp, char **line, int *len) {
    }
    else ungetc(ch, fp);
 
-   // reads chars from the file so as to construct a string
-   int bufsiz = READLINE_UNIT;
-   char *buf = smalloc(bufsiz);
-   int pos;
-   bool eol;
-
+   // Read chars from the file so as to construct a string
+   bufsiz = READLINE_UNIT;
+   buf = smalloc(bufsiz);
    pos = 0;
    eol = false;
 
@@ -47,10 +46,8 @@ extern int readln(FILE *fp, char **line, int *len) {
       }
       if (ch == '\r')
          continue;
-      if (ch == '\n') //{
+      if (ch == '\n')
          eol = true;
-         //continue;
-      //}
 
       buf[pos++] = ch;
 
@@ -59,31 +56,4 @@ extern int readln(FILE *fp, char **line, int *len) {
          buf = srealloc(buf, bufsiz);
       }
    }
-}
-
-extern int skipws(FILE *fp) {
-   int ch;
-
-   while (isspace(ch = fgetc(fp)))
-      /* empty loop body */ ;
-
-   if (ferror(fp))
-      fatal("read error occurred!");
-   if (feof(fp))
-      return EOF;
-
-   ungetc(ch, fp);
-   return 0;
-}
-
-extern int skipln(FILE *fp) {
-   int ch;
-
-   while ((ch = fgetc(fp)) != EOF)
-      if (ch == '\n')
-         break;
-   if (ferror(fp))
-      fatal("read error occurred!");
-
-   return feof(fp) ? EOF : 0;
 }

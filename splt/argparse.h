@@ -17,9 +17,7 @@ typedef struct optflg {
 } optflg_t;
 
 typedef struct optval {
-   const char *ret;
-   const char *lng;
-   const char *src;
+   const char *ret, *lng, *src;
 } optval_t;
 
 void parse_args(const char **argv, optflg_t *of, optval_t *ov);
