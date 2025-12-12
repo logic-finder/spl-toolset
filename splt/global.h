@@ -38,6 +38,5 @@ void err_template(
  **********************/
 extern const char *sfname;       // from optprocessor.c
 extern arr_t *ls;                // from splt.c
-extern const tokkind_t tokkind;  // from lex.c
 
 #endif

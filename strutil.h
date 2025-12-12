@@ -7,6 +7,11 @@
 extern const char *whitespaces;
 
 bool match(char ch, const char *scanset);
+int match_str(
+   const char * restrict s,
+   const char ** restrict arr,
+   int len
+);
 char *extfnm(const char *src, bool ext_flag);
 extern char **split(
    const char * restrict src,

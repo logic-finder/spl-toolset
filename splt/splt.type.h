@@ -20,5 +20,6 @@ static tree_callback_t cleanup_node;
 /* Miscellaneous */
 static arr_iterator_t print_token;
 static tree_callback_t print_node;
+static const char *nodekind2str(nodekind_t kind);
 
 #endif

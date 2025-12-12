@@ -26,10 +26,10 @@ int main(int argc, const char **argv) {
 
    pt = parse(&of, &ov, toks);
    fmtwrt(ENPREFIX "parsing done (total " Cbwhite "%d" Creset " nodes)\n", count_tree_node(pt));
-   // tree_pre_traverse(pt, print_node, 0);
+   tree_pre_traverse(pt, print_node, 0);
 
-   typecheck(&of, &ov, pt);
-   // tree_pre_traverse(pt, print_node, 0);
+   //typecheck(&of, &ov, pt);
+   //tree_pre_traverse(pt, print_node, 0);
 
    // Cleanup
    tree_post_traverse(pt, cleanup_node, 0);
@@ -64,7 +64,7 @@ static void print_node(tree_t *t, int lv) {
    for (int i = 0; i < total; i++)
       putchar(' ');
 
-   printf("[%s] = [%s]", n->tag,
+   printf("[%s] = [%s]", nodekind2str(n->kind),
       n->len ? (char *) n->run : Cbblack "(empty)" Creset);
    printf(" " Cbblack "(len = %d)" Creset "\n", n->len);
 }
@@ -82,4 +82,51 @@ static int count_tree_node(tree_t *root) {
       cnt += count_tree_node(tree_child(root, i));
 
    return cnt + 1;
+}
+
+static const char *nodekind2str(nodekind_t kind) {
+   switch (kind) {
+      case NODEKIND_ROOT   : return "ROOT";
+      case NODEKIND_DATA   : return "DATA";
+      case NODEKIND_ADJ    : return "ADJ";
+      case NODEKIND_NOUN   : return "NOUN";
+      case NODEKIND_AFFIRM : return "AFFIRM";
+      case NODEKIND_NEGATE : return "NEGATE";
+      case NODEKIND_LHS    : return "LHS";
+      case NODEKIND_RHS    : return "RHS";
+      case NODEKIND_PERSON : return "PERSON";
+      case NODEKIND_EQ     : return "EQ";
+      case NODEKIND_INEQ   : return "INEQ";
+      case NODEKIND_TITLE  : return "TITLE";
+      case NODEKIND_DP     : return "DP";
+      case NODEKIND_CHAR   : return "CHAR";
+      case NODEKIND_ACT    : return "ACT";
+      case NODEKIND_SCENE  : return "SCENE";
+      case NODEKIND_ENTER  : return "ENTER";
+      case NODEKIND_EXIT   : return "EXIT";
+      case NODEKIND_EXEUNT : return "EXEUNT";
+      case NODEKIND_LINE   : return "LINE";
+      case NODEKIND_ASSIGN : return "ASSIGN";
+      case NODEKIND_OUT_N  : return "OUT_N";
+      case NODEKIND_OUT_C  : return "OUT_C";
+      case NODEKIND_IN_N   : return "IN_N";
+      case NODEKIND_IN_C   : return "IN_C";
+      case NODEKIND_GOTO   : return "GOTO";
+      case NODEKIND_COND   : return "COND";
+      case NODEKIND_IF     : return "IF";
+      case NODEKIND_PUSH   : return "PUSH";
+      case NODEKIND_POP    : return "POP";
+      case NODEKIND_SUM    : return "SUM";
+      case NODEKIND_DIFF   : return "DIFF";
+      case NODEKIND_PROD   : return "PROD";
+      case NODEKIND_QUOT   : return "QUOT";
+      case NODEKIND_REM    : return "REM";
+      case NODEKIND_SQRT   : return "SQRT";
+      case NODEKIND_SQUR   : return "SQUR";
+      case NODEKIND_CUBE   : return "CUBE";
+      case NODEKIND_2X     : return "2X";
+      case NODEKIND_FACT   : return "FACT";
+      default : goto unreachable;
+   }
+   unreachable: return NULL;
 }

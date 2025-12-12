@@ -187,7 +187,10 @@ struct msg_err_syn {
 struct msg_err_sem {
    msgstr_t
       bad_adj,
-      bad_noun;
+      bad_noun,
+      bad_name,
+      bad_comp,
+      bad_rnum;
 };
 
 struct msg_err {

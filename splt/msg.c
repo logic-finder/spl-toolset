@@ -91,4 +91,7 @@ extern void init_msg(void) {
 
    msgs.err.sem.bad_adj = "incomprehensible adjective";
    msgs.err.sem.bad_noun = "incomprehensible noun";
+   msgs.err.sem.bad_name = "incomprehensible name";
+   msgs.err.sem.bad_comp = "incomprehensible comparative";
+   msgs.err.sem.bad_rnum = "incomprehensible roman numeral";
 }

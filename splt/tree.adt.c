@@ -20,7 +20,10 @@ extern tree_t *tree_plant(void *data, size_t dsiz) {
    return ret;
 }
 
-extern tree_t *tree_graft(tree_t *base, tree_t *in) {
+extern tree_t *tree_graft(
+   tree_t * restrict base,
+   tree_t * restrict in
+) {
    if (tree_full(base))
       tree_enlarge(base);
 
@@ -30,7 +33,7 @@ extern tree_t *tree_graft(tree_t *base, tree_t *in) {
    return in;
 }
 
-static bool tree_full(tree_t *t) {
+static bool tree_full(const tree_t *t) {
    return t->cmax == t->clen;
 }
 
@@ -79,18 +82,18 @@ extern void tree_post_traverse(tree_t *t, tree_callback_t *cb, int lv) {
    (*cb)(t, lv);
 }
 
-extern int tree_clen(tree_t *t) {
+extern int tree_clen(const tree_t *t) {
    return t->clen;
 }
 
-extern void *tree_dat(tree_t *t) {
+extern void *tree_dat(const tree_t *t) {
    return t->dat;
 }
 
-extern tree_t *tree_child(tree_t *t, int idx) {
+extern tree_t *tree_child(const tree_t *t, int idx) {
    return t->children[idx];
 }
 
-extern void *tree_chdat(tree_t *t, int idx) {
+extern void *tree_chdat(const tree_t *t, int idx) {
    return t->children[idx]->dat;
 }

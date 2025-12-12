@@ -12,6 +12,17 @@ extern bool match(char ch, const char *scanset) {
    return false;
 }
 
+extern int match_str(
+   const char * restrict s,
+   const char ** restrict arr,
+   int len
+) {
+   for (int i = 0; i < len; i++)
+      if (!strcmp(s, arr[i]))
+         return i;
+   return -1;
+}
+
 extern char *extfnm(const char *src, bool ext_flag) {
    /*
     * There are four possible cases for src:

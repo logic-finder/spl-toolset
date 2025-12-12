@@ -1,5 +1,10 @@
 #include "db.h"
 
-bool query_adj(const char * restrict s, int * restrict ret) {
-   return false;
+bool query(
+   querykind_t kind,
+   const char * restrict s,
+   int * restrict ret
+) {
+   *ret = 1;
+   return true;
 }

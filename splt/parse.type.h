@@ -18,34 +18,71 @@
  **********/
 #define LONGJMP_ENV env_parse_stmt
 #define JUMP(v) LONGJMP_TEMPLET(LONGJMP_ENV, (v))
+#
+#define KEYWRD_ACT    "Act"
+#define KEYWRD_SCENE  "Scene"
+#define KEYWRD_ENTER  "Enter"
+#define KEYWRD_EXIT   "Exit"
+#define KEYWRD_EXEUNT "Exeunt"
+#define KEYWRD_OPEN   "Open"
+#define KEYWRD_SPEAK  "Speak"
+#define KEYWRD_LISTEN "Listen"
+#define KEYWRD_LET    "Let"
+#define KEYWRD_WE     "We"
+#define KEYWRD_IF     "If"
+#define KEYWRD_REMEMB "Remember"
+#define KEYWRD_RECALL "Recall"
+#define KEYWRD_HEART  "heart"
+#define KEYWRD_TO     "to"
+#define KEYWRD_MIND   "mind"
+#define KEYWRD_AND    "and"
+#define KEYWRD_SO     "so"
+#define KEYWRD_NOT    "not"
+#define KEYWRD_THAN   "than"
+#define KEYWRD_AS     "as"
+#define KEYWRD_SUM    "sum"
+#define KEYWRD_DIFF   "difference"
+#define KEYWRD_PROD   "product"
+#define KEYWRD_QUOT   "quotient"
+#define KEYWRD_REM    "remainder"
+#define KEYWRD_SQUR   "square"
+#define KEYWRD_ROOT   "root"
+#define KEYWRD_CUBE   "cube"
+#define KEYWRD_2X     "twice"
+#define KEYWRD_FACT   "factorial"
+#define KEYWRD_OF     "of"
+#define KEYWRD_BTW    "between"
+#define KEYWRD_I      "I"
+#define KEYWRD_MY     "my"
+#define KEYWRD_YOU    "You"
+#define KEYWRD_THOU   "Thou"
+#define KEYWRD_YOU_L  "you"
+#define KEYWRD_THOU_L "thou"
+#define KEYWRD_YOUR   "your"
+#define KEYWRD_YOUR_U "YOUR"
+#define KEYWRD_THY    "thy"
+#define KEYWRD_THINE  "thine"
+#define KEYWRD_HIS    "his"
+#define KEYWRD_HER    "her"
+#define KEYWRD_ITS    "its"
+#define KEYWRD_A      "a"
+#define KEYWRD_AN     "an"
+#define KEYWRD_THE    "the"
+#define KEYWRD_AM     "Am"
+#define KEYWRD_ARE    "are"
+#define KEYWRD_ART    "art"
+#define KEYWRD_ARE_C  "Are"
+#define KEYWRD_ART_C  "Art"
+#define KEYWRD_IS     "Is"
+#define KEYWRD_US     "us"
+#define KEYWRD_SHALL  "shall"
+#define KEYWRD_MUST   "must"
+#define KEYWRD_RETURN "return"
+#define KEYWRD_PROCED "proceed"
 
 /************
  * TYPEDEFS *
  ************/
-typedef enum stmtkind {
-   STMTKIND_ENTER = 1,
-   STMTKIND_EXIT,
-   STMTKIND_EXEUNT,
-   STMTKIND_LINE,
-   STMTKIND_ACT,
-   STMTKIND_SCENE,
-   STMTKIND_FINALE
-} stmtkind_t;
-
-typedef enum opkind {
-   OPKIND_NAO,  /* not an operator */
-   OPKIND_SUM,
-   OPKIND_DIFF,
-   OPKIND_PROD,
-   OPKIND_QUOT,
-   OPKIND_REM,
-   OPKIND_SQRT,
-   OPKIND_SQUR,
-   OPKIND_CUBE,
-   OPKIND_2X,
-   OPKIND_FACT
-} opkind_t;
-
 typedef int seeker_t(void);
 typedef void parser_t(void);
 
@@ -67,7 +104,8 @@ typedef void operator_t(tree_t *op);
 /* Seekers */
 static void seek_stmt(void);
 static void seek_stmt_router(void);
-static opkind_t seek_op(void);
+static int seek_enterlike(const char *type);
+static nodekind_t seek_op(void);
 static seeker_t seek_act;
 static seeker_t seek_scene;
 static seeker_t seek_enter;
@@ -87,7 +125,7 @@ static seeker_t seek_pop;
 static int parse_stmt(void);
 static int parse_line_as_conseq(void);
 static void parse_const(tree_t *stmt);
-static void parse_op(tree_t *stmt, opkind_t kind);
+static void parse_op(tree_t *stmt, nodekind_t kind);
 static int parse_line_router(
    const stmthandler_t stmts[static 6],
    int stmts_len
@@ -136,7 +174,6 @@ static void readtoks(char sentinel, tree_t *base);
 static void nexttok(void);
 
 /* Utils */
-static int match_tokrun(const char **arr, int len);
 static inline void archive_tokstate(void);
 static inline void rewind_tokstate(void);
 
@@ -146,19 +183,18 @@ static teller_t tell;
 
 /* Miscellnaeous */
 static arr_iterator_t cleanup_tokstream;
-static const char *get_opname(opkind_t kind);
 static tree_t *plant_tree(
-   const char * restrict run,
+   const char *run,
    int len,
-   const char * restrict tag,
+   nodekind_t kind,
    int lnum,
    int lpos
 );
 static tree_t *graft_tree(
    tree_t *base,
-   const char * restrict run,
+   const char *run,
    int len,
-   const char * restrict tag
+   nodekind_t kind
 );
 
 #endif
