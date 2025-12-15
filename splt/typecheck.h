@@ -1,9 +1,9 @@
-#ifndef SEMANTICS_H
-#define SEMANTICS_H
+#ifndef TYPECHECK_H
+#define TYPECHECK_H
 
 #include "argparse.h"
 #include "tree.adt.h"
 
-void typecheck(optflg_t *of, optval_t *ov, tree_t *pt);
+void typecheck(optflg_t *of, optval_t *ov);
 
 #endif

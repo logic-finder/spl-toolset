@@ -1,20 +1,44 @@
 #include "typecheck.h"
 #include "typecheck.type.h"
 
+extern tree_t *pt;
 static const node_t *enode;
-static tree_t *pt;
-static bool ret;
-static int val;
 
-extern void typecheck(optflg_t *of, optval_t *ov, tree_t *_pt) {
-   // Initialize
-   pt = _pt;
-
-   // Preprocess names
+extern void typecheck(optflg_t *of, optval_t *ov) {
+   // Preprocess
+   coalesce_title();
    tree_post_traverse(pt, coalesce_name, 0);
 
    // Type-check
    tree_post_traverse(pt, typecheck_router, 0);
+}
+
+static void coalesce_title(void) {
+   const tree_t *title;
+   node_t *n;
+   char *buf;
+   int i, clen, rlen;
+
+   // Get the title node
+   title = tree_child(pt, 0);
+   n = tree_dat(title);
+   clen = tree_clen(title);
+
+   // Calculate the length of the title
+   rlen = 0;
+   for (i = 0; i < clen; i++)
+      // notice that len == strlen(run) + 1
+      rlen += TREE_CHDAT(title, i)->dat.s.len;
+
+   rlen++;
+   buf = smalloc(rlen);
+   buf[0] = '\0';
+   for (i = 0; i < clen; i++) {
+      strcat(buf, TREE_CHDAT(title, i)->dat.s.run);
+      strcat(buf, " ");
+   }
+   buf[rlen - 2] = '\0';
+   setnds(n, buf, rlen);
 }
 
 static void coalesce_name(tree_t *t, int _) {
@@ -23,50 +47,47 @@ static void coalesce_name(tree_t *t, int _) {
    int i, clen, rlen;
 
    (void) _;
+   // Check if this is a character node
    n = tree_dat(t);
-   if (strcmp(n->tag, "CHAR"))
+   if (n->kind != NODEKIND_CHDECL)
       return;
 
+   // Calculate the length of the name
    clen = tree_clen(t);
    rlen = 0;
    for (i = 0; i < clen; i++)
       // notice that len == strlen(run) + 1
-      rlen += TREE_CHDAT(t, i)->len;
+      rlen += TREE_CHDAT(t, i)->dat.s.len;
 
    /*
     * input  = ["the", "misty", "Ghost"]
     * output = "the_misty_Ghost00"
-    *    where _ = space and 0 = \0
+    *    where 0 = \0
     */
    rlen++;
    buf = smalloc(rlen);
    buf[0] = '\0';
    for (i = 0; i < clen; i++) {
-      strcat(buf, TREE_CHDAT(t, i)->run);
-      strcat(buf, " ");
+      strcat(buf, TREE_CHDAT(t, i)->dat.s.run);
+      strcat(buf, "_");
    }
    buf[rlen - 2] = '\0';
-
-   n->run = buf;
-   n->len = rlen;
+   setnds(n, buf, rlen);
 }
 
 static void typecheck_router(tree_t *t, int _) {
    typedef struct typehandler {
-      const char *kind;
+      nodekind_t kind;
       typechecker_t *check;
    } typehandler_t;
 
    static const typehandler_t types[] = {
-      { "ADJ"     , typecheck_adj  },
-      { "NOUN"    , typecheck_noun },
-      { "CHAR"    , typecheck_char },
-      { "ASSIGN"  , typecheck_adj  },
-      { "EQUAL"   , typecheck_adj  },
-      { "COMPARE" , typecheck_comp },
-      { "ACT"     , typecheck_rnum },
-      { "SCENE"   , typecheck_rnum },
-      { "GOTO"    , typecheck_rnum }
+      { NODEKIND_ADJ    , typecheck_adj  },
+      { NODEKIND_NOUN   , typecheck_noun },
+      { NODEKIND_ASSIGN , typecheck_adj  },
+      { NODEKIND_EQ     , typecheck_adj  },
+      { NODEKIND_INEQ   , typecheck_comp },
+      { NODEKIND_ROMNUM , typecheck_rnum },
    };
    static const int types_len = ARRLEN(types);
 
@@ -78,7 +99,7 @@ static void typecheck_router(tree_t *t, int _) {
 
    for (int i = 0; i < types_len; i++) {
       type = types + i;
-      if (strcmp(n->tag, type->kind))
+      if (n->kind != type->kind)
          continue;
       (*type->check)(n);
       return;
@@ -86,7 +107,10 @@ static void typecheck_router(tree_t *t, int _) {
 }
 
 static void typecheck_adj(node_t *n) {
-   ret = query(QUERYKIND_ADJ, n->run, &val);
+   bool ret;
+   int val;
+
+   ret = query(QUERYKIND_ADJ, n->dat.s.run, &val);
    if (!ret) {
       reason = msgs.err.sem.bad_adj;
       enode = n;
@@ -94,31 +118,12 @@ static void typecheck_adj(node_t *n) {
    }
 }
 
-static bool validate_name(const char *s, int *ret) {
-   const tree_t *dp, *ch;
-   const node_t *n;
-   int i, clen;
-
-   dp = tree_child(pt, 1);
-   clen = tree_clen(dp);
-
-   for (i = 0; i < clen; i++) {
-      ch = tree_child(dp, i);
-      n = tree_dat(ch);
-      if (!strcmp(n->run, s)) {
-         *ret = i;
-         return true;
-      }
-   }
-   return false;
-}
-
-static bool validate_pronoun(const char *s) {
+static int is_pronoun(const char *s) {
    static const char *prns[] = {
-      /* pronoun */
-      "me", "you", "thee",
+      /* objective */
+      KEYWRD_ME, KEYWRD_YOU_L, KEYWRD_THEE,
       /* reflexive */
-      "myself", "yourself", "thyself"
+      KEYWRD_MYSELF, KEYWRD_YRSELF, KEYWRD_TYSELF
    };
    static const int prns_len = ARRLEN(prns);
 
@@ -127,110 +132,88 @@ static bool validate_pronoun(const char *s) {
    for (int i = 0; i < prns_len; i++) {
       prn = prns[i];
       if (!strcmp(prn, s))
-         return true;
+         return i;
    }
-   return false;
-}
-
-static void mark_whom(char *tag, int num) {
-   /*
-    * node.tag = 31 chars + \0
-    * but 26 chars available for `num`
-    * because "CHAR-" is 5 chars long.
-    *
-    * Given that `num` is int and >= 0,
-    * buf[10] would suffice since
-    * max_int = 2,147,483,647 = 10 chars
-    */
-   #define NAME_BUFSIZ 11
-
-   static char buf[NAME_BUFSIZ];  /* for - */
-
-   snprintf(buf, NAME_BUFSIZ, "-%d", num);
-   strcat(tag, buf);
+   return -1;
 }
 
 static void typecheck_noun(node_t *n) {
-   const char *nounkind;
+   bool ret;
+   int ptype, val;
+   nodekind_t kind;
 
-   ret = validate_name(n->run, &val);
-   if (ret) {
-      mark_whom(n->tag, val);
-      return;
+   ptype = is_pronoun(n->dat.s.run);
+   switch (ptype) {
+      case -1 : goto handle_noun;  /* not a pronoun */
+      case  0 : kind = NODEKIND_P1; break;
+      case  1 : /* fall-through */
+      case  2 : kind = NODEKIND_P2;
    }
+   n->kind = kind;
+   return;
 
-   ret = validate_pronoun(n->run);
-   if (ret) return;
-
-   ret = query(QUERYKIND_NOUN, n->run, &val);
+   handle_noun:
+   ret = query(QUERYKIND_NOUN, n->dat.s.run, &val);
    if (!ret) {
       reason = msgs.err.sem.bad_noun;
       enode = n;
       semerr();
    }
 
-   nounkind = val ? "-POS" : "-NEG";
-   strcat(n->tag, nounkind);
-}
-
-static void typecheck_char(node_t *n) {
-   ret = validate_name(n->run, &val);
-   if (!ret) {
-      reason = msgs.err.sem.bad_name;
-      enode = n;
-      semerr();
-   }
-   mark_whom(n->tag, val);
+   kind = val ? NODEKIND_PNOUN : NODEKIND_NNOUN;
+   n->kind = kind;
 }
 
 static void typecheck_comp(node_t *n) {
-   const char *compkind;
+   bool ret;
+   int val;
+   nodekind_t kind;
 
-   ret = query(QUERYKIND_COMP, n->run, &val);
+   ret = query(QUERYKIND_COMP, n->dat.s.run, &val);
    if (!ret) {
       reason = msgs.err.sem.bad_comp;
       enode = n;
       semerr();
    }
 
-   compkind = val ? "-POS" : "-NEG";
-   strcat(n->tag, compkind);
+   kind = val ? NODEKIND_GT : NODEKIND_LT;
+   n->kind = kind;
 }
 
-static bool is_valid_rnum(const char *rnum) {
-   #define NUMS_LEN 9
+static bool is_rnum(const char *rnum) {
+   #define PLACE_LEN 9
+   typedef const char *place_t[PLACE_LEN];
 
-   typedef const char *nums_t[NUMS_LEN];
-
-   static nums_t hundreds = {
-      "CM", "DCCC", "DCC", "DC", "D", "CD", "CCC", "CC", "C"
+   static place_t ps[] = {
+      { "CM", "DCCC", "DCC", "DC", "D", "CD", "CCC", "CC", "C" }, /* 100 */
+      { "XC", "LXXX", "LXX", "LX", "L", "XL", "XXX", "XX", "X" }, /*  10 */
+      { "IX", "VIII", "VII", "VI", "V", "IV", "III", "II", "I" }  /*   1 */
    };
-   static nums_t tens = {
-      "XC", "LXXX", "LXX", "LX", "L", "XL", "XXX", "XX", "X"
-   };
-   static nums_t units = {
-      "IX", "VIII", "VII", "VI", "V", "IV", "III", "II", "I"
-   };
-   static nums_t *arr[] = { &hundreds, &tens, &units };
-   static const int arr_len = ARRLEN(arr);
+   static const int ps_len = ARRLEN(ps);
 
    int i, k, nlen;
+   place_t *p;
+   const char *dat;
 
-   for (i = 0; i < arr_len; i++) {
-      for (k = 0; k < NUMS_LEN; k++) {
-         nlen = strlen((*arr[i])[k]);
-         if (!strncmp(rnum, (*arr[i])[k], nlen))
-            break;
+   for (i = 0; i < ps_len; i++) {
+      p = ps + i;
+      for (k = 0; k < PLACE_LEN; k++) {
+         dat = (*p)[k];
+         nlen = strlen(dat);
+         if (!strncmp(rnum, dat, nlen))
+            goto increment;
       }
-      if (k < NUMS_LEN)
-         rnum += nlen;
+      continue;  /* k == PLACE_LEN */
+      increment: rnum += nlen;
    }
 
    return strlen(rnum) == 0 ? true : false;
 }
 
 static void typecheck_rnum(node_t *n) {
-   ret = is_valid_rnum(n->run);
+   bool ret;
+
+   ret = is_rnum(n->dat.s.run);
    if (!ret) {
       reason = msgs.err.sem.bad_rnum;
       enode = n;
@@ -254,8 +237,9 @@ static void tell(void) {
       "%s " Cbcyan "%s" Creset "\n"
       "[%s:%d:%d] " Cbwhite "note:" Creset " problematic at here\n"
       "%4d|%.*s" Cbblue "%s" Creset "%s\n",
-      reason, enode->run,
+      reason, enode->dat.s.run,
       sfname, lnum, lpos,
-      lnum, lpos - 1, l->run, enode->run, &l->run[lpos - 1 + enode->len - 1]
+      lnum, lpos - 1, l->run,
+      enode->dat.s.run, &l->run[lpos - 1 + enode->dat.s.len - 1]
    );
 }

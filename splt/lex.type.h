@@ -27,7 +27,6 @@ typedef int checker_t(va_list *ap);
  ***********************/
 /* Character Handling */
 static void skip_space(void);
-static void skip_nchar(int n);
 static void read_token(void);
 static void read_nchar(int n);
 

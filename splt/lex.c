@@ -104,10 +104,6 @@ static void skip_space(void) {
    iterate_lines(process_skip, check_space);
 }
 
-static void skip_nchar(int n) {
-   iterate_lines(process_skip, check_cntlessthan, n);
-}
-
 static void read_token(void) {
    idx = 0;
    iterate_lines(process_read, check_token);

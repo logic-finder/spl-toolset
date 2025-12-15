@@ -15,14 +15,17 @@ static int
    tidx;    // temp. var. for idx
 
 /* Parse tree */
+extern tree_t
+   *pt;     // parse tree (see global.h)
 static tree_t
-   *pt,     // parse tree
+   *nrtv,   // contains the whole narrative
    *act,    // current act
    *scene,  // current scene
    *line;   // current line
 
 /* Miscellaneous */
-static jmp_buf LONGJMP_ENV;        // for setjmp & longjmp
+static jmp_buf LONGJMP_ENV;  // for setjmp & longjmp
+static int charidx;          // used by `isname` & its caller
 
 /*
  * `seek_if` and `parse_if` being the
@@ -41,6 +44,13 @@ static const stmthandler_t stmts[] = {
 };
 static const int stmts_len = ARRLEN(stmts);
 
+/* These are used in `seek_cond` and `parse_cond` only. */
+static const char *cond_verbs[] = {
+   KEYWRD_AM, KEYWRD_ARE_C, KEYWRD_ART_C, KEYWRD_IS
+};
+static const int cond_verbs_len = ARRLEN(cond_verbs);
+static int vtype;
+
 extern tree_t *parse(
    optflg_t *of,
    optval_t *ov,
@@ -53,11 +63,16 @@ extern tree_t *parse(
    idx = -1;
    pt = plant_tree(NULL, 0, NODEKIND_ROOT, 0, 0);
 
-   // Construct the parse tree
+   /*
+    * Construct the parse tree
+    * pt[0] = title
+    * pt[1] = dp
+    * pt[2] = nrtv
+    */
    act = scene = line = NULL;
-
    parse_title();
    parse_dp();
+   nrtv = graft_tree(pt, NULL, 0, NODEKIND_NRTV);
    for (;;) {
       parse_act();
       for (;;) {
@@ -103,7 +118,7 @@ static void parse_dp(void) {
       gettok();
       reason = msgs.err.syn.dp.noname;
       eqtok(',');
-      character = graft_tree(dp, NULL, 0, NODEKIND_CHAR);
+      character = graft_tree(dp, NULL, 0, NODEKIND_CHDECL);
       ungettok();
       reason = msgs.err.syn.dp.chardecl_incomp;
       readtoks(',', character);
@@ -121,9 +136,12 @@ static int seek_act(void) {
 }
 
 static void parse_act(void) {
+   tree_t *romnum;
+
+   act = graft_tree(nrtv, NULL, 0, NODEKIND_ACT);
    reason = msgs.err.syn.act.incomp;
    gettok();
-   act = graft_tree(pt, tok->run, tok->len, NODEKIND_ACT);
+   (void) graft_tree(act, tok->run, tok->len, NODEKIND_ROMNUM);
    gettok();
    reason = msgs.err.syn.act.badsyn;
    neqtok(':');
@@ -139,9 +157,12 @@ static int seek_scene(void) {
 }
 
 static void parse_scene(void) {
+   tree_t *romnum;
+
+   scene = graft_tree(act, NULL, 0, NODEKIND_SCENE);
    reason = msgs.err.syn.scene.incomp;
    gettok();
-   scene = graft_tree(act, tok->run, tok->len, NODEKIND_SCENE);
+   (void) graft_tree(scene, tok->run, tok->len, NODEKIND_ROMNUM);
    gettok();
    reason = msgs.err.syn.scene.badsyn;
    neqtok(':');
@@ -163,28 +184,38 @@ static int seek_enter(void) {
    return seek_enterlike(KEYWRD_ENTER);
 }
 
-static void parse_enter(void) {
-   tree_t *enter, *character;
-
-   reason = msgs.err.syn.enter.incomp;
-   enter = graft_tree(scene, NULL, 0, NODEKIND_ENTER);
-   character = graft_tree(enter, NULL, 0, NODEKIND_CHAR);
-
-   // Enter has 1 or 2 characters
+static void parse_namelist(tree_t *enterlike, const char *err) {
    for (;;) {
       gettok();
+      archive_tokstate();  /* `isname` rewinds tokstate */
       if (tok->run[0] == ']')
          break;
-      if (!strcmp(tok->run, KEYWRD_AND)) {
-         character = graft_tree(enter, NULL, 0, NODEKIND_CHAR);
-         continue;
+      if (!isname()) {
+         reason = err;
+         synerr();
       }
-      (void) graft_tree(
-         character, tok->run, tok->len, NODEKIND_DATA);
+      (void) graft_tree_as_num(enterlike, charidx, NODEKIND_CHAR);
+      if (tok->run[0] == ']')
+         break;
+      if (!strcmp(tok->run, KEYWRD_AND))
+         continue;
    }
-   if (!tree_clen(enter)) {
-      reason = msgs.err.syn.enter.nochar;
-      synerr();
+}
+
+static void parse_enter(void) {
+   tree_t *enter;
+
+   enter = graft_tree(scene, NULL, 0, NODEKIND_ENTER);
+   reason = msgs.err.syn.enter.incomp;
+
+   // Enter has 1 or 2 characters
+   parse_namelist(enter, msgs.err.syn.enter.badname);
+
+   switch (tree_clen(enter)) {
+      case 1 : /* fall-through */
+      case 2 : return;
+      case 0  : reason = msgs.err.syn.enter.nochar; break;
+      default : reason = msgs.err.syn.enter.exceed;
    }
 }
 
@@ -193,19 +224,20 @@ static int seek_exit(void) {
 }
 
 static void parse_exit(void) {
-   tree_t *exit, *character;
+   tree_t *exit;
 
-   reason = msgs.err.syn.exit.incomp;
    exit = graft_tree(scene, NULL, 0, NODEKIND_EXIT);
-   character = graft_tree(exit, NULL, 0, NODEKIND_CHAR);
+   reason = msgs.err.syn.exit.incomp;
 
    // Exit has 1 character
-   readtoks(']', character);
+   parse_namelist(exit, msgs.err.syn.exit.badname);
 
-   if (!tree_clen(exit)) {
-      reason = msgs.err.syn.exit.nochar;
-      synerr();
+   switch (tree_clen(exit)) {
+      case 1 : return;
+      case 0  : reason = msgs.err.syn.exit.nochar; break;
+      default : reason = msgs.err.syn.exit.exceed;
    }
+   synerr();
 }
 
 static int seek_exeunt(void) {
@@ -213,32 +245,19 @@ static int seek_exeunt(void) {
 }
 
 static void parse_exeunt(void) {
-   tree_t *exeunt, *character;
-   int planted;
+   tree_t *exeunt;
 
-   reason = msgs.err.syn.exeunt.incomp;
    exeunt = graft_tree(scene, NULL, 0, NODEKIND_EXEUNT);
+   reason = msgs.err.syn.exeunt.incomp;
 
    // Exeunt has either 0 or 2 characters
-   planted = 0;
-   for (;;) {
-      gettok();
-      if (tok->run[0] == ']')
-         break;
-      if (!strcmp(tok->run, KEYWRD_AND)) {
-         planted = 1 - planted;
-         continue;
-      }
-      if (!planted) {
-         character = graft_tree(exeunt, NULL, 0, NODEKIND_CHAR);
-         planted = 1 - planted;
-      }
-      (void) graft_tree(
-         character, tok->run, tok->len, NODEKIND_DATA);
-   }
-   if (tree_clen(exeunt) == 1) {
-      reason = msgs.err.syn.exeunt.onechar;
-      synerr();
+   parse_namelist(exeunt, msgs.err.syn.exeunt.badname);
+
+   switch (tree_clen(exeunt)) {
+      case 0 : /* fall-through  */
+      case 2 : return;
+      case 1  : reason = msgs.err.syn.exeunt.onechar; break;
+      default : reason = msgs.err.syn.exeunt.exceed;
    }
 }
 
@@ -252,10 +271,12 @@ static void parse_const(tree_t *stmt) {
    };
    static const int decos_len = ARRLEN(decos);
 
-   bool opcond, cond1, cond2, cond3, cond4;
+   tree_t *constant;
+   bool opcond, cond1, cond2, cond3, cond4, cond5, cond6;
    int ret;
    nodekind_t kind;
 
+   constant = graft_tree(stmt, NULL, 0, NODEKIND_CONST);
    reason = msgs.err.syn.cnst.incomp;
    gettok();
    ret = match_str(tok->run, decos, decos_len);
@@ -264,22 +285,25 @@ static void parse_const(tree_t *stmt) {
 
    opcond = (kind = seek_op()) != NODEKIND__NAO;
    if (opcond) {
-      parse_op(stmt, kind);
+      parse_op(constant, kind);
       return;
    }
 
    for (;;) {
       // escape conditions
       cond1 = match(tok->run[0], ".!?");
+      if (cond1) goto noun;
       cond2 = !strcmp(tok->run, KEYWRD_AND);
-      cond3 = !strcmp(tok->run, KEYWRD_NOT);
-      cond4 = !strcmp(tok->run, KEYWRD_THAN);
-      if (cond1 || cond2 || cond3)
-         break;
-      if (cond4) {
-         ungettokn(2);
-         break;
-      }
+      if (cond2) goto noun;
+      cond3 = !strcmp(tok->run, KEYWRD_AS);
+      if (cond3) goto noun;
+      cond4 = !strcmp(tok->run, KEYWRD_NOT);
+      if (cond4) goto noun;
+      cond5 = !strcmp(tok->run, KEYWRD_THAN);
+      if (cond5) { ungettokn(2); goto noun; }
+      archive_tokstate();  /* `isname` rewinds tokstate */
+      cond6 = isname();
+      if (cond6) goto name;
 
       // is it a decorator?
       if (match_str(tok->run, decos, decos_len) >= 0) {
@@ -287,12 +311,19 @@ static void parse_const(tree_t *stmt) {
          synerr();
       }
 
-      (void) graft_tree(stmt, tok->run, tok->len, NODEKIND_ADJ);
+      (void) graft_tree(constant, tok->run, tok->len, NODEKIND_ADJ);
 
       reason = msgs.err.syn.cnst.incomp;
       gettok();
    }
-   TREE_CHDAT(stmt, tree_clen(stmt) - 1)->kind = NODEKIND_NOUN;
+
+   noun:
+      TREE_CHDAT(constant, tree_clen(constant) - 1)->kind = NODEKIND_NOUN;
+   return;
+
+   name:
+      (void) graft_tree_as_num(constant, charidx, NODEKIND_CHAR);
+   return;
 }
 
 static nodekind_t seek_op(void) {
@@ -390,6 +421,10 @@ static void parse_op_binary(
 
    lefthand = graft_tree(op, NULL, 0, NODEKIND_LHS);
    parse_const(lefthand);
+   if (strcmp(tok->run, KEYWRD_AND)) {
+      reason = msgs.err.syn.op.no_and;
+      synerr();
+   }
    righthand = graft_tree(op, NULL, 0, NODEKIND_RHS);
    parse_const(righthand);
 }
@@ -481,7 +516,7 @@ static void parse_op_fact(tree_t *op) {
    parse_op_unary(op, KEYWRD_OF, msgs.err.syn.op.fact);
 }
 
-static int seek_line(void) {
+static int isname(void) {
    tree_t *dp, *character;
    int i, k, dp_clen, char_clen;
 
@@ -492,30 +527,27 @@ static int seek_line(void) {
       character = tree_child(dp, i);
       char_clen = tree_clen(character);
       for (k = 0; k < char_clen; k++) {
-         if (strcmp(TREE_CHDAT(character, k)->run, tok->run))
-            break;
+         if (strcmp(TREE_CHDAT(character, k)->dat.s.run, tok->run)) {
+            rewind_tokstate();
+            goto next;
+         }
          gettok();
       }
-      rewind_tokstate();
-      if (k == char_clen)
-         return 1;
+      charidx = i;
+      return 1;
+      next:;
    }
    return 0;
 }
 
-static void parse_line(void) {
-   tree_t *character;
+static int seek_line(void) {
+   return isname();
+}
 
+static void parse_line(void) {
    reason = msgs.err.syn.line.incomp;
    line = graft_tree(scene, NULL, 0, NODEKIND_LINE);
-   character = graft_tree(line, NULL, 0, NODEKIND_CHAR);
-
-   /*
-    * We've already checked the character name in
-    * `seek_line`, so no need to error-check here.
-    */
-   ungettok();
-   readtoks(':', character);
+   (void) graft_tree_as_num(line, charidx, NODEKIND_CHAR);
 
    // Handle the first statement
    gettok();
@@ -667,12 +699,12 @@ static void seek_stmt_router(void) {
    } jumper_t;
 
    static const jumper_t jps[] = {
+      { seek_line  , NODEKIND_LINE   },
       { seek_enter , NODEKIND_ENTER  },
       { seek_exit  , NODEKIND_EXIT   },
-      { seek_exeunt, NODEKIND_EXEUNT },
       { seek_scene , NODEKIND_SCENE  },
       { seek_act   , NODEKIND_ACT    },
-      { seek_line  , NODEKIND_LINE   },
+      { seek_exeunt, NODEKIND_EXEUNT }
    };
    static const int jps_len = ARRLEN(jps);
 
@@ -832,7 +864,7 @@ static int seek_goto(void) {
 
 static void parse_goto(void) {
    tree_t *gt;
-   int type;
+   int type, mark;
    bool cond1, cond2;
 
    if (!strcmp(tok->run, KEYWRD_LET))
@@ -871,13 +903,23 @@ static void parse_goto(void) {
    }
 
    gettok();
-   if (strcmp(tok->run, KEYWRD_SCENE)) {
+   if (!strcmp(tok->run, KEYWRD_ACT))
+      mark = NODEKIND_ACT;
+   else
+   if (!strcmp(tok->run, KEYWRD_SCENE))
+      mark = NODEKIND_SCENE;
+   else {
+      if (!strcmp(tok->run, "act"))
+         reason = msgs.err.syn.gt.act_misspell;
+      else
       if (!strcmp(tok->run, "scene"))
-         reason = msgs.err.syn.gt.misspell;
+         reason = msgs.err.syn.gt.scene_misspell;
       else
          reason = msgs.err.syn.gt.badsyn;
       synerr();
    }
+
+   gt = graft_tree_as_num(line, mark, NODEKIND_GOTO);
 
    gettok();
    if (tok->kind == TOKKIND_PNT) {
@@ -885,7 +927,7 @@ static void parse_goto(void) {
       synerr();
    }
 
-   (void) graft_tree(line, tok->run, tok->len, NODEKIND_GOTO);
+   (void) graft_tree(gt, tok->run, tok->len, NODEKIND_ROMNUM);
 
    gettok();
    if (!match(tok->run[0], ".!")) {
@@ -895,14 +937,8 @@ static void parse_goto(void) {
 }
 
 static int seek_cond(void) {
-   bool cond1, cond2, cond3, cond4;
-
-   cond1 = strcmp(tok->run, KEYWRD_AM);
-   cond2 = strcmp(tok->run, KEYWRD_ARE_C);
-   cond3 = strcmp(tok->run, KEYWRD_ART_C);
-   cond4 = strcmp(tok->run, KEYWRD_IS);
-
-   if (cond1 && cond2 && cond3 && cond4)
+   vtype = match_str(tok->run, cond_verbs, cond_verbs_len);
+   if (vtype < 0)
       return 0;
    else
       return 1;
@@ -910,34 +946,21 @@ static int seek_cond(void) {
 
 static void parse_cond(void) {
    tree_t *condition, *lefthand, *righthand;
-   const char *person;
    bool cond1, cond2, cond3;
-   int type;
+   nodekind_t kind;
 
    reason = msgs.err.syn.cond.incomp;
    condition = graft_tree(line, NULL, 0, NODEKIND_COND);
 
-   if (!strcmp(tok->run, KEYWRD_AM))
-      type = 1, person = "1st";
-   else
-   if (!strcmp(tok->run, KEYWRD_ARE_C))
-      type = 2, person = "2nd";
-   else
-   if (!strcmp(tok->run, KEYWRD_ART_C))
-      type = 3, person = "2nd";
-   else
-   if (!strcmp(tok->run, KEYWRD_IS))
-      type = 4, person = "3rd";
-
-   if (type < 4) {
+   if (vtype < 3) {
       gettok();
       cond1 = !strcmp(tok->run, KEYWRD_I);
       cond2 = !strcmp(tok->run, KEYWRD_YOU_L);
       cond3 = !strcmp(tok->run, KEYWRD_THOU_L);
 
-      cond1 = type == 1 && !cond1;
-      cond2 = type == 2 && !cond2;
-      cond3 = type == 3 && !cond3;
+      cond1 = vtype == 0 && !cond1;
+      cond2 = vtype == 1 && !cond2;
+      cond3 = vtype == 2 && !cond3;
 
       if (cond1 || cond2 || cond3) {
          reason = msgs.err.syn.cond.unmatched;
@@ -947,8 +970,13 @@ static void parse_cond(void) {
    else parse_const(condition);
 
    lefthand  = graft_tree(condition, NULL, 0, NODEKIND_LHS);
-   (void) graft_tree(
-      lefthand, person, strlen(person) + 1, NODEKIND_PERSON);
+   switch (vtype) {
+      case 0 : kind = NODEKIND_P1; break;
+      case 1 : /* fall-through */
+      case 2 : kind = NODEKIND_P2; break;
+      case 3 : kind = NODEKIND_P3; break;
+   }
+   (void) graft_tree(lefthand, NULL, 0, kind);
 
    gettok();
    if (!strcmp(tok->run, KEYWRD_NOT)) {
@@ -960,6 +988,7 @@ static void parse_cond(void) {
 
    righthand = graft_tree(condition, NULL, 0, NODEKIND_RHS);
 
+   // Is it a equality test, i.e. "as ... as"?
    if (!strcmp(tok->run, KEYWRD_AS)) {
       gettok();
       if (tok->kind == TOKKIND_PNT) {
@@ -976,12 +1005,13 @@ static void parse_cond(void) {
          synerr();
       }
    }
+   // If not, then it is an inequality test
    else {
       (void) graft_tree(
          condition, tok->run, tok->len, NODEKIND_INEQ);
 
       gettok();
-      if (type < 4 && strcmp(tok->run, KEYWRD_THAN)) {
+      if (strcmp(tok->run, KEYWRD_THAN)) {
          reason = msgs.err.syn.cond.badsyn;
          synerr();
       }
@@ -995,7 +1025,7 @@ static int seek_if(void) {
 }
 
 static void parse_if(void) {
-   tree_t *ifstmt;
+   tree_t *ifstmt, *consequent, *tline;
    int ret;
 
    reason = msgs.err.syn.ifstmt.incomp;
@@ -1019,8 +1049,12 @@ static void parse_if(void) {
    }
 
    // Parse the consequent
+   consequent = graft_tree(ifstmt, NULL, 0, NODEKIND_CONSEQ);
+   tline = line;
+   line = consequent;
    reason = msgs.err.syn.ifstmt.conseq_incomp;
    ret = parse_line_as_conseq();
+   line = tline;
 
    if (!ret)
       return;
@@ -1037,19 +1071,26 @@ static int seek_push(void) {
 }
 
 static void parse_push(void) {
+   tree_t *push;
+
+   push = graft_tree(line, NULL, 0, NODEKIND_PUSH);
    reason = msgs.err.syn.push.incomp;
    gettok();
+   archive_tokstate();  /* `isname` rewinds tokstate */
 
    if (tok->kind == TOKKIND_PNT) {
       reason = msgs.err.syn.push.badsyn;
       synerr();
    }
 
-   (void) graft_tree(line, tok->run, tok->len, NODEKIND_PUSH);
+   if (isname())
+      (void) graft_tree_as_num(push, charidx, NODEKIND_CHAR);
+   else
+      (void) graft_tree(push, tok->run, tok->len, NODEKIND_NOUN);
 
    gettok();
    if (!match(tok->run[0], ".!")) {
-      reason = msgs.err.syn.in.badsyn;
+      reason = msgs.err.syn.push.badsyn;
       synerr();
    }
 }
@@ -1180,8 +1221,9 @@ static tree_t *plant_tree(
    }
    else buf = NULL;
 
-   node.run = buf;
-   node.len = len;
+   node.datkind = DATKIND_STR;
+   node.dat.s.run = buf;
+   node.dat.s.len = len;
    node.kind = kind;
    node.lnum = lnum;
    node.lpos = lpos;
@@ -1195,7 +1237,7 @@ static tree_t *graft_tree(
    int len,
    nodekind_t kind
 ) {
-   tree_t *ret, *sub;
+   tree_t *sub;
 
    sub = plant_tree(
       run,
@@ -1204,7 +1246,35 @@ static tree_t *graft_tree(
       tok->lnum,
       tok->lpos
    );
-   ret = tree_graft(base, sub);
 
-   return ret;
+   return tree_graft(base, sub);
+}
+
+static tree_t *graft_tree_as_num(
+   tree_t *base,
+   int num,
+   nodekind_t kind
+) {
+   node_t node;
+   tree_t *sub;
+
+   node.datkind = DATKIND_INT;
+   node.dat.n = num;
+   node.kind = kind;
+   node.lnum = tok->lnum;
+   node.lpos = tok->lpos;
+   sub = tree_plant(&node, sizeof node);
+
+   return tree_graft(base, sub);
+}
+
+void setndn(node_t *n, int v) {
+   n->datkind = DATKIND_INT;
+   n->dat.n = v;
+}
+
+void setnds(node_t *n, char *s, int l) {
+   n->datkind = DATKIND_STR;
+   n->dat.s.run = s;
+   n->dat.s.len = l;
 }

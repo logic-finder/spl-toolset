@@ -1,13 +1,16 @@
 #include "splt.type.h"
 
-arr_t *ls;  /* External Variable */
+/*********************
+ * External Variable *
+ *********************/
+arr_t *ls;
+tree_t *pt;
 
 int main(int argc, const char **argv) {
    optflg_t of = {0};
    optval_t ov;
-   int lc, wc;
    arr_t *toks;
-   tree_t *pt;
+   int lc, wc;
 
    // Initialize
    init_msg();
@@ -26,10 +29,15 @@ int main(int argc, const char **argv) {
 
    pt = parse(&of, &ov, toks);
    fmtwrt(ENPREFIX "parsing done (total " Cbwhite "%d" Creset " nodes)\n", count_tree_node(pt));
-   tree_pre_traverse(pt, print_node, 0);
+   // tree_pre_traverse(pt, print_node, 0);
 
-   //typecheck(&of, &ov, pt);
-   //tree_pre_traverse(pt, print_node, 0);
+   typecheck(&of, &ov);
+   fmtwrt(ENPREFIX "type-checking done (total " Cbwhite "%d" Creset " nodes)\n", count_tree_node(pt));
+   // tree_pre_traverse(pt, print_node, 0);
+
+   ctxcheck(&of, &ov);
+   fmtwrt(ENPREFIX "context-checking done (total " Cbwhite "%d" Creset " nodes)\n", count_tree_node(pt));
+   // tree_pre_traverse(pt, print_node, 0);
 
    // Cleanup
    tree_post_traverse(pt, cleanup_node, 0);
@@ -40,8 +48,13 @@ int main(int argc, const char **argv) {
 }
 
 static void cleanup_node(tree_t *t, int _) {
+   node_t *n;
+
    (void) _;
-   free(((node_t *) tree_dat(t))->run);
+   n = tree_dat(t);
+   if (n->datkind != DATKIND_STR)
+      return;
+   free(n->dat.s.run);
 }
 
 static void print_token(void *dat, int idx) {
@@ -64,9 +77,17 @@ static void print_node(tree_t *t, int lv) {
    for (int i = 0; i < total; i++)
       putchar(' ');
 
-   printf("[%s] = [%s]", nodekind2str(n->kind),
-      n->len ? (char *) n->run : Cbblack "(empty)" Creset);
-   printf(" " Cbblack "(len = %d)" Creset "\n", n->len);
+   printf("[%s] = [", nodekind2str(n->kind));
+   if (n->datkind == DATKIND_INT)
+      printf("%d]\n", n->dat.n);
+   else {
+      printf("%s]",
+         n->dat.s.len
+         ? (char *) n->dat.s.run
+         : Cbblack "(empty)" Creset
+      );
+      printf(" " Cbblack "(len = %d)" Creset "\n", n->dat.s.len);
+   }
 }
 
 static int count_tree_node(tree_t *root) {
@@ -88,17 +109,29 @@ static const char *nodekind2str(nodekind_t kind) {
    switch (kind) {
       case NODEKIND_ROOT   : return "ROOT";
       case NODEKIND_DATA   : return "DATA";
+      case NODEKIND_ROMNUM : return "ROMAN_NUMERAL";
+      case NODEKIND_SUBJ   : return "SUBJECT";
+      case NODEKIND_CONST  : return "CONST";
       case NODEKIND_ADJ    : return "ADJ";
       case NODEKIND_NOUN   : return "NOUN";
+      case NODEKIND_PNOUN  : return "NOUN_POS";
+      case NODEKIND_NNOUN  : return "NOUN_NEG";
       case NODEKIND_AFFIRM : return "AFFIRM";
       case NODEKIND_NEGATE : return "NEGATE";
+      case NODEKIND_CONSEQ : return "CONSEQUENT";
       case NODEKIND_LHS    : return "LHS";
       case NODEKIND_RHS    : return "RHS";
-      case NODEKIND_PERSON : return "PERSON";
+      case NODEKIND_P1     : return "PERSON_1ST";
+      case NODEKIND_P2     : return "PERSON_2ND";
+      case NODEKIND_P3     : return "PERSON_3RD";
       case NODEKIND_EQ     : return "EQ";
       case NODEKIND_INEQ   : return "INEQ";
+      case NODEKIND_GT     : return "INEQ_GT";
+      case NODEKIND_LT     : return "INEQ_LT";
       case NODEKIND_TITLE  : return "TITLE";
       case NODEKIND_DP     : return "DP";
+      case NODEKIND_CHDECL : return "CHARDECL";
+      case NODEKIND_NRTV   : return "NARRATIVE";
       case NODEKIND_CHAR   : return "CHAR";
       case NODEKIND_ACT    : return "ACT";
       case NODEKIND_SCENE  : return "SCENE";

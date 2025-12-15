@@ -60,19 +60,25 @@ struct msg_err_syn_scene {
 struct msg_err_syn_enter {
    msgstr_t
       incomp,
-      nochar;
+      nochar,
+      exceed,
+      badname;
 };
 
 struct msg_err_syn_exit {
    msgstr_t
       incomp,
-      nochar;
+      nochar,
+      exceed,
+      badname;
 };
 
 struct msg_err_syn_exeunt {
    msgstr_t
       incomp,
-      onechar;
+      exceed,
+      onechar,
+      badname;
 };
 
 struct msg_err_syn_line {
@@ -100,7 +106,8 @@ struct msg_err_syn_op {
       squr,
       cube,
       fact,
-      incomp;
+      incomp,
+      no_and;
 };
 
 struct msg_err_syn_asgn {
@@ -130,7 +137,8 @@ struct msg_err_syn_goto {
       incomp,
       badsyn,
       unmatched,
-      misspell;
+      act_misspell,
+      scene_misspell;
 };
 
 struct msg_err_syn_cond {
@@ -188,9 +196,21 @@ struct msg_err_sem {
    msgstr_t
       bad_adj,
       bad_noun,
-      bad_name,
       bad_comp,
-      bad_rnum;
+      bad_rnum,
+      emptystage,
+      already_onstage,
+      already_offstage,
+      not_onstage,
+      solitary,
+      vague_ref,
+      solpush,
+      mulpush,
+      solpop,
+      mulpop,
+      no_such_act,
+      no_such_scene,
+      unreachable;
 };
 
 struct msg_err {
