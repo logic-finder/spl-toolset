@@ -28,7 +28,7 @@ extern void transpile(optflg_t *of, optval_t *ov) {
 }
 
 static void gen_header(void) {
-   sfputs(fp, "#include \"core.h\"\n\n");
+   sfputs(fp, "#include \"splcore.h\"\n\n");
 }
 
 static void gen_title(tree_t *title) {

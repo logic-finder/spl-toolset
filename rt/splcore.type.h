@@ -1,7 +1,7 @@
 #ifndef SPLRT_TYPE_H
 #define SPLTY_TYPE_H
 
-#include "core.h"
+#include "splcore.h"
 
 typedef void iohandler_templet_t(
    const char *fmt,

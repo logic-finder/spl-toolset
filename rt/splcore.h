@@ -2,6 +2,7 @@
 #define SPLRT_H
 
 #include <math.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include "stack.adt.h"

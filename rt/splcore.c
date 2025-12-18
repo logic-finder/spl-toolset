@@ -1,7 +1,5 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include "core.h"
-#include "core.type.h"
+#include "splcore.h"
+#include "splcore.type.h"
 
 extern persona_t *init_personae(int siz) {
    persona_t *ret;
