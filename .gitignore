@@ -1,3 +1,4 @@
 .depend/
 .object/
 splt/splt
+rt/*.o

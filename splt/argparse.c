@@ -2,8 +2,8 @@
 #include "argparse.type.h"
 
 static const char *warnmsg =
-   "\t* Should this be a filename, specify \"--\" first.\n"
-   "\t* Type \"--\"help to see the manual page.";
+   "  * note: should this be a filename, specify '" Cbwhite "--" Creset "' first.\n"
+   "  * note: type " Cbmagenta "--help" Creset " to see the manual page.";
 
 extern void parse_args(const char **argv, optflg_t *of, optval_t *ov) {
    /*

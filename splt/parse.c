@@ -49,6 +49,10 @@ static const char *cond_verbs[] = {
    KEYWRD_AM, KEYWRD_ARE_C, KEYWRD_ART_C, KEYWRD_IS
 };
 static const int cond_verbs_len = ARRLEN(cond_verbs);
+static const char *cond_subjs[] = {
+   KEYWRD_I, KEYWRD_YOU_L, KEYWRD_THOU_L
+};
+static const int cond_subjs_len = ARRLEN(cond_subjs);
 static int vtype;
 
 extern tree_t *parse(
@@ -723,10 +727,10 @@ static int parse_stmt(void) {
 
    ret = setjmp(LONGJMP_ENV);
    switch (ret) {
-      case NODEKIND_ENTER  : parse_enter();  break;
-      case NODEKIND_EXIT   : parse_exit();   break;
+      case NODEKIND_ENTER  : parse_enter (); break;
+      case NODEKIND_EXIT   : parse_exit  (); break;
       case NODEKIND_EXEUNT : parse_exeunt(); break;
-      case NODEKIND_LINE   : parse_line();   break; /* seek_stmt */
+      case NODEKIND_LINE   : parse_line  (); break; /* seek_stmt */
       case NODEKIND_SCENE   : /* fall-through */
       case NODEKIND_ACT     : /* fall-through */
       case NODEKIND__FINALE : return ret;
@@ -931,7 +935,7 @@ static void parse_goto(void) {
 
    gettok();
    if (!match(tok->run[0], ".!")) {
-      reason = msgs.err.syn.in.badsyn;
+      reason = msgs.err.syn.gt.badsyn;
       synerr();
    }
 }
@@ -945,38 +949,43 @@ static int seek_cond(void) {
 }
 
 static void parse_cond(void) {
-   tree_t *condition, *lefthand, *righthand;
+   tree_t *condition,
+          *lefthand,
+          *righthand,
+          *p;
    bool cond1, cond2, cond3;
    nodekind_t kind;
 
    reason = msgs.err.syn.cond.incomp;
    condition = graft_tree(line, NULL, 0, NODEKIND_COND);
+   lefthand  = graft_tree(condition, NULL, 0, NODEKIND_LHS);
 
-   if (vtype < 3) {
-      gettok();
-      cond1 = !strcmp(tok->run, KEYWRD_I);
-      cond2 = !strcmp(tok->run, KEYWRD_YOU_L);
-      cond3 = !strcmp(tok->run, KEYWRD_THOU_L);
-
-      cond1 = vtype == 0 && !cond1;
-      cond2 = vtype == 1 && !cond2;
-      cond3 = vtype == 2 && !cond3;
-
-      if (cond1 || cond2 || cond3) {
+   gettok();
+   switch (vtype) {
+      case 0 : if (strcmp(tok->run, KEYWRD_I))
+                  goto hell; else break;
+      case 1 : if (strcmp(tok->run, KEYWRD_YOU_L))
+                  goto hell; else break;
+      case 2 : if (strcmp(tok->run, KEYWRD_THOU_L))
+                  goto hell; else break;
+      case 3 : if (0 <= match_str(tok->run, cond_subjs, cond_subjs_len))
+                  goto hell; else break;
+      hell : /* FLAMING HOT */
          reason = msgs.err.syn.cond.unmatched;
          synerr();
-      }
    }
-   else parse_const(condition);
+   if (vtype == 3) ungettok();
 
-   lefthand  = graft_tree(condition, NULL, 0, NODEKIND_LHS);
    switch (vtype) {
       case 0 : kind = NODEKIND_P1; break;
       case 1 : /* fall-through */
       case 2 : kind = NODEKIND_P2; break;
       case 3 : kind = NODEKIND_P3; break;
    }
-   (void) graft_tree(lefthand, NULL, 0, kind);
+   p = graft_tree(lefthand, NULL, 0, kind);
+
+   if (vtype == 3)
+      parse_const(p);
 
    gettok();
    if (!strcmp(tok->run, KEYWRD_NOT)) {
@@ -985,8 +994,6 @@ static void parse_cond(void) {
    }
    else
       (void) graft_tree(condition, NULL, 0, NODEKIND_AFFIRM);
-
-   righthand = graft_tree(condition, NULL, 0, NODEKIND_RHS);
 
    // Is it a equality test, i.e. "as ... as"?
    if (!strcmp(tok->run, KEYWRD_AS)) {
@@ -1009,7 +1016,6 @@ static void parse_cond(void) {
    else {
       (void) graft_tree(
          condition, tok->run, tok->len, NODEKIND_INEQ);
-
       gettok();
       if (strcmp(tok->run, KEYWRD_THAN)) {
          reason = msgs.err.syn.cond.badsyn;
@@ -1017,6 +1023,7 @@ static void parse_cond(void) {
       }
    }
 
+   righthand = graft_tree(condition, NULL, 0, NODEKIND_RHS);
    parse_const(righthand);
 }
 
@@ -1184,7 +1191,7 @@ static inline void rewind_tokstate(void) {
 }
 
 static inline void synerr(void) {
-   err_template(tell, Cbred, "<syntax error> ");
+   err_template(tell, Cbred, "\n<syntax error> ");
 }
 
 static void tell(void) {
@@ -1195,7 +1202,7 @@ static void tell(void) {
    lpos = etok->lpos;
    l = arr_peek(ls, lnum - 1);
 
-   ffmtwrt(stderr,
+   fmtwrt(
       "%s\n"
       "[%s:%d:%d] " Cbwhite "note:" Creset " problematic since here\n"
       "%4d|%.*s" Cbblue "%s" Creset "\n",

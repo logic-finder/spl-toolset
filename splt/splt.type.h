@@ -11,6 +11,7 @@
 #include "loadfile.h"
 #include "argparse.h"
 #include "ctxcheck.h"
+#include "transpile.h"
 #include "typecheck.h"
 #include "colorcode.h"
 #include "optprocessor.h"

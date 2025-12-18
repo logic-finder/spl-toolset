@@ -19,25 +19,34 @@ int main(int argc, const char **argv) {
 
    ls = loadfile(ov.src, &lc, &wc);
    fmtwrt(ENPREFIX
-      "loaded the source file \033[0;32m%s\033[0m (total " Cbwhite "%d" Creset " lines, " Cbwhite "%d" Creset " chars)\n",
+      "loaded the source file " Cgreen "%s" Creset
+      " (total " Cbwhite "%d" Creset " lines, " Cbwhite "%d" Creset " chars)\n",
       ov.src, lc, wc);
 
    // Main logic
+   sfputs(stdout, ENPREFIX "scanning...");
    toks = lex(&of, &ov, lc);
-   fmtwrt(ENPREFIX "scanning done (total " Cbwhite "%d" Creset " tokens)\n", arr_size(toks));
+   fmtwrt(" " Cbgreen "done!" Creset "\t(total " Cbwhite "%d" Creset " tokens)\n", arr_size(toks));
    // arr_foreach(toks, print_token);
 
+   sfputs(stdout, ENPREFIX "parsing...");
    pt = parse(&of, &ov, toks);
-   fmtwrt(ENPREFIX "parsing done (total " Cbwhite "%d" Creset " nodes)\n", count_tree_node(pt));
+   fmtwrt(" " Cbgreen "done!" Creset "\t(total " Cbwhite "%d" Creset " nodes)\n", count_tree_node(pt));
    // tree_pre_traverse(pt, print_node, 0);
 
+   sfputs(stdout, ENPREFIX "type-checking...");
    typecheck(&of, &ov);
-   fmtwrt(ENPREFIX "type-checking done (total " Cbwhite "%d" Creset " nodes)\n", count_tree_node(pt));
+   fmtwrt(" " Cbgreen "done!" Creset "\n");
    // tree_pre_traverse(pt, print_node, 0);
 
+   sfputs(stdout, ENPREFIX "context-checking...");
    ctxcheck(&of, &ov);
-   fmtwrt(ENPREFIX "context-checking done (total " Cbwhite "%d" Creset " nodes)\n", count_tree_node(pt));
+   fmtwrt(" " Cbgreen "done!" Creset "\n");
    // tree_pre_traverse(pt, print_node, 0);
+
+   sfputs(stdout, ENPREFIX "transpiling...");
+   transpile(&of, &ov);
+   fmtwrt(" " Cbgreen "done!" Creset "\n");
 
    // Cleanup
    tree_post_traverse(pt, cleanup_node, 0);

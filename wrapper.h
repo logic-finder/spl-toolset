@@ -41,6 +41,11 @@ FILE *sfopen(const char *filename, const char *mode);
 void sfclose(FILE *fp);
 
 /**
+ *
+ */
+void sfputc(FILE *stream, char ch);
+
+/**
  * @brief `sfputs` (safe fputs) is a wrapper for `fputs`.
  * @note exits in failure.
  */

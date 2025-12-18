@@ -198,19 +198,8 @@ struct msg_err_sem {
       bad_noun,
       bad_comp,
       bad_rnum,
-      emptystage,
-      already_onstage,
-      already_offstage,
-      not_onstage,
-      solitary,
-      vague_ref,
-      solpush,
-      mulpush,
-      solpop,
-      mulpop,
       no_such_act,
-      no_such_scene,
-      unreachable;
+      no_such_scene;
 };
 
 struct msg_err {

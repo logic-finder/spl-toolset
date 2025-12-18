@@ -120,10 +120,10 @@ static void typecheck_adj(node_t *n) {
 
 static int is_pronoun(const char *s) {
    static const char *prns[] = {
-      /* objective */
-      KEYWRD_ME, KEYWRD_YOU_L, KEYWRD_THEE,
-      /* reflexive */
-      KEYWRD_MYSELF, KEYWRD_YRSELF, KEYWRD_TYSELF
+   /*  objective       reflexive  */
+      KEYWRD_ME    , KEYWRD_MYSELF,
+      KEYWRD_YOU_L , KEYWRD_YRSELF,
+      KEYWRD_THEE  , KEYWRD_TYSELF,
    };
    static const int prns_len = ARRLEN(prns);
 
@@ -144,10 +144,13 @@ static void typecheck_noun(node_t *n) {
 
    ptype = is_pronoun(n->dat.s.run);
    switch (ptype) {
-      case -1 : goto handle_noun;  /* not a pronoun */
-      case  0 : kind = NODEKIND_P1; break;
-      case  1 : /* fall-through */
-      case  2 : kind = NODEKIND_P2;
+      case 0 : /* fall-through */
+      case 1 : kind = NODEKIND_P1; break;
+      case 2 : /* fall-through */
+      case 3 : /* fall-through */
+      case 4 : /* fall-through */
+      case 5 : kind = NODEKIND_P2; break;
+      default : goto handle_noun;  /* not a pronoun */
    }
    n->kind = kind;
    return;
@@ -222,7 +225,7 @@ static void typecheck_rnum(node_t *n) {
 }
 
 static inline void semerr(void) {
-   err_template(tell, Cbred, "<semantic error> ");
+   err_template(tell, Cbred, "\n<semantic error> ");
 }
 
 static void tell(void) {
@@ -233,7 +236,7 @@ static void tell(void) {
    lpos = enode->lpos;
    l = arr_peek(ls, lnum - 1);
 
-   ffmtwrt(stderr,
+   fmtwrt(
       "%s " Cbcyan "%s" Creset "\n"
       "[%s:%d:%d] " Cbwhite "note:" Creset " problematic at here\n"
       "%4d|%.*s" Cbblue "%s" Creset "%s\n",

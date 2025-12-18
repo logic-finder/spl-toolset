@@ -43,6 +43,11 @@ extern void sfclose(FILE *fp) {
    fatal("unable to close a stream.");
 }
 
+extern void sfputc(FILE *stream, char ch) {
+   if (fputc(ch, stream) == EOF)
+      fatal("fputc error");
+}
+
 extern void sfputs(FILE *stream, const char *line) {
    if (fputs(line, stream) == EOF)
       fatal("fputs error.");

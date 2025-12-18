@@ -12,6 +12,7 @@ typedef enum nodekind {
    NODEKIND__SETJMP = 0,  /* this MUST be 0 */
    NODEKIND__FINALE,
    NODEKIND__NAO,
+   NODEKIND__DEPEND,
 
    /* 100 General */
    NODEKIND_ROOT = 100,

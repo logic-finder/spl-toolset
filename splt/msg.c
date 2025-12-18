@@ -102,17 +102,6 @@ extern void init_msg(void) {
    msgs.err.sem.bad_comp = "incomprehensible comparative";
    msgs.err.sem.bad_rnum = "incomprehensible roman numeral";
 
-   msgs.err.sem.emptystage = "attempt to Exeunt with empty stage";
-   msgs.err.sem.already_onstage = "attempt to Enter " Cbyellow "%s" Creset " who is already onstage; this is going to cause a runtime error";
-   msgs.err.sem.already_offstage = "attempt to Exit " Cbyellow "%s" Creset " who is already offstage; this is going to cause a runtime error";
-   msgs.err.sem.not_onstage = "Line by offstage character " Cbyellow "%s" Creset;
-   msgs.err.sem.solitary  = "the reference by 2nd pronoun 'you' is unclear in this context since there is only " Cbyellow "%d" Creset " onstage character";
-   msgs.err.sem.vague_ref = "the reference by 2nd pronoun 'you' is unclear in this context since there are " Cbyellow "%d" Creset " onstage characters";
-   msgs.err.sem.solpush = "tried to push with only " Cbyellow "%d" Creset " onstage character";
-   msgs.err.sem.mulpush = "tried to push with " Cbyellow "%d" Creset " characters onstage";
-   msgs.err.sem.solpop = "tried to pop with only " Cbyellow "%d" Creset " onstage character";
-   msgs.err.sem.mulpop = "tried to pop with " Cbyellow "%d" Creset " characters onstage";
-   msgs.err.sem.no_such_act = "attempt of jump to nonexistent Act " Cbyellow "%s" Creset;
-   msgs.err.sem.no_such_scene = "attempt of jump to nonexistent Scene " Cbyellow "%s" Creset;
-   msgs.err.sem.unreachable = "unconditional goto nullifies statements following it";
+   msgs.err.sem.no_such_act = "attempt of jump to nonexistent " Ccyan "Act %s" Creset;
+   msgs.err.sem.no_such_scene = "attempt of jump to nonexistent " Ccyan "Scene %s" Creset;
 }
