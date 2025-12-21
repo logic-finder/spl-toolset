@@ -7,6 +7,10 @@ msg_t msgs;
 const char *reason;
 
 extern void init_msg(void) {
+   /* DB Errors */
+   msgs.sys.db.archived = "archived database; restore first";
+   msgs.sys.db.corrupted = "corrupted database";
+
    /* Parser Errors */
    msgs.err.syn.eot = "unwelcome end of token";
    msgs.err.syn.incomprehensible = "incomprehensible token";

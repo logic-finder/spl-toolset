@@ -4,7 +4,10 @@
 typedef const char *msgstr_t;
 typedef struct msg msg_t;
 
+typedef struct msg_sys msg_sys_t;
 typedef struct msg_err msg_err_t;
+
+typedef struct msg_sys_db msg_sys_db_t;
 
 typedef struct msg_err_syn msg_err_syn_t;
 typedef struct msg_err_sem msg_err_sem_t;
@@ -27,6 +30,16 @@ typedef struct msg_err_syn_cond msg_err_syn_cond_t;
 typedef struct msg_err_syn_if msg_err_syn_if_t;
 typedef struct msg_err_syn_push msg_err_syn_push_t;
 typedef struct msg_err_syn_pop msg_err_syn_pop_t;
+
+struct msg_sys_db {
+   msgstr_t
+      archived,
+      corrupted;
+};
+
+struct msg_sys {
+   msg_sys_db_t db;
+};
 
 struct msg_err_syn_title {
    msgstr_t
@@ -208,6 +221,7 @@ struct msg_err {
 };
 
 struct msg {
+   msg_sys_t sys;
    msg_err_t err;
 };
 

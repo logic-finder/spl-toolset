@@ -1,8 +1,6 @@
 #ifndef ARGPARSE_H
 #define ARGPARSE_H
 
-#include <stdbool.h>
-
 typedef struct optflg {
    unsigned int
       exe: 1,  // --exe

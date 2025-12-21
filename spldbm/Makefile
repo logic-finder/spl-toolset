@@ -5,7 +5,7 @@ common_source_dir := ..
 common_header_dir := ..
 common_object_dir := $(objdir)/common
 
-target := splt
+target := spldbm
 sources := $(wildcard $(srcdir)/*.c)
 common_sources := $(wildcard $(common_source_dir)/*.c)
 objects := $(sources:$(srcdir)/%.c=$(objdir)/$(target)/%.o)

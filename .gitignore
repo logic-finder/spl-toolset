@@ -1,4 +1,14 @@
-.depend/
-.object/
+# Compilation
+.depend/**/*.d
+.object/**/*.o
+
+# Transpiler
 splt/splt
-rt/*.o
+splt/words.spldb
+
+# Runtime
+splrt/*.o
+splrt/libsplrt.so
+
+# Database
+spldbm/spldbm

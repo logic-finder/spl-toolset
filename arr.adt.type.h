@@ -3,7 +3,7 @@
 
 #include <string.h>
 #include <stdbool.h>
-#include "global.h"
+#include "common.h"
 #include "arr.adt.h"
 #include "wrapper.h"
 

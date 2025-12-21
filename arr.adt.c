@@ -53,3 +53,7 @@ static void arr_enlarge(arr_t *arr) {
       ESIZ(arr->arr)
    );
 }
+
+void arr_sort(arr_t *arr, arr_sorter_t *compare) {
+   qsort(arr->arr, arr->len, ESIZ(arr->arr), compare);
+}

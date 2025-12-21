@@ -84,7 +84,7 @@ static void typecheck_router(tree_t *t, int _) {
    static const typehandler_t types[] = {
       { NODEKIND_ADJ    , typecheck_adj  },
       { NODEKIND_NOUN   , typecheck_noun },
-      { NODEKIND_ASSIGN , typecheck_adj  },
+      { NODEKIND_ASGN1  , typecheck_adj  },
       { NODEKIND_EQ     , typecheck_adj  },
       { NODEKIND_INEQ   , typecheck_comp },
       { NODEKIND_ROMNUM , typecheck_rnum },
@@ -107,10 +107,7 @@ static void typecheck_router(tree_t *t, int _) {
 }
 
 static void typecheck_adj(node_t *n) {
-   bool ret;
-   int val;
-
-   ret = query(QUERYKIND_ADJ, n->dat.s.run, &val);
+   bool ret = query_adj(n->dat.s.run);
    if (!ret) {
       reason = msgs.err.sem.bad_adj;
       enode = n;
@@ -156,7 +153,7 @@ static void typecheck_noun(node_t *n) {
    return;
 
    handle_noun:
-   ret = query(QUERYKIND_NOUN, n->dat.s.run, &val);
+   ret = query_noun(n->dat.s.run, &val);
    if (!ret) {
       reason = msgs.err.sem.bad_noun;
       enode = n;
@@ -172,7 +169,7 @@ static void typecheck_comp(node_t *n) {
    int val;
    nodekind_t kind;
 
-   ret = query(QUERYKIND_COMP, n->dat.s.run, &val);
+   ret = query_comp(n->dat.s.run, &val);
    if (!ret) {
       reason = msgs.err.sem.bad_comp;
       enode = n;

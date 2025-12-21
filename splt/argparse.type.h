@@ -21,7 +21,7 @@ typedef struct opt {
 
 static void parse_endopt(optflg_t *of);
 static void parse_filenm(optval_t *ov, const char *arg);
-static void parse_shrtop(optflg_t *of, optval_t *_, const char *arg);
+static void parse_shrtop(optflg_t *of, optval_t *ov, const char *arg);
 static void parse_longop(optflg_t *of, optval_t *ov, const char *arg);
 
 static arghandler_t handle_exeopt;

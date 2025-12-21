@@ -40,6 +40,9 @@ FILE *sfopen(const char *filename, const char *mode);
  */
 void sfclose(FILE *fp);
 
+void sremove(const char *filename);
+void srename(const char *old, const char *new);
+
 /**
  *
  */
@@ -62,5 +65,30 @@ void ffmtwrt(FILE *stream, const char *format, ...);
  * @note exits in failure.
  */
 void fmtwrt(const char *format, ...);
+
+/**
+ *
+ */
+void sfwrite(
+   void *src,
+   size_t siz,
+   unsigned int cnt,
+   FILE *dest
+);
+
+/**
+ *
+ */
+void sfseek(FILE *fp, long offset, int whence);
+
+/**
+ *
+ */
+void sfgetpos(FILE *fp, fpos_t *pos);
+
+/**
+ *
+ */
+void sfsetpos(FILE *fp, fpos_t *pos);
 
 #endif

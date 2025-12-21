@@ -23,15 +23,24 @@ int main(int argc, const char **argv) {
       " (total " Cbwhite "%d" Creset " lines, " Cbwhite "%d" Creset " chars)\n",
       ov.src, lc, wc);
 
+   dbload();
+   sfputs(stdout, ENPREFIX "loaded the database\n");
+
    // Main logic
    sfputs(stdout, ENPREFIX "scanning...");
    toks = lex(&of, &ov, lc);
-   fmtwrt(" " Cbgreen "done!" Creset "\t(total " Cbwhite "%d" Creset " tokens)\n", arr_size(toks));
+   fmtwrt(" " Cbgreen "done!" Creset
+      "\t(total " Cbwhite "%d" Creset " tokens)\n",
+      arr_size(toks)
+   );
    // arr_foreach(toks, print_token);
 
    sfputs(stdout, ENPREFIX "parsing...");
    pt = parse(&of, &ov, toks);
-   fmtwrt(" " Cbgreen "done!" Creset "\t(total " Cbwhite "%d" Creset " nodes)\n", count_tree_node(pt));
+   fmtwrt(" " Cbgreen "done!" Creset
+      "\t(total " Cbwhite "%d" Creset " nodes)\n",
+      count_tree_node(pt)
+   );
    // tree_pre_traverse(pt, print_node, 0);
 
    sfputs(stdout, ENPREFIX "type-checking...");
@@ -52,6 +61,7 @@ int main(int argc, const char **argv) {
    tree_post_traverse(pt, cleanup_node, 0);
    tree_prune(pt);
    unloadfl(ls, lc);
+   dbunload();
 
    return 0;
 }
@@ -148,7 +158,8 @@ static const char *nodekind2str(nodekind_t kind) {
       case NODEKIND_EXIT   : return "EXIT";
       case NODEKIND_EXEUNT : return "EXEUNT";
       case NODEKIND_LINE   : return "LINE";
-      case NODEKIND_ASSIGN : return "ASSIGN";
+      case NODEKIND_ASGN1  : return "ASSIGN_A";
+      case NODEKIND_ASGN2  : return "ASSIGN_B";
       case NODEKIND_OUT_N  : return "OUT_N";
       case NODEKIND_OUT_C  : return "OUT_C";
       case NODEKIND_IN_N   : return "IN_N";

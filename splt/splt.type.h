@@ -3,6 +3,7 @@
 
 #include <ctype.h>
 #include <string.h>
+#include "db.h"
 #include "msg.h"
 #include "lex.h"
 #include "parse.h"

@@ -1,10 +1,198 @@
 #include "db.h"
+#include "db.type.h"
 
-bool query(
-   querykind_t kind,
-   const char * restrict s,
-   int * restrict ret
+static uint32_t secpos[SECPOS_LEN];
+static uint32_t ecnts[SECPOS_LEN];
+// static record_t *sects[SECPOS_LEN];
+static void *sects[SECPOS_LEN];
+static bool le, be;
+static FILE *db;
+
+extern void dbload(void) {
+   dbcheck();
+   load_section(SECTKIND_NAME, NAME_DTSIZ);
+   load_section(SECTKIND_ADJ ,  ADJ_DTSIZ);
+   load_section(SECTKIND_NOUN, NOUN_DTSIZ);
+   load_section(SECTKIND_COMP, COMP_DTSIZ);
+}
+
+extern void dbunload(void) {
+   for (int i = 0; i < SECPOS_LEN; i++)
+      free(sects[i]);
+}
+
+static void load_section(sectkind_t kind, size_t esiz) {
+   unsigned int ret;
+
+   sects[kind] = smalloc(ecnts[kind] * esiz);
+   sfseek(db, secpos[kind], SEEK_SET);
+   ret = fread(sects[kind], esiz, ecnts[kind], db);
+   if (ret < ecnts[kind])
+      ERR("fread error");
+}
+
+static void dbcheck(void) {
+   int ret;
+   uint32_t header;
+   uint8_t af;
+
+   le = isle(), be = !le;
+   db = sfopen(DBFILENAME, "rb");
+
+   // Check metadata section header
+   ret = fread(&header, MTDT_HD, 1, db);
+   if (ret < 1) ERR("fread error");
+   if (le) header = endrev32(header);
+   if (header != HEADER_METADATA) {
+      reason = msgs.sys.db.corrupted;
+      dberr();
+   }
+
+   // Check metadata section archive flag
+   ret = fread(&af, MTDT_AF, 1, db);
+   if (ret < 1) ERR("fread error");
+   if (af == Arcflg_t) {
+      reason = msgs.sys.db.archived;
+      dberr();
+   }
+
+   // Read section positions
+   ret = fread(secpos, MTDT_SP, SECPOS_LEN, db);
+   if (ret < SECPOS_LEN) ERR("fread error");
+   if (be) for (int i = 0; i < SECPOS_LEN; i++)
+      secpos[i] = endrev32(secpos[i]);
+
+   // Check section header & read entry count
+   check_secthead(SECTKIND_NAME, NAME_HD, HEADER_NAMESECT);
+   read_ecnt(SECTKIND_NAME, NAME_EC);
+
+   check_secthead(SECTKIND_ADJ, ADJ_HD, HEADER_ADJSECT);
+   read_ecnt(SECTKIND_ADJ, ADJ_EC);
+
+   check_secthead(SECTKIND_NOUN, NOUN_HD, HEADER_NOUNSECT);
+   read_ecnt(SECTKIND_NOUN, NOUN_EC);
+
+   check_secthead(SECTKIND_COMP, COMP_HD, HEADER_COMPSECT);
+   read_ecnt(SECTKIND_COMP, COMP_EC);
+
+   // Update section positions
+   secpos[SECTKIND_NAME] += NAME_MTDTSIZ;
+   secpos[SECTKIND_ADJ ] +=  ADJ_MTDTSIZ;
+   secpos[SECTKIND_NOUN] += NOUN_MTDTSIZ;
+   secpos[SECTKIND_COMP] += COMP_MTDTSIZ;
+}
+
+static void check_secthead(
+   sectkind_t kind,
+   int hdsiz,
+   uint32_t against
 ) {
-   *ret = 1;
+   int ret;
+   uint32_t header;
+
+   sfseek(db, secpos[kind], SEEK_SET);
+   ret = fread(&header, hdsiz, 1, db);
+   if (ret < 1) ERR("fread error");
+   if (le) header = endrev32(header);
+   if (header != against) {
+      reason = msgs.sys.db.corrupted;
+      dberr();
+   }
+}
+
+static void read_ecnt(sectkind_t kind, int ecntsiz) {
+   int ret;
+
+   ret = fread(&ecnts[kind], ecntsiz, 1, db);
+   if (ret < 1) ERR("fread error");
+   if (be) ecnts[kind] = endrev32(ecnts[kind]);
+}
+
+extern bool query_name(const char *key) {
+   void *record = bsearch(
+      key,
+      sects[SECTKIND_NAME],
+      ecnts[SECTKIND_NAME],
+      NAME_DTSIZ,
+      compare_rec_A
+   );
+   return record ? true : false;
+}
+
+extern bool query_adj(const char *key) {
+   void *record = bsearch(
+      key,
+      sects[SECTKIND_ADJ],
+      ecnts[SECTKIND_ADJ],
+      ADJ_DTSIZ,
+      compare_rec_A
+   );
+   return record ? true : false;
+}
+
+extern bool query_noun(const char *key, int *ret) {
+   //record_t *record
+   void *record
+   = bsearch(
+      key,
+      sects[SECTKIND_NOUN],
+      ecnts[SECTKIND_NOUN],
+      NOUN_DTSIZ,
+      compare_rec_B
+   );
+   if (!record)
+      return false;
+   //*ret = (*record)[0];
+   *ret = ((char *) record)[0];
+
    return true;
+}
+
+extern bool query_comp(const char *key, int *ret) {
+   //record_t *record
+   void *record
+   = bsearch(
+      key,
+      sects[SECTKIND_COMP],
+      ecnts[SECTKIND_COMP],
+      COMP_DTSIZ,
+      compare_rec_B
+   );
+   if (!record)
+      return false;
+   //*ret = (*record)[0];
+   *ret = ((char *) record)[0];
+
+   return true;
+}
+
+static int compare_rec_A(const void *key, const void *elem) {
+   /* elem = a pointer to an array member whose size is 65 bytes */
+   const char *e;
+   int len;
+
+   e = elem;  /* treat elem as a (char *) */
+   len = e[0];
+
+   //printf("key=[%s], elem=[%s]\n", (char*)key, e+1);
+
+   return strncmp((char *) key, e + 1, len);
+}
+
+static int compare_rec_B(const void *key, const void *elem) {
+   const char *e;
+   int len;
+
+   e = elem;
+   len = e[1];  /* e[0] is kind */
+
+   return strncmp((char *) key, e + 2, len);
+}
+
+static inline void dberr(void) {
+   err_template(tell, Cbred, "<DB error> ");
+}
+
+static void tell(void) {
+   fmtwrt("%s\n", reason);
 }

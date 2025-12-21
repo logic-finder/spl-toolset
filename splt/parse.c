@@ -14,7 +14,7 @@ static int
    idx,     // current index in toks
    tidx;    // temp. var. for idx
 
-/* Parse tree */
+/* Parse Tree */
 extern tree_t
    *pt;     // parse tree (see global.h)
 static tree_t
@@ -666,7 +666,7 @@ static void parse_asgn_i(void) {
       synerr();
    }
 
-   asgn_i = graft_tree(line, tok->run, tok->len, NODEKIND_ASSIGN);
+   asgn_i = graft_tree(line, tok->run, tok->len, NODEKIND_ASGN1);
 
    gettok();
    if (strcmp(tok->run, KEYWRD_AS)) {
@@ -680,7 +680,7 @@ static void parse_asgn_i(void) {
 static void parse_asgn_ii(void) {
    tree_t *asgn_ii;
 
-   asgn_ii = graft_tree(line, NULL, 0, NODEKIND_ASSIGN);
+   asgn_ii = graft_tree(line, NULL, 0, NODEKIND_ASGN2);
    parse_const(asgn_ii);
 }
 

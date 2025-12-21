@@ -3,7 +3,7 @@
 
 #include "lex.h"
 #include "parse.h"
-#include "fatal.h"
+#include "common.h"
 #include "loadfile.h"
 #include "colorcode.h"
 
@@ -12,12 +12,6 @@
  **********/
 #define EXECNAME "splt"
 #define ENPREFIX EXECNAME ": "
-#
-#define ERR(msg) fatal(ENPREFIX msg)
-#define VERR(msg, ...) vfatal(ENPREFIX msg, __VA_ARGS__)
-#
-#define ESIZ(arr) (sizeof (arr)[0])
-#define ARRLEN(arr) (sizeof (arr) / ESIZ(arr))
 #
 #define LONGJMP_TEMPLET(e,v) longjmp((e),(v))
 #
