@@ -20,12 +20,12 @@
 #define HEADER_NOUNSECT 0x4E4F554EUL
 #define HEADER_COMPSECT 0x434F4D50UL
 #
-#define SECPOS_LEN 4
+#define SECTNUM 4
 #
 #define MTDT_HD 4
 #define MTDT_AF 1
 #define MTDT_SP 4
-#define MTDT_SIZ (MTDT_HD + MTDT_AF + MTDT_SP * SECPOS_LEN)
+#define MTDT_SIZ (MTDT_HD + MTDT_AF + MTDT_SP * SECTNUM)
 #
 #define NAME_HD 4
 #define NAME_EC 4

@@ -14,14 +14,14 @@
 #include "colorcode.h"
 
 #define SRCFILE(sectname, idx)      \
-ffmtwrt(stdout,                     \
+fmtwrt(                             \
    "   " Cgreen "%s" Creset         \
    " for " #sectname " section\n",  \
       ov.mak[idx]                   \
    );
 #
 #define DONE(idx, tabs)                              \
-ffmtwrt(stdout,                                      \
+fmtwrt(                                              \
       #tabs Cbgreen "done!" Creset                   \
       " (total " Cbwhite "%d" Creset " entries)\n",  \
       ecnts[idx]                                     \
@@ -39,7 +39,7 @@ static int compare_rec_##type(                        \
    lhs = _lhs, rhs = _rhs;                            \
    ret = strcmp((*lhs)->run, (*rhs)->run);            \
    if (!ret) {                                        \
-      ffmtwrt(stdout,                                 \
+      fmtwrt(                                         \
          "\n" Cbred "<DB error>" Creset               \
          " the same %s entry " Cbmagenta "%s" Creset  \
          " detected at line " Cbwhite "%d" Creset     \

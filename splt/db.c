@@ -1,10 +1,9 @@
 #include "db.h"
 #include "db.type.h"
 
-static uint32_t secpos[SECPOS_LEN];
-static uint32_t ecnts[SECPOS_LEN];
-// static record_t *sects[SECPOS_LEN];
-static void *sects[SECPOS_LEN];
+static uint32_t secpos[SECTNUM];
+static uint32_t ecnts[SECTNUM];
+static void *sects[SECTNUM];
 static bool le, be;
 static FILE *db;
 
@@ -14,10 +13,17 @@ extern void dbload(void) {
    load_section(SECTKIND_ADJ ,  ADJ_DTSIZ);
    load_section(SECTKIND_NOUN, NOUN_DTSIZ);
    load_section(SECTKIND_COMP, COMP_DTSIZ);
+   fmtwrt(ENPREFIX
+      "loaded the database " Cgreen DBFILENAME Creset " ("
+      Cbwhite "%d" Creset " names, " Cbwhite "%d" Creset " adjs, "
+      Cbwhite "%d" Creset " nouns, " Cbwhite "%d" Creset " cmps)\n",
+      ecnts[SECTKIND_NAME], ecnts[SECTKIND_ADJ],
+      ecnts[SECTKIND_NOUN], ecnts[SECTKIND_COMP]
+   );
 }
 
 extern void dbunload(void) {
-   for (int i = 0; i < SECPOS_LEN; i++)
+   for (int i = 0; i < SECTNUM; i++)
       free(sects[i]);
 }
 
@@ -57,9 +63,9 @@ static void dbcheck(void) {
    }
 
    // Read section positions
-   ret = fread(secpos, MTDT_SP, SECPOS_LEN, db);
-   if (ret < SECPOS_LEN) ERR("fread error");
-   if (be) for (int i = 0; i < SECPOS_LEN; i++)
+   ret = fread(secpos, MTDT_SP, SECTNUM, db);
+   if (ret < SECTNUM) ERR("fread error");
+   if (be) for (int i = 0; i < SECTNUM; i++)
       secpos[i] = endrev32(secpos[i]);
 
    // Check section header & read entry count
@@ -131,9 +137,7 @@ extern bool query_adj(const char *key) {
 }
 
 extern bool query_noun(const char *key, int *ret) {
-   //record_t *record
-   void *record
-   = bsearch(
+   void *record = bsearch(
       key,
       sects[SECTKIND_NOUN],
       ecnts[SECTKIND_NOUN],
@@ -142,16 +146,12 @@ extern bool query_noun(const char *key, int *ret) {
    );
    if (!record)
       return false;
-   //*ret = (*record)[0];
    *ret = ((char *) record)[0];
-
    return true;
 }
 
 extern bool query_comp(const char *key, int *ret) {
-   //record_t *record
-   void *record
-   = bsearch(
+   void *record = bsearch(
       key,
       sects[SECTKIND_COMP],
       ecnts[SECTKIND_COMP],
@@ -160,9 +160,7 @@ extern bool query_comp(const char *key, int *ret) {
    );
    if (!record)
       return false;
-   //*ret = (*record)[0];
    *ret = ((char *) record)[0];
-
    return true;
 }
 
@@ -173,8 +171,6 @@ static int compare_rec_A(const void *key, const void *elem) {
 
    e = elem;  /* treat elem as a (char *) */
    len = e[0];
-
-   //printf("key=[%s], elem=[%s]\n", (char*)key, e+1);
 
    return strncmp((char *) key, e + 1, len);
 }

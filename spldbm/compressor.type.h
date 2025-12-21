@@ -18,6 +18,7 @@ static void work_template(
    worker_t *work,
    uint8_t af
 );
+static bool is_archived(FILE *src);
 static void write_metadata(FILE *src, FILE *dest, uint8_t af);
 static worker_t rle, rrle;
 

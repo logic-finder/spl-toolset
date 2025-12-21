@@ -24,7 +24,6 @@ int main(int argc, const char **argv) {
       ov.src, lc, wc);
 
    dbload();
-   sfputs(stdout, ENPREFIX "loaded the database\n");
 
    // Main logic
    sfputs(stdout, ENPREFIX "scanning...");

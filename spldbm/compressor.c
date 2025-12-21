@@ -19,6 +19,20 @@ extern void restore(void) {
    );
 }
 
+static bool is_archived(FILE *src) {
+   uint8_t af;
+   int ret;
+
+   sfseek(src, MTDT_HD, SEEK_SET);
+   ret = fread(&af, MTDT_AF, 1, src);
+   if (ret < 1)
+      ERR("fread error");
+   if (af != 0 && af != 1)
+      ERR("bad archive flag value");
+
+   return af == Arcflg_t ? true : false;
+}
+
 static void work_template(
    const char *prefix,
    const char *srcname,
@@ -27,6 +41,20 @@ static void work_template(
 ) {
    FILE *src, *dest;
    char *destname;
+   bool archived;
+
+   src = sfopen(srcname, "rb");
+   archived = is_archived(src);
+   if ((af == 1 && archived)) {
+      fmtwrt(ENPREFIX "this DB is already archived; terminating\n");
+      exit(2);
+   }
+   else
+   if ((af == 0 && !archived)) {
+      fmtwrt(ENPREFIX "this DB is not archived; terminating\n");
+      exit(3);
+   }
+   rewind(src);  /* is_archived moved forward the file position */
 
    destname = smalloc(
       strlen(srcname)
@@ -35,7 +63,6 @@ static void work_template(
    );
    strcpy(destname, srcname);
    strcat(destname, prefix);
-   src = sfopen(srcname, "rb");
    dest = sfopen(destname, "wb");
 
    write_metadata(src, dest, af);
@@ -90,8 +117,8 @@ static void rle(FILE *src, FILE *dest) {
       else cnt++;
    }
 
-   ffmtwrt(stdout,
-      ENPREFIX "archiving done! %d bytes -> %d bytes (%d%%)\n",
+   fmtwrt(ENPREFIX
+      "archiving done! %d bytes -> %d bytes (%d%%)\n",
       orig_siz, arc_siz, (arc_siz * 100 / orig_siz)
    );
 }
@@ -118,8 +145,8 @@ static void rrle(FILE *src, FILE *dest) {
       while (pair[Cnt]--)
          sfputc(dest, pair[Ch]);
    }
-   ffmtwrt(stdout,
-      ENPREFIX "restoring done! %d bytes -> %d bytes (%d%%)\n",
+   fmtwrt(ENPREFIX
+      "restoring done! %d bytes -> %d bytes (%d%%)\n",
       orig_siz, res_siz, (res_siz * 100 / orig_siz)
    );
 }

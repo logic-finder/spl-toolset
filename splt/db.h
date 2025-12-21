@@ -3,13 +3,6 @@
 
 #include <stdbool.h>
 
-typedef enum querykind {
-   QUERYKIND_NAME,
-   QUERYKIND_ADJ,
-   QUERYKIND_NOUN,
-   QUERYKIND_COMP
-} querykind_t;
-
 typedef bool querier_rec_A(const char *key);
 typedef bool querier_rec_B(const char *key, int *ret);
 

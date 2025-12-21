@@ -1,7 +1,7 @@
 #include "dbmaker.h"
 #include "dbmaker.type.h"
 
-static uint32_t ecnts[SECPOS_LEN];
+static uint32_t ecnts[SECTNUM];
 static bool le, be;
 static bool dupflg;
 
@@ -86,7 +86,7 @@ extern void dbmake(void) {
 
    sfputs(stdout, ENPREFIX "writing metadata section...");
    tbytes = write_metadata(fp);
-   ffmtwrt(stdout,
+   fmtwrt(
       "\t" Cbgreen "done!" Creset
       " (" Cbwhite "%" PRIu32 Creset " bytes in total)\n",
       tbytes
@@ -127,15 +127,15 @@ static uint32_t write_metadata(FILE *fp) {
    sfwrite(&arcflg, MTDT_AF, 1, fp);
 
    // section positions
-   int dtsizs[SECPOS_LEN] = {
+   int dtsizs[SECTNUM] = {
       NAME_DTSIZ, ADJ_DTSIZ, NOUN_DTSIZ, COMP_DTSIZ
    };
-   int mtdtsizs[SECPOS_LEN] = {
+   int mtdtsizs[SECTNUM] = {
       NAME_MTDTSIZ, ADJ_MTDTSIZ, NOUN_MTDTSIZ, COMP_MTDTSIZ
    };
 
    pos = MTDT_SIZ;
-   for (int i = 0; i < SECPOS_LEN; i++) {
+   for (int i = 0; i < SECTNUM; i++) {
       if (be) pos = endrev32(pos);
       sfwrite(&pos, MTDT_SP, 1, fp);
       pos += mtdtsizs[i];
