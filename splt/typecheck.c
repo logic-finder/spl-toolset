@@ -2,12 +2,15 @@
 #include "typecheck.type.h"
 
 extern tree_t *pt;
-static const node_t *enode;
 
 extern void typecheck(optflg_t *of, optval_t *ov) {
+   tree_t *dp;
+
    // Preprocess
    coalesce_title();
-   tree_post_traverse(pt, coalesce_name, 0);
+   dp = tree_child(pt, 1);
+   coalesce_name(dp);
+   check_namecol(dp);
 
    // Type-check
    tree_post_traverse(pt, typecheck_router, 0);
@@ -41,38 +44,48 @@ static void coalesce_title(void) {
    setnds(n, buf, rlen);
 }
 
-static void coalesce_name(tree_t *t, int _) {
-   node_t *n;
+static void coalesce_name(tree_t *dp) {
+   tree_t *chardecl;
    char *buf;
-   int i, clen, rlen;
+   int dp_len, chardecl_len, total_len;
 
-   (void) _;
-   // Check if this is a character node
-   n = tree_dat(t);
-   if (n->kind != NODEKIND_CHDECL)
-      return;
+   dp_len = tree_clen(dp);
+   for (int i = 0; i < dp_len; i++) {
+      chardecl = tree_child(dp, i);
+      chardecl_len = tree_clen(chardecl);
+      total_len = 0;
 
-   // Calculate the length of the name
-   clen = tree_clen(t);
-   rlen = 0;
-   for (i = 0; i < clen; i++)
-      // notice that len == strlen(run) + 1
-      rlen += TREE_CHDAT(t, i)->dat.s.len;
+      for (int k = 0; k < chardecl_len; k++)
+         // note that s.len == strlen(s.run) + 1
+         total_len += TREE_CHDAT(chardecl, k)->dat.s.len;
 
-   /*
-    * input  = ["the", "misty", "Ghost"]
-    * output = "the_misty_Ghost00"
-    *    where 0 = \0
-    */
-   rlen++;
-   buf = smalloc(rlen);
-   buf[0] = '\0';
-   for (i = 0; i < clen; i++) {
-      strcat(buf, TREE_CHDAT(t, i)->dat.s.run);
-      strcat(buf, "_");
+      buf = smalloc(total_len + 1);  /* a room for ' ' */
+      buf[0] = '\0';
+      for (int k = 0; k < chardecl_len; k++) {
+         strcat(buf, TREE_CHDAT(chardecl, k)->dat.s.run);
+         strcat(buf, " ");
+      }
+      buf[total_len - 1] = '\0';
+      setnds(tree_dat(chardecl), buf, total_len);
    }
-   buf[rlen - 2] = '\0';
-   setnds(n, buf, rlen);
+}
+
+static void check_namecol(tree_t *dp) {
+   const char *curr, *prev;
+   node_t *cn, *pn;
+   int clen;
+
+   clen = tree_clen(dp);
+   for (int i = 1; i < clen; i++) {
+      cn = tree_chdat(dp, i);
+      curr = cn->dat.s.run;
+      for (int k = 0; k < i; k++) {
+         pn = tree_chdat(dp, k);
+         prev = pn->dat.s.run;
+         if (!strcmp(curr, prev))
+            semerr_dupname(cn, pn);
+      }
+   }
 }
 
 static void typecheck_router(tree_t *t, int _) {
@@ -82,12 +95,13 @@ static void typecheck_router(tree_t *t, int _) {
    } typehandler_t;
 
    static const typehandler_t types[] = {
+      { NODEKIND_CHDECL , typecheck_name },
       { NODEKIND_ADJ    , typecheck_adj  },
       { NODEKIND_NOUN   , typecheck_noun },
       { NODEKIND_ASGN1  , typecheck_adj  },
       { NODEKIND_EQ     , typecheck_adj  },
       { NODEKIND_INEQ   , typecheck_comp },
-      { NODEKIND_ROMNUM , typecheck_rnum },
+      { NODEKIND_ROMNUM , typecheck_rnum }
    };
    static const int types_len = ARRLEN(types);
 
@@ -106,13 +120,18 @@ static void typecheck_router(tree_t *t, int _) {
    }
 }
 
+static void typecheck_name(node_t *n) {
+   if (query_name(n->dat.s.run))
+      return;
+   reason = msgs.err.sem.bad_name;
+   semerr_badword(n);
+}
+
 static void typecheck_adj(node_t *n) {
-   bool ret = query_adj(n->dat.s.run);
-   if (!ret) {
-      reason = msgs.err.sem.bad_adj;
-      enode = n;
-      semerr();
-   }
+   if (query_adj(n->dat.s.run))
+      return;
+   reason = msgs.err.sem.bad_adj;
+   semerr_badword(n);
 }
 
 static int is_pronoun(const char *s) {
@@ -156,8 +175,7 @@ static void typecheck_noun(node_t *n) {
    ret = query_noun(n->dat.s.run, &val);
    if (!ret) {
       reason = msgs.err.sem.bad_noun;
-      enode = n;
-      semerr();
+      semerr_badword(n);
    }
 
    kind = val ? NODEKIND_PNOUN : NODEKIND_NNOUN;
@@ -172,8 +190,7 @@ static void typecheck_comp(node_t *n) {
    ret = query_comp(n->dat.s.run, &val);
    if (!ret) {
       reason = msgs.err.sem.bad_comp;
-      enode = n;
-      semerr();
+      semerr_badword(n);
    }
 
    kind = val ? NODEKIND_GT : NODEKIND_LT;
@@ -211,35 +228,60 @@ static bool is_rnum(const char *rnum) {
 }
 
 static void typecheck_rnum(node_t *n) {
-   bool ret;
-
-   ret = is_rnum(n->dat.s.run);
-   if (!ret) {
-      reason = msgs.err.sem.bad_rnum;
-      enode = n;
-      semerr();
-   }
+   if (is_rnum(n->dat.s.run))
+      return;
+   reason = msgs.err.sem.bad_rnum;
+   semerr_badword(n);
 }
 
-static inline void semerr(void) {
-   err_template(tell, Cbred, "\n<semantic error> ");
+static inline void print_errheader(void) {
+   sfputs(stdout, Cbred "\n<semantic error> " Creset);
 }
 
-static void tell(void) {
+static void semerr_badword(node_t *n) {
    int lnum, lpos;
    line_t *l;
 
-   lnum = enode->lnum;
-   lpos = enode->lpos;
+   lnum = n->lnum;
+   lpos = n->lpos;
    l = arr_peek(ls, lnum - 1);
 
+   print_errheader();
    fmtwrt(
       "%s " Cbcyan "%s" Creset "\n"
       "[%s:%d:%d] " Cbwhite "note:" Creset " problematic at here\n"
       "%4d|%.*s" Cbblue "%s" Creset "%s\n",
-      reason, enode->dat.s.run,
+      reason, n->dat.s.run,
       sfname, lnum, lpos,
       lnum, lpos - 1, l->run,
-      enode->dat.s.run, &l->run[lpos - 1 + enode->dat.s.len - 1]
+      n->dat.s.run, &l->run[lpos - 1 + n->dat.s.len - 1]
    );
+   exit(EXIT_FAILURE);
+}
+
+static void semerr_dupname(
+   node_t * restrict curr,
+   node_t * restrict prev
+) {
+   line_t *cl, *pl;
+
+   cl = arr_peek(ls, curr->lnum - 1);
+   pl = arr_peek(ls, prev->lnum - 1);
+
+   print_errheader();
+   fmtwrt(
+      "duplicate name " Cbcyan "%s" Creset "\n"
+      "[%s:%d:%d] " Cbwhite "note:" Creset " at here\n"
+      "%4d|%.*s" Cbblue "%s" Creset "%s"
+      "[%s:%d:%d] " Cbwhite "note:" Creset " first declared at here\n"
+      "%4d|%.*s" Cbblue "%s" Creset "%s",
+      curr->dat.s.run,
+      sfname, curr->lnum, curr->lpos,
+      curr->lnum, curr->lpos - 1, cl->run,
+         curr->dat.s.run, &cl->run[curr->lpos - 1 + curr->dat.s.len - 1],
+      sfname, prev->lnum, prev->lpos,
+      prev->lnum, prev->lpos - 1, pl->run,
+         prev->dat.s.run, &pl->run[prev->lpos - 1 + prev->dat.s.len - 1]
+   );
+   exit(EXIT_FAILURE);
 }

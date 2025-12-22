@@ -211,6 +211,7 @@ struct msg_err_syn {
 
 struct msg_err_sem {
    msgstr_t
+      bad_name,
       bad_adj,
       bad_noun,
       bad_comp,

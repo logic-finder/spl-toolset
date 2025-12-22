@@ -75,7 +75,7 @@ static void generate(tree_t *t, int _) {
       case NODEKIND_EXIT   : gen_exit  (t); break;
       case NODEKIND_EXEUNT : gen_exeunt(t); break;
       case NODEKIND_LINE   : gen_line  (t); break;
-      case NODEKIND_ASGN1  : gen_asgn  (t); break;
+      case NODEKIND_ASGN1  : /* fall-through */
       case NODEKIND_ASGN2  : gen_asgn  (t); break;
       case NODEKIND_OUT_N  : gen_outn  (t); break;
       case NODEKIND_OUT_C  : gen_outc  (t); break;
@@ -256,7 +256,7 @@ static void resolve_binary(tree_t *op, char c) {
 static void gen_act(tree_t *t) {
    node_t *n;
 
-   n = tree_chdat(t, 0);
+   n = tree_chdat(t, 0);  /* NODEKIND_ROMNUM */
    actnum = ((node_t *) tree_chdat(t, 0))->dat.s.run;
    ffmtwrt(fp,
       INDENT "\n%s_%s:;\n",
@@ -268,7 +268,7 @@ static void gen_act(tree_t *t) {
 static void gen_scene(tree_t *t) {
    node_t *n;
 
-   n = tree_chdat(t, 0);
+   n = tree_chdat(t, 0);  /* NODEKIND_ROMNUM */
    ffmtwrt(fp,
       INDENT "\n%s_%s_%s_%s:;\n",
       KEYWRD_ACT,
@@ -310,7 +310,7 @@ static void gen_exeunt(tree_t *t) {
 }
 
 static void gen_line(tree_t *t) {
-   speaker = TREE_CHDAT(t, 0)->dat.n;
+   speaker = TREE_CHDAT(t, 0)->dat.n;  /* NODEKIND_CHAR */
    ffmtwrt(fp,
       INDENT "assert_offstage(stage, %d);\n",
       speaker

@@ -105,11 +105,14 @@ extern void init_msg(void) {
 
    msgs.err.syn.pop.incomp = "incomplete pop statement";
 
-   msgs.err.sem.bad_adj = "incomprehensible adjective";
-   msgs.err.sem.bad_noun = "incomprehensible noun";
-   msgs.err.sem.bad_comp = "incomprehensible comparative";
+   /* Type Errors */
+   msgs.err.sem.bad_name = "undefined name";
+   msgs.err.sem.bad_adj = "undefined adjective";
+   msgs.err.sem.bad_noun = "undefined noun";
+   msgs.err.sem.bad_comp = "undefined comparative";
    msgs.err.sem.bad_rnum = "incomprehensible roman numeral";
 
+   /* Context Errors */
    msgs.err.sem.no_such_act = "attempt of jump to nonexistent " Ccyan "Act %s" Creset;
    msgs.err.sem.no_such_scene = "attempt of jump to nonexistent " Ccyan "Scene %s" Creset;
 }
