@@ -2,9 +2,7 @@
 #include "msg.h"
 #include "colorcode.h"
 
-/* External variables */
-msg_t msgs;
-const char *reason;
+msg_t msgs;  /* external variable */
 
 extern void init_msg(void) {
    /* DB Errors */
@@ -13,7 +11,6 @@ extern void init_msg(void) {
 
    /* Parser Errors */
    msgs.err.syn.eot = "unwelcome end of token";
-   msgs.err.syn.notcap = "keyword not capitalized";
    msgs.err.syn.incomprehensible = "incomprehensible token";
    msgs.err.syn.name_not_lowcase = "the first letter of this name is not lowercase";
 
@@ -52,7 +49,7 @@ extern void init_msg(void) {
    msgs.err.syn.exeunt.badname = "incomprehensible name in Exeunt";
 
    msgs.err.syn.line.incomp = "incomplete Line";
-   msgs.err.syn.line.nostmt = "no statement present in Line";
+   msgs.err.syn.line.nostmt = "no comprehensible statement present in Line";
 
    msgs.err.syn.cnst.incomp = "incomplete constant";
    msgs.err.syn.cnst.deco = "incorrect use of possessive or article";

@@ -186,7 +186,6 @@ struct msg_err_syn_pop {
 struct msg_err_syn {
    msgstr_t
       eot,
-      notcap,
       incomprehensible,
       name_not_lowcase;
    msg_err_syn_title_t title;
@@ -229,9 +228,6 @@ struct msg {
    msg_sys_t sys;
    msg_err_t err;
 };
-
-extern msg_t msgs;
-extern msgstr_t reason;
 
 void init_msg(void);
 

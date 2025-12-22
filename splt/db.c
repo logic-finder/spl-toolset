@@ -1,6 +1,7 @@
 #include "db.h"
 #include "db.type.h"
 
+extern msg_t msgs;  // see global.h
 static uint32_t secpos[SECTNUM];
 static uint32_t ecnts[SECTNUM];
 static void *sects[SECTNUM];
@@ -49,18 +50,14 @@ static void dbcheck(void) {
    ret = fread(&header, MTDT_HD, 1, db);
    if (ret < 1) ERR("fread error");
    if (le) header = endrev32(header);
-   if (header != HEADER_METADATA) {
-      reason = msgs.sys.db.corrupted;
-      dberr();
-   }
+   if (header != HEADER_METADATA)
+      dberr(msgs.sys.db.corrupted);
 
    // Check metadata section archive flag
    ret = fread(&af, MTDT_AF, 1, db);
    if (ret < 1) ERR("fread error");
-   if (af == Arcflg_t) {
-      reason = msgs.sys.db.archived;
-      dberr();
-   }
+   if (af == Arcflg_t)
+      dberr(msgs.sys.db.archived);
 
    // Read section positions
    ret = fread(secpos, MTDT_SP, SECTNUM, db);
@@ -100,10 +97,8 @@ static void check_secthead(
    ret = fread(&header, hdsiz, 1, db);
    if (ret < 1) ERR("fread error");
    if (le) header = endrev32(header);
-   if (header != against) {
-      reason = msgs.sys.db.corrupted;
-      dberr();
-   }
+   if (header != against)
+      dberr(msgs.sys.db.corrupted);
 }
 
 static void read_ecnt(sectkind_t kind, int ecntsiz) {
@@ -185,10 +180,10 @@ static int compare_rec_B(const void *key, const void *elem) {
    return strncmp((char *) key, e + 2, len);
 }
 
-static inline void dberr(void) {
-   err_template(tell, Cbred, "<DB error> ");
-}
-
-static void tell(void) {
-   fmtwrt("%s\n", reason);
+static inline void dberr(const char *reason) {
+   fmtwrt(
+      Cbred "<DB error>" Creset "%s\n",
+      reason
+   );
+   exit(EXIT_FAILURE);
 }

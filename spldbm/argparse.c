@@ -84,7 +84,7 @@ static void parse_longop(const char *arg) {
 }
 
 static void handle_makopt(const char *arg) {
-   static int makopt_len = 4;
+   static const int makopt_len = 4;
 
    if (of.mak) ERR("--make already seen");
    if (of.arc) ERR("--archive with --make");
@@ -112,7 +112,7 @@ static void handle_makopt(const char *arg) {
 }
 
 static void handle_arcopt(const char *arg) {
-   static int arcopt_len = 7;
+   static const int arcopt_len = 7;
 
    if (of.mak) ERR("--make with --archive");
    if (of.arc) ERR("--archive already seen");
@@ -129,7 +129,7 @@ static void handle_arcopt(const char *arg) {
 }
 
 static void handle_resopt(const char *arg) {
-   static int resopt_len = 7;
+   static const int resopt_len = 7;
 
    if (of.mak) ERR("--make with --restore");
    if (of.arc) ERR("--archive with --restore");

@@ -1,6 +1,8 @@
 #include "ctxcheck.h"
 #include "ctxcheck.type.h"
 
+extern msg_t msgs;  // see global.h
+static const char *reason;  // error message
 static tree_t *nrtv, *act, *scene;
 
 extern void ctxcheck(optflg_t *of, optval_t *ov) {

@@ -65,9 +65,11 @@ static int parse_stmt(void);
 static void parse_namelist(tree_t *enterlike, const char *err);
 static int parse_line_as_conseq(void);
 static void parse_const(tree_t *stmt);
+static void parse_cond_eq(tree_t *cond);
+static void parse_cond_ineq(tree_t *cond);
 static void parse_op(tree_t *stmt, nodekind_t kind);
 static int parse_line_router(
-   const stmthandler_t stmts[static 6],
+   const stmthandler_t stmts[8],
    int stmts_len
 );
 static parser_t parse_title;
@@ -121,7 +123,6 @@ static inline void rewind_tokstate(void);
 
 /* Error Handling */
 static inline void synerr(void);
-static teller_t tell;
 
 /* Miscellnaeous */
 static arr_iterator_t cleanup_tokstream;

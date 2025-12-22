@@ -29,7 +29,6 @@ static void load_section(sectkind_t kind, size_t esiz);
 static comparer_t compare_rec_A;
 static comparer_t compare_rec_B;
 
-static inline void dberr(void);
-static teller_t tell;
+static inline void dberr(const char *reason);
 
 #endif

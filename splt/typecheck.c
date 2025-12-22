@@ -1,7 +1,9 @@
 #include "typecheck.h"
 #include "typecheck.type.h"
 
-extern tree_t *pt;
+extern tree_t *pt;  // see global.h
+extern msg_t msgs;  // see global.h
+static const char *reason;  // error message
 
 extern void typecheck(optflg_t *of, optval_t *ov) {
    tree_t *dp;
@@ -101,6 +103,8 @@ static void typecheck_router(tree_t *t, int _) {
       { NODEKIND_ASGN1  , typecheck_adj  },
       { NODEKIND_EQ     , typecheck_adj  },
       { NODEKIND_INEQ   , typecheck_comp },
+      { NODEKIND_GT     , typecheck_adj  },
+      { NODEKIND_LT     , typecheck_adj  },
       { NODEKIND_ROMNUM , typecheck_rnum }
    };
    static const int types_len = ARRLEN(types);
@@ -198,8 +202,8 @@ static void typecheck_comp(node_t *n) {
 }
 
 static bool is_rnum(const char *rnum) {
-   #define PLACE_LEN 9
-   typedef const char *place_t[PLACE_LEN];
+   static const int place_len = 9;
+   typedef const char *place_t[9];
 
    static place_t ps[] = {
       { "CM", "DCCC", "DCC", "DC", "D", "CD", "CCC", "CC", "C" }, /* 100 */
@@ -214,13 +218,13 @@ static bool is_rnum(const char *rnum) {
 
    for (i = 0; i < ps_len; i++) {
       p = ps + i;
-      for (k = 0; k < PLACE_LEN; k++) {
+      for (k = 0; k < place_len; k++) {
          dat = (*p)[k];
          nlen = strlen(dat);
          if (!strncmp(rnum, dat, nlen))
             goto increment;
       }
-      continue;  /* k == PLACE_LEN */
+      continue;  /* k == place_len */
       increment: rnum += nlen;
    }
 

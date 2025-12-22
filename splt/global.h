@@ -2,6 +2,7 @@
 #define GLOBAL_H
 
 #include "lex.h"
+#include "msg.h"
 #include "parse.h"
 #include "common.h"
 #include "loadfile.h"
@@ -81,26 +82,11 @@
 #define KEYWRD_RETURN "return"
 #define KEYWRD_PROCED "proceed"
 
-/************
- * TYPEDEFS *
- ************/
-typedef void teller_t(void);
-typedef void msg_template_t(
-   teller_t *tell,
-   const char * restrict color,
-   const char * restrict msg
-);
-
-/***********************
- * FUNCTION PROTOTYPES *
- ***********************/
-msg_template_t err_template;
-msg_template_t warn_template;
-
 /**********************
  * EXTERNAL VARIABLES *
  **********************/
 extern const char *sfname;   // from optprocessor.c
+extern msg_t msgs;           // from msg.c
 extern arr_t *ls;            // from splt.c
 extern tree_t *pt;           // from splt.c
 

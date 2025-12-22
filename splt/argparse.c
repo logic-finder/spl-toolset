@@ -157,7 +157,7 @@ static void handle_kwiopt(optflg_t *of, optval_t *_, const char *__) {
 }
 
 static void handle_lngopt(optflg_t *of, optval_t *ov, const char *arg) {
-   static int lngopt_len = 4;
+   static const int lngopt_len = 4;
    static const char *langs[] = {
       "en", "ko"
    };
@@ -183,7 +183,7 @@ static void handle_lngopt(optflg_t *of, optval_t *ov, const char *arg) {
 }
 
 static void handle_retopt(optflg_t *of, optval_t *ov, const char *arg) {
-   static int retopt_len = 3;
+   static const int retopt_len = 3;
 
    if (of->ret) ERR("--ret already seen");
    if (of->hlp) ERR("-h with --ret");

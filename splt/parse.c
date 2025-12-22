@@ -24,6 +24,8 @@ static tree_t
    *line;   // current line
 
 /* Miscellaneous */
+extern msg_t msgs;           // see global.h
+static const char *reason;   // error message
 static jmp_buf LONGJMP_ENV;  // for setjmp & longjmp
 static int charidx;          // used by `isname` & its caller
 
@@ -33,12 +35,12 @@ static int charidx;          // used by `isname` & its caller
  * refer to `parse_line_as_conseq`.
  */
 static const stmthandler_t stmts[] = {
-   { seek_if   , parse_if   },
    { seek_asgn , parse_asgn },
    { seek_out  , parse_out  },
    { seek_in   , parse_in   },
    { seek_goto , parse_goto },
    { seek_cond , parse_cond },
+   { seek_if   , parse_if   },
    { seek_push , parse_push },
    { seek_pop  , parse_pop  }
 };
@@ -354,6 +356,55 @@ static void parse_const(tree_t *stmt) {
    return;
 }
 
+static void parse_cond_eq(tree_t *cond) {
+   gettok();
+   if (tok->kind == TOKKIND_PNT) {
+      reason = msgs.err.syn.cond.badsyn;
+      synerr();
+   }
+
+   (void) graft_tree_s(
+      cond, tok->run, tok->len, NODEKIND_EQ);
+
+   gettok();
+   if (strcmp(tok->run, KEYWRD_AS)) {
+      reason = msgs.err.syn.cond.badsyn;
+      synerr();
+   }
+}
+
+static void parse_cond_ineq(tree_t *cond) {
+   static const char *comps[2] = { "more", "less" };
+   static const int comps_len = ARRLEN(comps);
+
+   int ret;
+   nodekind_t kind;
+
+   ret = match_str(tok->run, comps, comps_len);
+
+   if (ret > 0) {
+      gettok();
+      if (tok->kind == TOKKIND_PNT) {
+         reason = msgs.err.syn.cond.badsyn;
+         synerr();
+      }
+      switch (ret) {
+         case 0 : kind = NODEKIND_GT; break;
+         case 1 : kind = NODEKIND_LT; break;
+      }
+      (void) graft_tree_s(cond, tok->run, tok->len, kind);
+   }
+   else {
+      (void) graft_tree_s(
+         cond, tok->run, tok->len, NODEKIND_INEQ);
+      gettok();
+      if (strcmp(tok->run, KEYWRD_THAN)) {
+         reason = msgs.err.syn.cond.badsyn;
+         synerr();
+      }
+   }
+}
+
 static nodekind_t seek_op(void) {
    typedef struct ophandler {
       const char *name;
@@ -371,7 +422,7 @@ static nodekind_t seek_op(void) {
       { KEYWRD_2X   , NODEKIND_2X   },
       { KEYWRD_FACT , NODEKIND_FACT }
    };
-   static int ops_len = ARRLEN(ops);
+   static const int ops_len = ARRLEN(ops);
 
    const ophandler_t *op;
    int i;
@@ -588,10 +639,6 @@ static int isname_lower(void) {
 }
 
 static int seek_line(void) {
-   if (islower(tok->run[0])) {
-      reason = msgs.err.syn.notcap;
-      synerr();
-   }
    return isname();
 }
 
@@ -642,20 +689,15 @@ static int parse_line_as_conseq(void) {
    if (islower(tok->run[0]))
       tok->run[0] = toupper(tok->run[0]);
 
-   return parse_line_router(stmts + 1, stmts_len - 1);
+   return parse_line_router(stmts, stmts_len);
 }
 
 static int parse_line_router(
-   const stmthandler_t stmts[static 6],
+   const stmthandler_t stmts[8],
    int stmts_len
 ) {
    const stmthandler_t *stmt;
    int i;
-
-   if (islower(tok->run[0])) {
-      reason = msgs.err.syn.notcap;
-      synerr();
-   }
 
    for (i = 0; i < stmts_len; i++) {
       stmt = stmts + i;
@@ -1048,33 +1090,10 @@ static void parse_cond(void) {
    else
       (void) graft_tree_n(condition, 0, NODEKIND_AFFIRM);
 
-   // Is it a equality test, i.e. "as ... as"?
-   if (!strcmp(tok->run, KEYWRD_AS)) {
-      gettok();
-      if (tok->kind == TOKKIND_PNT) {
-         reason = msgs.err.syn.cond.badsyn;
-         synerr();
-      }
-
-      (void) graft_tree_s(
-         condition, tok->run, tok->len, NODEKIND_EQ);
-
-      gettok();
-      if (strcmp(tok->run, KEYWRD_AS)) {
-         reason = msgs.err.syn.cond.badsyn;
-         synerr();
-      }
-   }
-   // If not, then it is an inequality test
-   else {
-      (void) graft_tree_s(
-         condition, tok->run, tok->len, NODEKIND_INEQ);
-      gettok();
-      if (strcmp(tok->run, KEYWRD_THAN)) {
-         reason = msgs.err.syn.cond.badsyn;
-         synerr();
-      }
-   }
+   if (!strcmp(tok->run, KEYWRD_AS))
+      parse_cond_eq(condition);
+   else
+      parse_cond_ineq(condition);
 
    righthand = graft_tree_n(condition, 0, NODEKIND_RHS);
    parse_const(righthand);
@@ -1089,9 +1108,9 @@ static void parse_if(void) {
    int ret;
 
    ifstmt = graft_tree_n(line, 0, NODEKIND_IF);
+
    reason = msgs.err.syn.ifstmt.incomp;
    gettok();
-
    if (!strcmp(tok->run, KEYWRD_SO))
       (void) graft_tree_n(ifstmt, 0, NODEKIND_AFFIRM);
    else
@@ -1116,14 +1135,16 @@ static void parse_if(void) {
    ret = parse_line_as_conseq();
    line = tline;
 
-   if (!ret)
-      return;
-
    switch (ret) {
-      case 1: reason = msgs.err.syn.ifstmt.bad_conseq; break;
-      case 2: reason = msgs.err.syn.ifstmt.conseq_cap; break;
+      case 0 : return;
+      case 1 :
+         reason = msgs.err.syn.ifstmt.bad_conseq;
+         goto error;
+      case 2 :
+         reason = msgs.err.syn.ifstmt.conseq_cap;
+         goto error;
+      error : synerr();
    }
-   synerr();
 }
 
 static int seek_push(void) {
@@ -1134,19 +1155,15 @@ static void parse_push(void) {
    tree_t *push;
 
    push = graft_tree_n(line, 0, NODEKIND_PUSH);
+
    reason = msgs.err.syn.push.incomp;
    gettok();
-   archive_tokstate();  /* `isname` rewinds tokstate */
-
    if (tok->kind == TOKKIND_PNT) {
       reason = msgs.err.syn.push.badsyn;
       synerr();
    }
 
-   if (isname_lower())
-      (void) graft_tree_n(push, charidx, NODEKIND_CHAR);
-   else
-      (void) graft_tree_s(push, tok->run, tok->len, NODEKIND_NOUN);
+   parse_const(push);
 
    gettok();
    if (!match(tok->run[0], ".!")) {
@@ -1243,11 +1260,7 @@ static inline void rewind_tokstate(void) {
    tok = arr_peek(toks, idx);
 }
 
-static inline void synerr(void) {
-   err_template(tell, Cbred, "\n<syntax error> ");
-}
-
-static void tell(void) {
+static void synerr(void) {
    int lnum, lpos;
    line_t *l;
 
@@ -1256,13 +1269,14 @@ static void tell(void) {
    l = arr_peek(ls, lnum - 1);
 
    fmtwrt(
-      "%s\n"
+      Cbred "\n<syntax error>" Creset " %s\n"
       "[%s:%d:%d] " Cbwhite "note:" Creset " problematic since here\n"
       "%4d|%.*s" Cbblue "%s" Creset "\n",
       reason,
       sfname, lnum, lpos,
       lnum, lpos - 1, l->run, &l->run[lpos - 1]
    );
+   exit(EXIT_FAILURE);
 }
 
 static tree_t *plant_tree(

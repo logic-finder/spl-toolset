@@ -40,12 +40,7 @@ extern int op_cube(int v) {
 }
 
 extern int op_fact(int v) {
-   int r;
-
-   for (r = 1; v >= 1; v--)
-      r *= v;
-
-   return r;
+   return tgamma(v + 1);
 }
 
 static void clearbuf(void) {

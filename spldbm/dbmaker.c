@@ -198,7 +198,7 @@ static void write_sect_type_A(
 
    // Write the records
    sfseek(fp, ec_len, SEEK_CUR);
-   for (int i = 0; i < ecnt; i++) {
+   for (uint32_t i = 0; i < ecnt; i++) {
       r = arr_peek(records, i);
       sfwrite(&r->len, dt_l_len, 1, fp);
       sfwrite(r->run, 1, r->len, fp);
@@ -304,7 +304,7 @@ static void write_sect_type_B(
 
    // Write the records
    sfseek(fp, ec_len, SEEK_CUR);
-   for (int i = 0; i < ecnt; i++) {
+   for (uint32_t i = 0; i < ecnt; i++) {
       r = arr_peek(records, i);
       sfwrite(&r->kind, dt_k_len, 1, fp);
       sfwrite(&r->len, dt_l_len, 1, fp);

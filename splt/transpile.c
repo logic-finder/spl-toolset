@@ -353,15 +353,23 @@ static void gen_inc(tree_t *_) {
 }
 
 static void gen_goto(tree_t *t) {
-   node_t *type, *place;
+   nodekind_t type;
+   node_t *place;
 
-   type = tree_dat(t);
+   type = ((node_t *) tree_dat(t))->dat.n;
    place = tree_chdat(t, 0);
-   ffmtwrt(fp,
-      INDENT "goto %s_%s;\n",
-      type->dat.s.run,
-      place->dat.s.run
-   );
+
+   if (type == NODEKIND_ACT)
+      ffmtwrt(fp,
+         INDENT "goto %s_%s;\n",
+         KEYWRD_ACT, place->dat.s.run
+      );
+   else
+      ffmtwrt(fp,
+         INDENT "goto %s_%s_%s_%s;\n",
+         KEYWRD_ACT, actnum,
+         KEYWRD_SCENE, place->dat.s.run
+      );
 }
 
 static void gen_cond(tree_t *t) {
