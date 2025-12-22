@@ -3,7 +3,7 @@
 
 #include <stdlib.h>
 #include <stdbool.h>
-#include "core.h"
+#include "splcore.h"
 #include "stack.adt.h"
 
 typedef struct node {

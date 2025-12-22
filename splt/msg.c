@@ -13,7 +13,9 @@ extern void init_msg(void) {
 
    /* Parser Errors */
    msgs.err.syn.eot = "unwelcome end of token";
+   msgs.err.syn.notcap = "keyword not capitalized";
    msgs.err.syn.incomprehensible = "incomprehensible token";
+   msgs.err.syn.name_not_lowcase = "the first letter of this name is not lowercase";
 
    msgs.err.syn.title.incomp = "incomplete title";
 
@@ -24,12 +26,14 @@ extern void init_msg(void) {
    msgs.err.syn.dp.nonext = "nothing after a character description";
 
    msgs.err.syn.act.incomp = "incomplete Act";
-   msgs.err.syn.act.badsyn = "no colon after Act number";
+   msgs.err.syn.act.nornum = "no roman number present";
+   msgs.err.syn.act.nocolon = "no colon after Act number";
    msgs.err.syn.act.desc_incomp = "incomplete Act description";
    msgs.err.syn.act.noscene = "no scene seen next";
 
    msgs.err.syn.scene.incomp = "incomplete Scene";
-   msgs.err.syn.scene.badsyn = "no colon after Scene number";
+   msgs.err.syn.scene.nornum = "no roman number present";
+   msgs.err.syn.scene.nocolon = "no colon after Scene number";
    msgs.err.syn.scene.desc_incomp = "incomplete Scene description";
 
    msgs.err.syn.enter.incomp = "incomplete Enter";
@@ -87,7 +91,7 @@ extern void init_msg(void) {
    msgs.err.syn.gt.scene_misspell = "misspelling detected; it's Scene, not scene";
 
    msgs.err.syn.cond.incomp = "incomplete interrogative sentence";
-   msgs.err.syn.cond.unmatched = "incomprehensible interrogative sentence";
+   msgs.err.syn.cond.not_conj = "not conjugated interrogative sentence";
    msgs.err.syn.cond.badsyn = "incorrect interrogative sentence syntax";
 
    msgs.err.syn.ifstmt.incomp = "incomplete conditional statement";

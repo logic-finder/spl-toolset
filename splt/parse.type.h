@@ -115,6 +115,7 @@ static void nexttok(void);
 
 /* Utils */
 static int isname(void);
+static int isname_lower(void);
 static inline void archive_tokstate(void);
 static inline void rewind_tokstate(void);
 
@@ -131,13 +132,13 @@ static tree_t *plant_tree(
    int lnum,
    int lpos
 );
-static tree_t *graft_tree(
+static tree_t *graft_tree_s(
    tree_t *base,
    const char *run,
    int len,
    nodekind_t kind
 );
-static tree_t *graft_tree_as_num(
+static tree_t *graft_tree_n(
    tree_t *base,
    int num,
    nodekind_t kind

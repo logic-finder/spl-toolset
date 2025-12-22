@@ -2,7 +2,7 @@
 #define STAGE_ADT_TYPE_H
 
 #include <stdlib.h>
-#include "core.h"
+#include "splcore.h"
 #include "stage.adt.h"
 
 struct stage {

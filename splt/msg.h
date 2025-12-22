@@ -58,7 +58,8 @@ struct msg_err_syn_dp {
 struct msg_err_syn_act {
    msgstr_t
       incomp,
-      badsyn,
+      nornum,
+      nocolon,
       desc_incomp,
       noscene;
 };
@@ -66,7 +67,8 @@ struct msg_err_syn_act {
 struct msg_err_syn_scene {
    msgstr_t
       incomp,
-      badsyn,
+      nornum,
+      nocolon,
       desc_incomp;
 };
 
@@ -157,7 +159,7 @@ struct msg_err_syn_goto {
 struct msg_err_syn_cond {
    msgstr_t
       incomp,
-      unmatched,
+      not_conj,
       badsyn;
 };
 
@@ -184,7 +186,9 @@ struct msg_err_syn_pop {
 struct msg_err_syn {
    msgstr_t
       eot,
-      incomprehensible;
+      notcap,
+      incomprehensible,
+      name_not_lowcase;
    msg_err_syn_title_t title;
    msg_err_syn_dp_t dp;
    msg_err_syn_act_t act;

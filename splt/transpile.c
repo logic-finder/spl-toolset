@@ -448,7 +448,7 @@ static void gen_if(tree_t *t) {
    sfputs(fp, "cond) ");
 
    switch (stmtdat->kind) {
-      case NODEKIND_ASGN1  : gen_asgn(stmt); break;
+      case NODEKIND_ASGN1  : /* fall-through */
       case NODEKIND_ASGN2  : gen_asgn(stmt); break;
       case NODEKIND_OUT_N  : gen_outn(stmt); break;
       case NODEKIND_OUT_C  : gen_outc(stmt); break;
