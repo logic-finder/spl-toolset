@@ -24,7 +24,9 @@ static tree_t
    *line;   // current line
 
 /* Miscellaneous */
+extern const char *sfname;   // see global.h
 extern msg_t msgs;           // see global.h
+
 static const char *reason;   // error message
 static jmp_buf LONGJMP_ENV;  // for setjmp & longjmp
 static int charidx;          // used by `isname` & its caller

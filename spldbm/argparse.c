@@ -13,8 +13,8 @@ extern void parse_args(const char **argv) {
     *    spldbm --make=<name>,<adj>,<noun>,<comp> [-k | --kawaii]
     *    spldbm --archive=<spldb> [-k | --kawaii]
     *    spldbm --restore=<spldb> [-k | --kawaii]
-    *    spldbm (-h | --help) [-k | --kawaii]
-    *    spldbm (-v | --version) [-k | --kawaii]
+    *    spldbm (-h | --help)
+    *    spldbm (-v | --version)
     */
    const char *arg;
 
@@ -148,6 +148,8 @@ static void handle_resopt(const char *arg) {
 static void handle_kwiopt(const char *arg) {
    (void) ov; (void) arg;
    if (of.kwi) ERR("--kawaii already seen");
+   if (of.hlp) ERR("--help with --kawaii");
+   if (of.vsn) ERR("--version with --kawaii");
    of.kwi = true;
 }
 
@@ -156,6 +158,7 @@ static void handle_hlpopt(const char *arg) {
    if (of.mak) ERR("--make with --help");
    if (of.arc) ERR("--archive with --help");
    if (of.res) ERR("--restore with --help");
+   if (of.kwi) ERR("--kawaii with --help");
    if (of.hlp) ERR("--help already seen");
    if (of.vsn) ERR("--version with --help");
    of.hlp = true;
@@ -166,6 +169,7 @@ static void handle_vsnopt(const char *arg) {
    if (of.mak) ERR("--make with --version");
    if (of.arc) ERR("--archive with --version");
    if (of.res) ERR("--restore with --version");
+   if (of.kwi) ERR("--kawaii with --version");
    if (of.hlp) ERR("--help with --version");
    if (of.vsn) ERR("--version already seen");
    of.vsn = true;

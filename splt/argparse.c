@@ -8,7 +8,7 @@ static const char *warnmsg =
 extern void parse_args(const char **argv, optflg_t *of, optval_t *ov) {
    /*
     * SYNOPSIS
-    *    splt [OPTIONS] [--] source
+    *    splt [OPTIONS] [--] <source>
     *    splt (-h | --help)
     *    splt (-v | --version)
     *
@@ -48,14 +48,14 @@ extern void parse_args(const char **argv, optflg_t *of, optval_t *ov) {
 }
 
 static void parse_endopt(optflg_t *of) {
-   if (of->hlp) ERR("-h with --.");
-   if (of->vsn) ERR("-v with --.");
+   if (of->hlp) ERR("-h with --");
+   if (of->vsn) ERR("-v with --");
    of->eoo = true;
 }
 
 static void parse_filenm(optval_t *ov, const char *arg) {
    // Only one source file is allowed
-   if (ov->src != NULL)
+   if (ov->src)
       ERR("a source file already specified");
    ov->src = arg;
 }
@@ -77,7 +77,7 @@ static void parse_shrtop(optflg_t *of, optval_t *ov, const char *arg) {
    char ch;
    int p, q;
 
-   // `arg` be like -eidk; read one letter at a time.
+   // `arg` be like -eidk; read one letter at a time
    for (p = 1; (ch = arg[p]); p++) {
       // iterate the `opts` array
       for (q = 0; q < opts_len; q++) {

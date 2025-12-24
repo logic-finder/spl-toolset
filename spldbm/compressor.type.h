@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include "global.h"
 #include "wrapper.h"
+#include "db.common.h"
 
 #define ARCHIVE_PREFIX ".archive"
 #define RESTORE_PREFIX ".restore"

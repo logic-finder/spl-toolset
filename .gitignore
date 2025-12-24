@@ -12,3 +12,9 @@ splrt/libsplrt.so
 
 # Database
 spldbm/spldbm
+
+# Analyzer
+spla/spla
+
+## TEMPORARY ##
+__temporary/

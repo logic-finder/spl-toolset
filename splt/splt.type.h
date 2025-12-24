@@ -3,7 +3,6 @@
 
 #include <ctype.h>
 #include <string.h>
-#include "db.h"
 #include "msg.h"
 #include "lex.h"
 #include "parse.h"
@@ -12,6 +11,7 @@
 #include "loadfile.h"
 #include "argparse.h"
 #include "ctxcheck.h"
+#include "dbhandler.h"
 #include "transpile.h"
 #include "typecheck.h"
 #include "colorcode.h"

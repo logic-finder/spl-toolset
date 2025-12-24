@@ -1,11 +1,11 @@
 #ifndef TYPECHECK_TYPE_H
 #define TYPECHECK_TYPE_H
 
-#include "db.h"
 #include "msg.h"
 #include "parse.h"
 #include "global.h"
 #include "wrapper.h"
+#include "dbhandler.h"
 #include "typecheck.h"
 #include "colorcode.h"
 

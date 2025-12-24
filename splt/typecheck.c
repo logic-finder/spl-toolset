@@ -1,8 +1,10 @@
 #include "typecheck.h"
 #include "typecheck.type.h"
 
+extern const char *sfname;  // see global.h
 extern tree_t *pt;  // see global.h
 extern msg_t msgs;  // see global.h
+
 static const char *reason;  // error message
 
 extern void typecheck(optflg_t *of, optval_t *ov) {

@@ -10,6 +10,7 @@
 #include "dbmaker.h"
 #include "strutil.h"
 #include "arr.adt.h"
+#include "db.common.h"
 #include "lineutil.h"
 #include "colorcode.h"
 

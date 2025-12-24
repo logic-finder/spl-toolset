@@ -3,7 +3,7 @@
 #include "optprocessor.h"
 #include "optprocessor.type.h"
 
-const char *sfname;
+const char *sfname;  /* external variable */
 
 extern void process_opts(
    int argc,
@@ -11,12 +11,14 @@ extern void process_opts(
    optval_t *ov
 ) {
    validate_argc(argc);
+   if (!ov->src)
+      ERR("no source file given; terminating");
    init_extvar(ov);
 }
 
 static void validate_argc(int argc) {
    if (argc == 1)
-      ERR("executed with no argument.\n"
+      ERR("executed with no argument\n"
          "Note. type -h or --help to see a manual");
 }
 

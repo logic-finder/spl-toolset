@@ -1,7 +1,9 @@
 #include "ctxcheck.h"
 #include "ctxcheck.type.h"
 
-extern msg_t msgs;  // see global.h
+extern const char *sfname;  // see global.h
+extern msg_t msgs;          // see global.h
+
 static const char *reason;  // error message
 static tree_t *nrtv, *act, *scene;
 

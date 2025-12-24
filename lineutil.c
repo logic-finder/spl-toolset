@@ -29,6 +29,7 @@ extern int readln(FILE *fp, char **line, int *len) {
 
    for (;;) {
       if (eol) {
+      end_of_line:
          buf[pos] = '\0';
          *line = buf;
          *len = pos;  /* i.e. len == strlen(buf) + 1 */
@@ -39,10 +40,7 @@ extern int readln(FILE *fp, char **line, int *len) {
 
       if (ch == EOF) {
          if (ferror(fp)) vfatal(errmsg, __func__);
-         buf[pos] = '\0';
-         *line = buf;
-         *len = pos;
-         return 0;
+         goto end_of_line;
       }
       if (ch == '\r')
          continue;

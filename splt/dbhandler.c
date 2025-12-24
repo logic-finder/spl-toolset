@@ -1,5 +1,5 @@
-#include "db.h"
-#include "db.type.h"
+#include "dbhandler.h"
+#include "dbhandler.type.h"
 
 extern msg_t msgs;  // see global.h
 static uint32_t secpos[SECTNUM];

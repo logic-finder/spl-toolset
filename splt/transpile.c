@@ -301,12 +301,11 @@ static void gen_exeunt(tree_t *t) {
    clen = tree_clen(t);
    if (!clen)
       sfputs(fp, INDENT "stage_exeunt(stage);\n");
-   else {
+   else
       for (int i = 0; i < clen; i++) {
          charidx = TREE_CHDAT(t, i)->dat.n;
          ffmtwrt(fp, INDENT "stage_exit(stage, %d);\n", charidx);
       }
-   }
 }
 
 static void gen_line(tree_t *t) {
@@ -467,7 +466,7 @@ static void gen_if(tree_t *t) {
       case NODEKIND_PUSH   : gen_push(stmt); break;
       case NODEKIND_POP    : gen_pop (stmt); break;
       case NODEKIND_IF :
-         sfputs(fp, INDENT);
+         sfputs(fp, "\n");
          gen_if(stmt);
          break;
       /* control never reaches here */

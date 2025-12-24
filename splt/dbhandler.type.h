@@ -2,12 +2,13 @@
 #define DB_TYPE_H
 
 #include <stdint.h>
-#include "db.h"
+#include "dbhandler.h"
 #include "msg.h"
 #include "global.h"
 #include "common.h"
 #include "arr.adt.h"
 #include "wrapper.h"
+#include "db.common.h"
 #include "colorcode.h"
 
 // typedef char *record_t;
