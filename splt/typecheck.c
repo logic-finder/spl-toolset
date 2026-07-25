@@ -1,5 +1,5 @@
 #include "typecheck.h"
-#include "typecheck.type.h"
+#include "typecheck.internals.h"
 
 extern const char *sfname;  // see global.h
 extern tree_t *pt;  // see global.h

@@ -1,7 +1,7 @@
 // TODO: init opt, handle h,v (refer proofread)
 
 #include "optprocessor.h"
-#include "optprocessor.type.h"
+#include "optprocessor.internals.h"
 
 const char *sfname;  /* external variable */
 

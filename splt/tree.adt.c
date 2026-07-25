@@ -1,5 +1,5 @@
 #include "tree.adt.h"
-#include "tree.adt.type.h"
+#include "tree.adt.internals.h"
 
 extern tree_t *tree_plant(void *data, size_t dsiz) {
    tree_t *ret;  /* a little sapling! */

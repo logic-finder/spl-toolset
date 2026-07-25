@@ -1,5 +1,5 @@
 #include "compressor.h"
-#include "compressor.type.h"
+#include "compressor.internals.h"
 
 extern void archive(void) {
    work_template(

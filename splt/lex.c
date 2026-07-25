@@ -1,5 +1,5 @@
 #include "lex.h"
-#include "lex.type.h"  // contains typedef & prototypes
+#include "lex.internals.h"  // contains typedef & prototypes
 
 /******************************
  * IMPORTANT GLOBAL VARIABLES *
@@ -144,6 +144,11 @@ static int process_read(va_list *ap) {
       return 1;
    }
    else
+      /*
+       * buf[idx] = '\0';
+       * if it were here, buf would not be null-
+       * terminated when we reach the end of `ls`
+       */
       return 0;
 }
 

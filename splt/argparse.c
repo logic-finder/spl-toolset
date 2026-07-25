@@ -1,5 +1,5 @@
 #include "argparse.h"
-#include "argparse.type.h"
+#include "argparse.internals.h"
 
 static const char *warnmsg =
    "  * note: should this be a filename, specify '" Cbwhite "--" Creset "' first\n"

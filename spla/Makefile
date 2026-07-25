@@ -1,52 +1,50 @@
-srcdir := .
-objdir := ../.object
-depdir := ../.depend
-common_source_dir := ..
-common_header_dir := ..
-common_object_dir := $(objdir)/common
-
-target := spla
-sources := $(wildcard $(srcdir)/*.c)
-common_sources := $(wildcard $(common_source_dir)/*.c)
-objects := $(sources:$(srcdir)/%.c=$(objdir)/$(target)/%.o)
-common_objects := $(common_sources:$(common_source_dir)/%.c=$(common_object_dir)/%.o)
-depends := $(sources:$(srcdir)/%.c=$(depdir)/$(target)/%.d)
-common_depends := $(common_sources:$(common_source_dir)/%.c=$(depdir)/common/%.d)
-
+## Variables ##
+TARGET := spla
+LIBDIR := ../lib
 SHELL := /bin/sh
+
 CC := gcc
-CFLAGS := -g -Wall -W -pedantic
-CPPFLAGS := -I $(common_header_dir)
+CFLAGS := -O -Wall -W -pedantic
+CFLAGS += -g
+CFLAGS += -MMD -MP
+CPPFLAGS = -I $(LIBDIR)
 
-.SUFFIXES:
-.SUFFIXES: .c .o .h
+SOURCES = $(wildcard *.c)
+LIBSRCS = $(wildcard $(LIBDIR)/*.c)
+OBJECTS = $(SOURCES:.c=.o)
+LIBOBJS = $(notdir $(LIBSRCS:.c=.o))
+DEPENDS = $(OBJECTS:.o=.d) $(LIBOBJS:.o=.d)
 
-.PHONY: all
-all: $(target)
+## Targets ##
+.PHONY: all $(TARGET)
+.PHONY: clean install uninstall help
 
-$(target): $(objects) $(common_objects)
-	$(CC) $^ $(CFLAGS) -o $(target)
+# Default Goal #
+all: $(TARGET)
 
-$(depdir)/$(target)/%.d: $(srcdir)/%.c
-	@set -e; rm -f $@; \
-	 $(CC) $< $(CPPFLAGS) -MM > $@.$$$$; \
-	 printf "%s%s" "$(objdir)/$(target)/" "$$(cat $@.$$$$)" > $@; \
-	 rm -f $@.$$$$
+# Build #
+$(TARGET): $(OBJECTS) $(LIBOBJS)
+	$(CC) $^ $(CFLAGS) -o $@
 
-$(depdir)/common/%.d: $(common_source_dir)/%.c
-	@set -e; rm -f $@; \
-	 $(CC) $< $(CPPFLAGS) -MM > $@.$$$$; \
-	 printf "%s%s" "$(objdir)/common/" "$$(cat $@.$$$$)" > $@; \
-	 rm -f $@.$$$$
-
-include $(depends) $(common_depends)
-
-$(objdir)/$(target)/%.o:
+$(OBJECTS): %.o: %.c
 	$(CC) $< $(CPPFLAGS) $(CFLAGS) -c -o $@
 
-$(objdir)/common/%.o:
+$(LIBOBJS): %.o: $(LIBDIR)/%.c
 	$(CC) $< $(CPPFLAGS) $(CFLAGS) -c -o $@
 
-.PHONY: clean
+# Dependency #
+-include $(DEPENDS)
+
+# Tasks #
 clean:
-	rm -rf $(target) $(depdir)/**/*.d $(objdir)/*.o
+	rm -f $(TARGET) *.o *.d
+
+# TODO:
+#  - copy the executable under /usr/local/bin
+#  - copy the manpage /usr/local/share/man/man1
+install: $(TARGET)
+
+uninstall:
+
+# TODO: write help
+help:

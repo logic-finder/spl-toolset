@@ -1,5 +1,5 @@
 #include "argparse.h"
-#include "argparse.type.h"
+#include "argparse.internals.h"
 
 /**********************
  * External Variables *

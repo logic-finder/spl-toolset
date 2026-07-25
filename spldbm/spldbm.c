@@ -1,4 +1,4 @@
-#include "spldbm.type.h"
+#include "spldbm.internals.h"
 
 int main(int argc, const char **argv) {
    if (argc == 1)

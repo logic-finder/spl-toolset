@@ -1,5 +1,5 @@
 #include "stack.adt.h"
-#include "stack.adt.type.h"
+#include "stack.adt.internals.h"
 
 extern stack_t *stack_create(void) {
    stack_t *ret;

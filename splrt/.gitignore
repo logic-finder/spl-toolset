@@ -1,0 +1,3 @@
+libsplrt.so
+*.o
+*.d

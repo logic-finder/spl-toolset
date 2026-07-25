@@ -1,5 +1,5 @@
 #include "stage.adt.h"
-#include "stage.adt.type.h"
+#include "stage.adt.internals.h"
 
 extern stage_t *stage_create(int siz) {
    stage_t *ret;

@@ -1,5 +1,5 @@
 #include "parse.h"
-#include "parse.type.h"
+#include "parse.internals.h"
 
 /******************************
  * IMPORTANT GLOBAL VARIABLES *
@@ -219,6 +219,9 @@ static void parse_enter(void) {
    enter = graft_tree_n(scene, 0, NODEKIND_ENTER);
    reason = msgs.err.syn.enter.incomp;
 
+   // fixme: enter can take one or more characters
+   // 꼭 A,B, and C 이럴필요 X 공백은 어디든 있을수있음
+   // 그냥 A B C 만 파싱하면 됨
    // Enter has 1 or 2 characters
    parse_namelist(enter, msgs.err.syn.enter.badname);
 
@@ -645,7 +648,7 @@ static int seek_line(void) {
 }
 
 static void parse_line(void) {
-   // Make nodes (charidx was updated by isname() in seek_line)
+   // Make nodes (charidx has been updated by isname() in seek_line)
    line = graft_tree_n(scene, 0, NODEKIND_LINE);
    (void) graft_tree_n(line, charidx, NODEKIND_CHAR);
 

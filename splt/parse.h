@@ -76,10 +76,10 @@ typedef enum nodekind {
 
 /*
  * `dat` - an union; either an int or a string structure
- * `dat.n` - treats the union as an int value
- * `dat.s` - treats the union as a string structure
- * `dat.s.run` - a string
- * `dat.s.len` - the length of the string
+ *    `.n` - treats the union as an int value
+ *    `.s` - treats the union as a string structure
+ *       `.run` - a string
+ *       `.len` - the length of the string
  * `kind` - kind of node
  * `lnum` - the line number to which this node belongs
  * `lpos` - the position in the line

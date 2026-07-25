@@ -1,5 +1,5 @@
 #include "argparse.h"
-#include "argparse.type.h"
+#include "argparse.internals.h"
 
 /**********************
  * External Variables *
@@ -8,6 +8,7 @@ optflg_t of = {0};
 optval_t ov;
 
 extern void parse_args(const char **argv) {
+   // TODO: support --basedir=... option
    /*
     * SYNOPSIS
     *    spldbm --make=<name>,<adj>,<noun>,<comp> [-k | --kawaii]
@@ -56,11 +57,11 @@ static void parse_shrtop(const char *arg) {
 
 static void parse_longop(const char *arg) {
    static const opt_t opts[] = {
-      { "make" , handle_makopt },
+      { "make"    , handle_makopt },
       { "archive" , handle_arcopt },
       { "restore" , handle_resopt },
-      { "kawaii" , handle_kwiopt },
-      { "help" , handle_hlpopt },
+      { "kawaii"  , handle_kwiopt },
+      { "help"    , handle_hlpopt },
       { "version" , handle_vsnopt }
    };
    static const int opts_len = ARRLEN(opts);

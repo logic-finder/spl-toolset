@@ -1,5 +1,5 @@
 #include "ctxcheck.h"
-#include "ctxcheck.type.h"
+#include "ctxcheck.internals.h"
 
 extern const char *sfname;  // see global.h
 extern msg_t msgs;          // see global.h

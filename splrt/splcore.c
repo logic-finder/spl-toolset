@@ -1,5 +1,5 @@
 #include "splcore.h"
-#include "splcore.type.h"
+#include "splcore.internals.h"
 
 extern persona_t *init_personae(int siz) {
    persona_t *ret;

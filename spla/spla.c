@@ -1,4 +1,4 @@
-#include "spla.type.h"
+#include "spla.internals.h"
 
 extern optflg_t of;
 extern optval_t ov;

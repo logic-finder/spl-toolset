@@ -1,4 +1,4 @@
-#include "splt.type.h"
+#include "splt.internals.h"
 
 /*********************
  * External Variable *
@@ -52,9 +52,13 @@ int main(int argc, const char **argv) {
    fmtwrt(" " Cbgreen "done!" Creset "\n");
    // tree_pre_traverse(pt, print_node, 0);
 
-   sfputs(stdout, ENPREFIX "transpiling...");
-   transpile(&of, &ov);
-   fmtwrt(" " Cbgreen "done!" Creset "\n");
+   // sfputs(stdout, ENPREFIX "generating IR...");
+   // generate_ir(&of, &ov);
+   // fmtwrt(" " Cbgreen "done!" Creset "\n");
+
+   // sfputs(stdout, ENPREFIX "transpiling...");
+   // transpile(&of, &ov);
+   // fmtwrt(" " Cbgreen "done!" Creset "\n");
 
    // Cleanup
    tree_post_traverse(pt, cleanup_node, 0);

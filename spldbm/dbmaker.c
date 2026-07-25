@@ -1,5 +1,5 @@
 #include "dbmaker.h"
-#include "dbmaker.type.h"
+#include "dbmaker.internals.h"
 
 static uint32_t ecnts[SECTNUM];
 static bool le, be;
@@ -42,7 +42,7 @@ extern void dbmake(void) {
     *          string         - 64 bytes
     *
     *    Comparative Section  : total 8 + (66 * n) bytes
-    *       header            - 4 bytes; BE; contains "COMPS"
+    *       header            - 4 bytes; BE; contains "COMP"
     *       entry count       - 4 bytes; LE
     *       entry...          - each 66 bytes
     *          kind           - 1 byte, contains 0 or 1

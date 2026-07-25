@@ -1,5 +1,5 @@
 #include "transpile.h"
-#include "transpile.type.h"
+#include "transpile.internals.h"
 
 static FILE *fp;
 static int speaker;

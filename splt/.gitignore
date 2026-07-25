@@ -1,0 +1,6 @@
+splt
+*.o
+*.d
+
+# TEMPORARY #
+words.spldb
