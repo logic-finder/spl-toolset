@@ -1,5 +1,5 @@
 #include "hashtable.adt.h"
-#include "hashtable.adt.type.h"
+#include "hashtable.adt.internals.h"
 
 static int hash(const char *s, unsigned int offset) {
    unsigned long v = 5381;
@@ -43,7 +43,7 @@ extern void ht_set(
    bucket_t *bucket;
 
    if (ht_full(ht))
-      VERR("%s: table full", __func__);
+      vfatal("%s: table full", __func__);
 
    idx = hash(key, 0);
    for (offset = 0;;) {

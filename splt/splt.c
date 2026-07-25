@@ -50,7 +50,7 @@ int main(int argc, const char **argv) {
    sfputs(stdout, ENPREFIX "context-checking...");
    ctxcheck(&of, &ov);
    fmtwrt(" " Cbgreen "done!" Creset "\n");
-   // tree_pre_traverse(pt, print_node, 0);
+   tree_pre_traverse(pt, print_node, 0);
 
    // sfputs(stdout, ENPREFIX "generating IR...");
    // generate_ir(&of, &ov);

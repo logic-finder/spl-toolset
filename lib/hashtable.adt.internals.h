@@ -1,8 +1,8 @@
-#ifndef HASHTABLE_ADT_TYPE_H
-#define HASHTABLE_ADT_TYPE_H
+#ifndef HASHTABLE_ADT_INTERNALS_H
+#define HASHTABLE_ADT_INTERNALS_H
 
 #include <string.h>
-#include "global.h"
+#include "common.h"
 #include "wrapper.h"
 
 #define HASHTABLE_SIZ 1249  /* prime */
