@@ -1,13 +1,6 @@
 #include "dbhandler.h"
 #include "dbhandler.internals.h"
 
-extern msg_t msgs;  // see global.h
-static uint32_t secpos[SECTNUM];
-static uint32_t ecnts[SECTNUM];
-static void *sects[SECTNUM];
-static bool le, be;
-static FILE *db;
-
 extern void dbload(void) {
    dbcheck();
    load_section(SECTKIND_NAME, NAME_DTSIZ);

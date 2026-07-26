@@ -1,12 +1,6 @@
 #include "ctxcheck.h"
 #include "ctxcheck.internals.h"
 
-extern const char *sfname;  // see global.h
-extern msg_t msgs;          // see global.h
-
-static const char *reason;  // error message
-static tree_t *nrtv, *act, *scene;
-
 extern void ctxcheck(optflg_t *of, optval_t *ov) {
    nrtv = tree_child(pt, 2);
    tree_pre_traverse(nrtv, ctxcheck_router, 0);

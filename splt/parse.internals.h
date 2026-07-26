@@ -8,8 +8,8 @@
 #include "msg.h"
 #include "lex.h"
 #include "global.h"
-#include "wrapper.h"
-#include "strutil.h"
+#include "wrappers.h"
+#include "strutils.h"
 #include "tree.adt.h"
 #include "colorcode.h"
 
@@ -144,5 +144,64 @@ static tree_t *graft_tree_n(
    int num,
    nodekind_t kind
 );
+
+/******************************
+ * IMPORTANT GLOBAL VARIABLES *
+ ******************************/
+/* Token Stream */
+static arr_t *toks;
+static token_t
+   *tok,    // toks[idx]
+   *etok;   // used in `tell()` for printing an error
+static int
+   len,     // toks.length
+   idx,     // current index in toks
+   tidx;    // temp. var. for idx
+
+/* Parse Tree */
+extern tree_t
+   *pt;     // parse tree (see global.h)
+static tree_t
+   *nrtv,   // contains the whole narrative
+   *act,    // current act
+   *scene,  // current scene
+   *line;   // current line
+
+/* Miscellaneous */
+
+// extern const char *sfname;   // see global.h
+// extern msg_t msgs;           // see global.h
+
+static const char *reason;   // error message
+static jmp_buf LONGJMP_ENV;  // for setjmp & longjmp
+static int charidx;          // used by `isname` & its caller
+
+/*
+ * `seek_if` and `parse_if` being the
+ * first element is intentional;
+ * refer to `parse_line_as_conseq`.
+ */
+static const stmthandler_t stmts[] = {
+   { seek_asgn , parse_asgn },
+   { seek_out  , parse_out  },
+   { seek_in   , parse_in   },
+   { seek_goto , parse_goto },
+   { seek_cond , parse_cond },
+   { seek_if   , parse_if   },
+   { seek_push , parse_push },
+   { seek_pop  , parse_pop  }
+};
+static const int stmts_len = ARRLEN(stmts);
+
+/* These are used in `seek_cond` and `parse_cond` only. */
+static const char *cond_verbs[] = {
+   KEYWRD_AM, KEYWRD_ARE_C, KEYWRD_ART_C, KEYWRD_IS
+};
+static const int cond_verbs_len = ARRLEN(cond_verbs);
+static const char *cond_subjs[] = {
+   KEYWRD_I, KEYWRD_YOU_L, KEYWRD_THOU_L
+};
+static const int cond_subjs_len = ARRLEN(cond_subjs);
+static int vtype;
 
 #endif

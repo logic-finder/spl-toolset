@@ -1,5 +1,5 @@
-#ifndef WRAPPER_H
-#define WRAPPER_H
+#ifndef WRAPPERS_H
+#define WRAPPERS_H
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -1,3 +1,5 @@
+// fixme: lib으로 옮기기
+
 #include "loadfile.h"
 #include "loadfile.internals.h"
 

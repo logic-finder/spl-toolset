@@ -1,12 +1,6 @@
 #include "argparse.h"
 #include "argparse.internals.h"
 
-/**********************
- * External Variables *
- **********************/
-optflg_t of = {0};
-optval_t ov;
-
 extern void parse_args(const char **argv) {
    // TODO: support --basedir=... option
    /*

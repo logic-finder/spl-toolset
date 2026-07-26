@@ -22,4 +22,10 @@ static arghandler_t handle_kwiopt;
 static arghandler_t handle_hlpopt;
 static arghandler_t handle_vsnopt;
 
+/**********************
+ * External Variables *
+ **********************/
+optflg_t of = {0};
+optval_t ov;
+
 #endif

@@ -1,7 +1,5 @@
-#include <stdio.h>
-#include <stdlib.h>
 #include "fatal.h"
-#include "wrapper.h"
+#include "fatal.internals.h"
 
 void fatal(const char *msg) {
    ffmtwrt(stderr, "fatal: %s\n", msg);

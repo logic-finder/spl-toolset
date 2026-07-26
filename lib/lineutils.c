@@ -1,8 +1,5 @@
-#include <ctype.h>
-#include <stdbool.h>
-#include "fatal.h"
-#include "wrapper.h"
-#include "lineutil.h"
+#include "lineutils.h"
+#include "lineutils.internals.h"
 
 static const char *errmsg = "%s: unable to read";
 

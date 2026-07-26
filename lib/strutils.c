@@ -1,9 +1,5 @@
-#include <ctype.h>
-#include <stddef.h>
-#include "strutil.h"
-#include "wrapper.h"
-
-const char *whitespaces = " \n\r\t\a\b\v\f";
+#include "strutils.h"
+#include "strutils.internals.h"
 
 extern bool match(char ch, const char *scanset) {
    while (*scanset)

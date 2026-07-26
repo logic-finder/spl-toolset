@@ -1,10 +1,6 @@
 #include "dbmaker.h"
 #include "dbmaker.internals.h"
 
-static uint32_t ecnts[SECTNUM];
-static bool le, be;
-static bool dupflg;
-
 GENERIC_COMPARE(A)
 GENERIC_COMPARE(B)
 

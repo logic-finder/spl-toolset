@@ -4,9 +4,8 @@
 #include "msg.h"
 #include "parse.h"
 #include "global.h"
-#include "wrapper.h"
+#include "wrappers.h"
 #include "dbhandler.h"
-#include "typecheck.h"
 #include "colorcode.h"
 
 typedef void typechecker_t(node_t *n);
@@ -31,5 +30,11 @@ static void semerr_dupname(
    node_t * restrict curr,
    node_t * restrict prev
 );
+
+extern const char *sfname;  // see global.h
+extern tree_t *pt;  // see global.h
+extern msg_t msgs;  // see global.h
+
+static const char *reason;  // error message
 
 #endif

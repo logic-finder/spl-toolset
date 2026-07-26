@@ -1,5 +1,5 @@
-#include "fatal.h"
-#include "wrapper.h"
+#include "wrappers.h"
+#include "wrappers.internals.h"
 
 /************
  * stdlib.h *

@@ -6,12 +6,11 @@
 #include <inttypes.h>
 #include "common.h"
 #include "global.h"
-#include "wrapper.h"
-#include "dbmaker.h"
-#include "strutil.h"
+#include "wrappers.h"
+#include "strutils.h"
 #include "arr.adt.h"
 #include "db.common.h"
-#include "lineutil.h"
+#include "lineutils.h"
 #include "colorcode.h"
 
 #define SRCFILE(sectname, idx)      \
@@ -106,5 +105,9 @@ static arr_sorter_t compare_comp;
 
 static void print_srcfiles(void);
 static void handle_dberr(void);
+
+static uint32_t ecnts[SECTNUM];
+static bool le, be;
+static bool dupflg;
 
 #endif

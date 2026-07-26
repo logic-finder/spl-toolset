@@ -1,11 +1,5 @@
 #include "splt.internals.h"
 
-/*********************
- * External Variable *
- *********************/
-arr_t *ls;
-tree_t *pt;
-
 int main(int argc, const char **argv) {
    optflg_t of = {0};
    optval_t ov;

@@ -5,8 +5,8 @@
 #include <stddef.h>
 #include "fatal.h"
 #include "global.h"
-#include "wrapper.h"
-#include "strutil.h"
+#include "wrappers.h"
+#include "strutils.h"
 
 typedef void arghandler_t(
    optflg_t *of,
@@ -32,5 +32,9 @@ static arghandler_t handle_lngopt;
 static arghandler_t handle_retopt;
 static arghandler_t handle_hlpopt;
 static arghandler_t handle_vsnopt;
+
+static const char *warnmsg =
+   "  * note: should this be a filename, specify '" Cbwhite "--" Creset "' first\n"
+   "  * note: type " Cbmagenta "--help" Creset " to see the manual page";
 
 #endif

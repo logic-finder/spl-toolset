@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include "splcore.h"
-#include "stack.adt.h"
 
 typedef struct node {
    struct node *prev, *next;

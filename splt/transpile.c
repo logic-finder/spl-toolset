@@ -1,11 +1,6 @@
 #include "transpile.h"
 #include "transpile.internals.h"
 
-static FILE *fp;
-static int speaker;
-static bool you_flag;
-static const char *actnum;
-
 extern void transpile(optflg_t *of, optval_t *ov) {
    tree_t *title, *dp, *nrtv;
 

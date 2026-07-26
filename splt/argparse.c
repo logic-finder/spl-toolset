@@ -1,10 +1,6 @@
 #include "argparse.h"
 #include "argparse.internals.h"
 
-static const char *warnmsg =
-   "  * note: should this be a filename, specify '" Cbwhite "--" Creset "' first\n"
-   "  * note: type " Cbmagenta "--help" Creset " to see the manual page";
-
 extern void parse_args(const char **argv, optflg_t *of, optval_t *ov) {
    /*
     * SYNOPSIS

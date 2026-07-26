@@ -3,7 +3,6 @@
 
 #include <stdlib.h>
 #include "splcore.h"
-#include "stage.adt.h"
 
 struct stage {
    int cnt;

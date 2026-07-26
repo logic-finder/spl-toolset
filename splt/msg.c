@@ -1,8 +1,5 @@
-#include <stddef.h>
 #include "msg.h"
-#include "colorcode.h"
-
-msg_t msgs;  /* external variable */
+#include "msg.internals.h"
 
 extern void init_msg(void) {
    /* DB Errors */

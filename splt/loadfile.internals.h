@@ -3,9 +3,9 @@
 
 #include <ctype.h>
 #include "global.h"
-#include "wrapper.h"
-#include "lineutil.h"
-#include "strutil.h"
+#include "wrappers.h"
+#include "strutils.h"
+#include "lineutils.h"
 
 #define INIT_SIZE 128
 

@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 #include "global.h"
-#include "wrapper.h"
+#include "wrappers.h"
 #include "tree.adt.h"
 
 #define FP_NAME "temp.c"
@@ -50,5 +50,10 @@ static resolver_t resolve_diff;
 static resolver_t resolve_prod;
 static resolver_t resolve_quot;
 static resolver_t resolve_rem;
+
+static FILE *fp;
+static int speaker;
+static bool you_flag;
+static const char *actnum;
 
 #endif

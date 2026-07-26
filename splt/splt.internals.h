@@ -7,7 +7,7 @@
 #include "lex.h"
 #include "parse.h"
 #include "global.h"
-#include "wrapper.h"
+#include "wrappers.h"
 #include "loadfile.h"
 #include "argparse.h"
 #include "ctxcheck.h"
@@ -25,5 +25,11 @@ static tree_callback_t cleanup_node;
 static arr_iterator_t print_token;
 static tree_callback_t print_node;
 static const char *nodekind2str(nodekind_t kind);
+
+/*********************
+ * External Variable *
+ *********************/
+arr_t *ls;
+tree_t *pt;
 
 #endif

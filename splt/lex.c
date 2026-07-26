@@ -1,31 +1,6 @@
 #include "lex.h"
 #include "lex.internals.h"  // contains typedef & prototypes
 
-/******************************
- * IMPORTANT GLOBAL VARIABLES *
- ******************************/
-/* Line Access */
-extern arr_t *ls;    // array of line_t (see global.h)
-static int lls;      // length of ls
-
-static int p;        // line number
-static int q;        // position in line
-static line_t *l;    // l = arr_peek(ls, p)
-
-static int tp;       // temp. var. for p
-static int tq;       // temp. var. for q
-
-/* Line Contents Copy */
-static char ch;      // to store a char
-static char *buf;    // to store a string
-static int idx;      // position in buf
-static int max;      // size of buf
-
-/* Miscellaneous */
-static jmp_buf LONGJMP_ENV;  // for setjmp & longjmp
-static bool eoe;             // end-of-everything
-const tokkind_t tokkind;     // kind of token
-
 extern arr_t *lex(
    optflg_t *of,
    optval_t *ov,

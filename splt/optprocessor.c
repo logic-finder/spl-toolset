@@ -3,8 +3,6 @@
 #include "optprocessor.h"
 #include "optprocessor.internals.h"
 
-const char *sfname;  /* external variable */
-
 extern void process_opts(
    int argc,
    optflg_t *of,

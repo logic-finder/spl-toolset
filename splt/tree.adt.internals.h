@@ -5,8 +5,7 @@
 #include <string.h>
 #include "fatal.h"
 #include "global.h"
-#include "wrapper.h"
-#include "tree.adt.h"
+#include "wrappers.h"
 
 #define INIT_CMAX 2
 

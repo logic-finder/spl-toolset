@@ -1,3 +1,6 @@
+// fixme: arr.adt.c => array.adt.c 로 이름 변경
+// fixme: ->arr => ->container로 변경
+
 #include "arr.adt.h"
 #include "arr.adt.internals.h"
 

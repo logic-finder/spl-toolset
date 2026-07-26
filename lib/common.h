@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include "fatal.h"
 
+// fixme: move ERR and VERR into fatal.h
 #define ERR(msg) fatal(ENPREFIX msg)
 #define VERR(msg, ...) vfatal(ENPREFIX msg, __VA_ARGS__)
 #

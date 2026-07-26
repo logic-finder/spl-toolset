@@ -3,8 +3,7 @@
 
 #include <string.h>
 #include "global.h"
-#include "strutil.h"
-#include "argparse.h"
+#include "strutils.h"
 
 typedef void parser_t(const char *arg);
 typedef void arghandler_t(const char *arg);
@@ -23,5 +22,11 @@ static arghandler_t handle_resopt;
 static arghandler_t handle_kwiopt;
 static arghandler_t handle_hlpopt;
 static arghandler_t handle_vsnopt;
+
+/**********************
+ * External Variables *
+ **********************/
+optflg_t of = {0};
+optval_t ov;
 
 #endif

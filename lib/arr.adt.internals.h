@@ -4,8 +4,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include "common.h"
-#include "arr.adt.h"
-#include "wrapper.h"
+#include "wrappers.h"
 
 #define INIT_MAX 128
 

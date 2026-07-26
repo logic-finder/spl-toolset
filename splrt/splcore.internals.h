@@ -1,8 +1,6 @@
 #ifndef SPLRT_INTERNALS_H
 #define SPLTY_INTERNALS_H
 
-#include "splcore.h"
-
 typedef void iohandler_templet_t(
    const char *fmt,
    persona_t *arr,
