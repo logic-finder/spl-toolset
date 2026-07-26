@@ -18,8 +18,7 @@ DEPENDS = $(OBJECTS:.o=.d) $(LIBOBJS:.o=.d)
 BUILD_DB := db
 
 ## Targets ##
-.PHONY: all $(TARGET)
-.PHONY: $(BUILD_DB) clean install uninstall help
+.PHONY: all $(BUILD_DB) clean install uninstall help
 
 # Default Goal #
 all: $(TARGET)

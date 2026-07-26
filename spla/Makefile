@@ -16,8 +16,7 @@ LIBOBJS = $(notdir $(LIBSRCS:.c=.o))
 DEPENDS = $(OBJECTS:.o=.d) $(LIBOBJS:.o=.d)
 
 ## Targets ##
-.PHONY: all $(TARGET)
-.PHONY: clean install uninstall help
+.PHONY: all clean install uninstall help
 
 # Default Goal #
 all: $(TARGET)

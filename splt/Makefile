@@ -16,8 +16,7 @@ LIBOBJS = $(notdir $(LIBSRCS:.c=.o))
 DEPENDS = $(OBJECTS:.o=.d) $(LIBOBJS:.o=.d)
 
 ## Targets ##
-.PHONY: all $(TARGET)
-.PHONY: clean install uninstall run help
+.PHONY: all clean install uninstall help run
 
 # Default Goal #
 all: $(TARGET)
@@ -46,8 +45,8 @@ install: $(TARGET)
 
 uninstall:
 
-run:
-	$(TARGET) -- ../dat/hello.spl
-
 # TODO: write help
 help:
+
+run:
+	$(TARGET) -- ../dat/hello.spl
