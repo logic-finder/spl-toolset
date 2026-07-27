@@ -267,9 +267,11 @@ static void parse_const(tree_t *stmt) {
     * is met.
     */
    for (;;) {
-      // escape conditions
+      /* escape conditions */
+      // fixme: ".!?" const static 변수로 빼기 (종결기호들)
       cond1 = match(tok->run[0], ".!?");
       if (cond1) goto noun;
+      // fixme: STREQL 매크로 정의해서 쓰기 (!strcmp 대체 프로젝트 전체적으로)
       cond2 = !strcmp(tok->run, KEYWRD_AND);
       if (cond2) goto noun;
       cond3 = !strcmp(tok->run, KEYWRD_AS);
@@ -282,7 +284,7 @@ static void parse_const(tree_t *stmt) {
       cond6 = isname_lower();
       if (cond6) goto name;
 
-      // is it a decorator?
+      /* is it a decorator? */
       if (match_str(tok->run, decos, decos_len) >= 0) {
          reason = msgs.err.syn.cnst.deco;
          synerr();
@@ -294,12 +296,12 @@ static void parse_const(tree_t *stmt) {
       gettok();
    }
 
-   noun:
-      TREE_CHDAT(constant, tree_clen(constant) - 1)->kind = NODEKIND_NOUN;
+noun:
+   TREE_CHDAT(constant, tree_clen(constant) - 1)->kind = NODEKIND_NOUN;
    return;
 
-   name:
-      (void) graft_tree_n(constant, charidx, NODEKIND_CHAR);
+name:
+   (void) graft_tree_n(constant, charidx, NODEKIND_CHAR);
    return;
 }
 
@@ -541,6 +543,9 @@ static void parse_op_fact(tree_t *op) {
    parse_op_unary(op, KEYWRD_OF, msgs.err.syn.op.fact);
 }
 
+// fixme: dp를 파싱한 다음에 바로 이름을 합치기
+// 현재 typecheck.c에서 coalesce_name 하니까 isname에서 일일히 트리를 순회해야해서 불편함
+// fixme: title 도 파싱한 다음에 바로 coalesce_title 해버리기 (typecheck.c에서 옮기기)
 static int isname(void) {
    tree_t *dp, *character;
    int i, k, dp_clen, char_clen;
@@ -1289,12 +1294,12 @@ static tree_t *graft_tree_n(
    return tree_graft(base, sub);
 }
 
-void setndn(node_t *n, int v) {
+extern void setndn(node_t *n, int v) {
    n->datkind = DATKIND_INT;
    n->dat.n = v;
 }
 
-void setnds(node_t *n, char *s, int l) {
+extern void setnds(node_t *n, char *s, int l) {
    n->datkind = DATKIND_STR;
    n->dat.s.run = s;
    n->dat.s.len = l;

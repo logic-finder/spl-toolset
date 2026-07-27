@@ -201,6 +201,7 @@ static bool is_rnum(const char *rnum) {
    static const int place_len = 9;
    typedef const char *place_t[9];
 
+   // fixme: 순서 1~9로 바꾸고, 배열1~9를 첫번째로 변경
    static place_t ps[] = {
       { "CM", "DCCC", "DCC", "DC", "D", "CD", "CCC", "CC", "C" }, /* 100 */
       { "XC", "LXXX", "LXX", "LX", "L", "XL", "XXX", "XX", "X" }, /*  10 */
@@ -221,7 +222,8 @@ static bool is_rnum(const char *rnum) {
             goto increment;
       }
       continue;  /* k == place_len */
-      increment: rnum += nlen;
+   increment:
+      rnum += nlen;
    }
 
    return strlen(rnum) == 0 ? true : false;
