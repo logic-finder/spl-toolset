@@ -971,6 +971,8 @@ static void parse_goto(void) {
       synerr();
    }
 
+   /* Note: NODEKIND value is used to determine
+      where this GOTO heads -- Act or Scene */
    gt = graft_tree_n(line, mark, NODEKIND_GOTO);
 
    gettok();
@@ -982,7 +984,7 @@ static void parse_goto(void) {
    (void) graft_tree_s(gt, tok->run, tok->len, NODEKIND_ROMNUM);
 
    gettok();
-   if (!match(tok->run[0], ".!")) {
+   if (!match(tok->run[0], ".!")) {  // fixme: .! 변수화
       reason = msgs.err.syn.gt.badsyn;
       synerr();
    }
@@ -1024,10 +1026,11 @@ static void parse_cond(void) {
    if (vtype == 3) ungettok();
 
    switch (vtype) {
-      case 0 : kind = NODEKIND_P1; break;
-      case 1 : /* fall-through */
-      case 2 : kind = NODEKIND_P2; break;
-      case 3 : kind = NODEKIND_P3; break;
+      case 0  : kind = NODEKIND_P1; break;
+      case 1  : /* fall-through */
+      case 2  : kind = NODEKIND_P2; break;
+      case 3  : kind = NODEKIND_P3; break;
+      default : kind = -1;  /* control never reaches here */
    }
    p = graft_tree_n(lefthand, 0, kind);
 

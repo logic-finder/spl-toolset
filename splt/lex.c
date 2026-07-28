@@ -17,7 +17,7 @@ extern arr_t *lex(
    // Construct a stream of tokens
    arr_t *toks = arr_create();
 
-   if (!setjmp(env_lex))
+   if (!setjmp(LONGJMP_ENV))
       goto tokenize;
    else
       goto cleanup;

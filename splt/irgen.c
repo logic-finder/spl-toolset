@@ -1,14 +1,12 @@
 #include "irgen.h"
 #include "irgen.internals.h"
 
-static tree_t *irroot, *curr_act, *curr_scene, *curr_block;
-static int labelcnt;
-
 extern void irgenerate(void) {
    tree_t *nrtv;
 
    nrtv = tree_child(pt, 2);
    irroot = plant_tree(NULL, 0, IrnodekindRoot, 0, 0);
+   // set dpsz
    tree_pre_traverse(nrtv, route, 0);
 }
 
@@ -25,18 +23,18 @@ static void route(tree_t *t, int lv) {
       case NODEKIND_EXIT   : handle_exit  (t); break;
       case NODEKIND_EXEUNT : handle_exeunt(t); break;
       case NODEKIND_LINE   : handle_line  (t); break;
-      case NODEKIND_ASGN1  : handle_asgn  (t); break;
+      case NODEKIND_ASGN1  : /* fall-through */
       case NODEKIND_ASGN2  : handle_asgn  (t); break;
-      case NODEKIND_OUT_N  : handle_outn  (t); break;
-      case NODEKIND_OUT_C  : handle_outc  (t); break;
-      case NODEKIND_IN_N   : handle_inn   (t); break;
-      case NODEKIND_IN_C   : handle_inc   (t); break;
+      case NODEKIND_OUT_N  : handle_io(t, IrinstOutN); break;
+      case NODEKIND_OUT_C  : handle_io(t, IrinstOutC); break;
+      case NODEKIND_IN_N   : handle_io(t, IrinstInN ); break;
+      case NODEKIND_IN_C   : handle_io(t, IrinstInC ); break;
       case NODEKIND_GOTO   : handle_goto  (t); break;
       case NODEKIND_COND   : handle_cond  (t); break;
       case NODEKIND_IF     : handle_if    (t); break;
       case NODEKIND_PUSH   : handle_push  (t); break;
       case NODEKIND_POP    : handle_pop   (t); break;
-      default: ;  /* control CAN reach here */
+      default: ;  /* DEPEND, CONST, and operators fall here */
    }
 }
 
@@ -44,7 +42,7 @@ static void handle_act(tree_t *t) {
    node_t *act, *romnum;
 
    act = tree_dat(t);
-   romnum = tree_chdat(act, 0);
+   romnum = tree_chdat(t, 0);
 
    curr_act = graft_tree_s(
       irroot,
@@ -60,7 +58,7 @@ static void handle_scene(tree_t *t) {
    node_t *scene, *romnum;
 
    scene = tree_dat(t);
-   romnum = tree_chdat(scene, 0);
+   romnum = tree_chdat(t, 0);
 
    curr_scene = graft_tree_s(
       irroot,
@@ -75,49 +73,275 @@ static void handle_scene(tree_t *t) {
 }
 
 static void handle_enter(tree_t *t) {
+   node_t *n;
+   size_t len;
+   int charidx;
 
+   n = tree_dat(t);
+   len = tree_clen(t);
+
+   /* Generates 'ENTER <charidx>' */
+   for (size_t i = 0; i < len; i++) {
+      charidx = TREE_CHDAT(t, i)->dat.n;
+      graft_tree_n(
+         curr_block,
+         IrinstEnter,
+         IrnodekindInst,
+         n->lnum,
+         n->lpos
+      );
+      graft_tree_n(
+         curr_block,
+         charidx,
+         IrnodekindPerson,
+         0,
+         0
+      );
+   }
 }
 
 static void handle_exit(tree_t *t) {
+   node_t *n;
+   int charidx;
 
+   n = tree_dat(t);
+   charidx = TREE_CHDAT(t, 0)->dat.n;
+
+   graft_tree_n(
+      curr_block,
+      IrinstExit,
+      IrnodekindInst,
+      n->lnum,
+      n->lpos
+   );
+   graft_tree_n(
+      curr_block,
+      charidx,
+      IrnodekindPerson,
+      0,
+      0
+   );
 }
 
 static void handle_exeunt(tree_t *t) {
+   node_t *n;
+   size_t len;
+   int charidx;
 
+   n = tree_dat(t);
+   len = tree_clen(t);
+
+   /* Generates 'EXEUNT' */
+   if (!len) {
+      graft_tree_n(
+         curr_block,
+         IrinstExeunt,
+         IrnodekindInst,
+         n->lnum,
+         n->lpos
+      );
+      return;
+   }
+
+   /* Generates 'ENTER <charidx>' */
+   for (size_t i = 0; i < len; i++) {
+      charidx = TREE_CHDAT(t, i)->dat.n;
+      graft_tree_n(
+         curr_block,
+         IrinstEnter,
+         IrnodekindInst,
+         n->lnum,
+         n->lpos
+      );
+      graft_tree_n(
+         curr_block,
+         charidx,
+         IrnodekindPerson,
+         0,
+         0
+      );
+   }
 }
 
 static void handle_line(tree_t *t) {
+   node_t *dat, *chdat;
+   int charidx;
 
+   chdat = tree_chdat(t, 0);
+   charidx = chdat->dat.n;
+   dat = tree_dat(t);
+
+   /* Generates 'SPEAK <charidx>' */
+   graft_tree_n(
+      curr_block,
+      IrinstSpeak,
+      IrnodekindInst,
+      dat->lnum,
+      dat->lpos
+   );
+   graft_tree_n(
+      curr_block,
+      charidx,
+      IrnodekindPerson,
+      0,
+      0
+   );
 }
 
 static void handle_asgn(tree_t *t) {
-   resolve_const();
-   // pop
-   // hearer
+   tree_t *c;
+   node_t *n;
+
+   c = tree_child(t, 0);
+   resolve_const(c);  /* ... PUSH const */
+
+   /* Generates 'POP hearer' */
+   n = tree_dat(t);
+   graft_tree_n(
+      curr_block,
+      IrinstPop,
+      IrnodekindInst,
+      n->lnum,
+      n->lpos
+   );
+   graft_tree_n(curr_block, IrvarHearer, IrnodekindVar, 0, 0);
 }
 
-static void handle_outn(tree_t *t) {
-
-}
-
-static void handle_outc(tree_t *t) {
-
-}
-
-static void handle_inn(tree_t *t) {
-
-}
-
-static void handle_inc(tree_t *t) {
-
+static void handle_io(tree_t *t, irinst_t inst) {
+   /* Generates '<inst>' */
+   node_t *n = tree_dat(t);
+   graft_tree_n(
+      curr_block,
+      inst,
+      IrnodekindInst,
+      n->lnum,
+      n->lpos
+   );
 }
 
 static void handle_goto(tree_t *t) {
+   nodekind_t type;
+   node_t *node, *child;
 
+   node = tree_dat(t);
+   type = node->dat.n;
+   child = tree_chdat(t, 0);
+
+   /* Note: NODEKIND value is used to determine
+      where this GOTO heads -- Act or Scene */
+   graft_tree_n(
+      curr_block,
+      IrinstGoto,
+      IrnodekindInst,
+      node->lnum,
+      node->lpos
+   );
+   graft_tree_n(
+      curr_block,
+      type,
+      IrnodekindData,
+      0,
+      0
+   );
+   graft_tree_s(
+      curr_block,
+      child->dat.s.run,
+      child->dat.s.len,
+      IrnodekindData,
+      0,
+      0
+   );
 }
 
 static void handle_cond(tree_t *t) {
+   /* COND NODE STRUCTURE
+         [0] = lhs -> p1 | p2 | (p3 -> const)
+         [1] = negate | affirm
+         [2] = eq | (ineq -> gt | lt)
+         [3] = rhs -> const
+      EXAMPLE
+         !(lhs < rhs)
+         lhs == rhs */
 
+   tree_t *lhs_child, *rhs_child;
+   node_t *node, *p, *op, *mode;
+   irvar_t var;
+   irinst_t comp;
+
+   /* Prepares left constant */
+   lhs_child = tree_child(tree_child(t, 0), 0);
+   p = tree_dat(lhs_child);
+
+   if (p->kind == NODEKIND_P1 || p->kind == NODEKIND_P2) {
+      graft_tree_n(
+         curr_block,
+         IrinstPush,
+         IrnodekindInst,
+         0,
+         0
+      );
+      var = p->kind == NODEKIND_P1 ? IrvarTeller : IrvarHearer;
+      graft_tree_n(
+         curr_block,
+         var,
+         IrnodekindVar,
+         0,
+         0
+      );
+   }
+   /* NODEKIND_P3 */
+   else resolve_const(tree_child(lhs_child, 0));
+
+   /* Prepares right constant */
+   rhs_child = tree_child(tree_child(t, 3), 0);
+   resolve_const(rhs_child);
+
+   /* Determines ==, <, or > */
+   op = tree_chdat(t, 2);
+   switch (op->kind) {
+      case NODEKIND_LT: comp = IrinstLt; break;
+      case NODEKIND_EQ: comp = IrinstEqual; break;
+      case NODEKIND_GT: comp = IrinstGt; break;
+      /* control never reaches here */
+      default: comp = IrinstUnknown;
+   }
+
+   /* Generates the comparison */
+   node = tree_dat(t);
+   set_operands();
+   graft_tree_n(
+      curr_block,
+      comp,
+      IrnodekindInst,
+      node->lnum,
+      node->lpos
+   );
+   graft_tree_n(
+      curr_block,
+      IrvarOperandL,
+      IrnodekindVar,
+      0,
+      0
+   );
+   graft_tree_n(
+      curr_block,
+      IrvarOperandR,
+      IrnodekindVar,
+      0,
+      0
+   );
+
+   /* Generates ! optionally */
+   mode = tree_chdat(t, 1);
+   if (mode->kind == NODEKIND_AFFIRM)
+      return;  /* early return */
+   graft_tree_n(
+      curr_block,
+      IrinstNegate,
+      IrnodekindInst,
+      node->lnum,
+      node->lpos
+   );
 }
 
 static void handle_if(tree_t *t) {
@@ -140,7 +364,8 @@ static void handle_if(tree_t *t) {
    switch (mode->kind) {
       case NODEKIND_AFFIRM: jump = IrinstJumpF; break;
       case NODEKIND_NEGATE: jump = IrinstJumpT; break;
-      default: ;  /* control never reaches here */
+      /* control never reaches here */
+      default: jump = IrinstUnknown;
    }
    ifdat = tree_dat(t);
    graft_tree_n(
@@ -151,7 +376,7 @@ static void handle_if(tree_t *t) {
       ifdat->lpos
    );
    my_cnt = ++labelcnt;  /* labelcnt updated */
-   graft_tree_n(curr_block, my_cnt, IrnodekindLabelNum, 0, 0);
+   graft_tree_n(curr_block, my_cnt, IrnodekindData, 0, 0);
 
    /* Example IR - "if not, recall your shiny proud!"
       .L1:
@@ -167,10 +392,10 @@ static void handle_if(tree_t *t) {
    switch (stmtdat->kind) {
       case NODEKIND_ASGN1  : /* fall-through */
       case NODEKIND_ASGN2  : handle_asgn(stmt); break;
-      case NODEKIND_OUT_N  : handle_outn(stmt); break;
-      case NODEKIND_OUT_C  : handle_outc(stmt); break;
-      case NODEKIND_IN_N   : handle_inn (stmt); break;
-      case NODEKIND_IN_C   : handle_inc (stmt); break;
+      case NODEKIND_OUT_N  : handle_io(t, IrinstOutN); break;
+      case NODEKIND_OUT_C  : handle_io(t, IrinstOutC); break;
+      case NODEKIND_IN_N   : handle_io(t, IrinstInN ); break;
+      case NODEKIND_IN_C   : handle_io(t, IrinstInC ); break;
       case NODEKIND_GOTO   : handle_goto(stmt); break;
       case NODEKIND_COND   : handle_cond(stmt); break;
       case NODEKIND_PUSH   : handle_push(stmt); break;
@@ -187,11 +412,34 @@ static void handle_if(tree_t *t) {
 }
 
 static void handle_push(tree_t *t) {
+   tree_t *c;
+   node_t *node;
+   irnode_t *irnode;
+   size_t len, instidx;
 
+   c = tree_child(t, 0);
+   resolve_const(c);  /* ... PUSH const */
+
+   /* Replaces PUSH with <inst> */
+   len = tree_clen(curr_block);
+   instidx = len - 2;
+
+   node = tree_dat(t);
+   irnode = tree_chdat(curr_block, instidx);
+   irnode->dat.n = IrinstRememb;
+   irnode->lnum = node->lnum;
+   irnode->lpos = node->lpos;
 }
 
 static void handle_pop(tree_t *t) {
-
+   node_t *n = tree_dat(t);
+   graft_tree_n(
+      curr_block,
+      IrinstRecall,
+      IrnodekindInst,
+      n->lnum,
+      n->lpos
+   );
 }
 
 static void resolve_const(tree_t *t) {
@@ -249,7 +497,8 @@ static void resolve_unary_op(tree_t *t, irinst_t inst) {
    tree_t *c;
    node_t *op;
 
-   c = tree_child(tree_child(t, 0), 0);
+   /* operator -> const */
+   c = tree_child(t, 0);
    resolve_const(c);
 
    /* Generates 'POP operand_left */
@@ -274,6 +523,7 @@ static void resolve_binary_op(tree_t *t, irinst_t inst) {
    tree_t *lc, *rc;
    node_t *op;
 
+   /* operator -> lhs / rhs -> const */
    lc = tree_child(tree_child(t, 0), 0);
    rc = tree_child(tree_child(t, 1), 0);
 
@@ -283,15 +533,10 @@ static void resolve_binary_op(tree_t *t, irinst_t inst) {
    /* Generates
          POP operand_right
          POP operand_left */
-
-   graft_tree_n(curr_block, IrinstPop, IrnodekindInst, 0, 0);
-   graft_tree_n(curr_block, IrvarOperandR, IrnodekindVar, 0, 0);
-   graft_tree_n(curr_block, IrinstPop, IrnodekindInst, 0, 0);
-   graft_tree_n(curr_block, IrvarOperandL, IrnodekindVar, 0, 0);
-
-   op = tree_dat(t);
+   set_operands();
 
    /* Generates '<inst> const left right' */
+   op = tree_dat(t);
    graft_tree_n(
       curr_block,
       inst,
@@ -348,9 +593,18 @@ static void resolve_noun(tree_t *t) {
          kind = IrnodekindPerson;
       break;
 
-      default: ;  /* control never reaches here */
+      default:  /* control never reaches here */
+         val = -1;
+         kind = IrnodekindUnknown;
    }
    graft_tree_n(curr_block, val, kind, 0, 0);
+}
+
+static void set_operands(void) {
+   graft_tree_n(curr_block, IrinstPop, IrnodekindInst, 0, 0);
+   graft_tree_n(curr_block, IrvarOperandR, IrnodekindVar, 0, 0);
+   graft_tree_n(curr_block, IrinstPop, IrnodekindInst, 0, 0);
+   graft_tree_n(curr_block, IrvarOperandL, IrnodekindVar, 0, 0);
 }
 
 static tree_t *plant_tree(
@@ -369,7 +623,7 @@ static tree_t *plant_tree(
    }
    else buf = NULL;
 
-   node.datkind = DATKIND_STR;
+   node.datkind = IrnodeDatkindStr;
    node.dat.s.run = buf;
    node.dat.s.len = len;
    node.kind = kind;
@@ -401,7 +655,7 @@ static tree_t *graft_tree_n(
    irnode_t node;
    tree_t *sub;
 
-   node.datkind = DATKIND_INT;
+   node.datkind = IrnodeDatkindInt;
    node.dat.n = val;
    node.kind = kind;
    node.lnum = lnum;

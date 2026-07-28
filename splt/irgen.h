@@ -3,6 +3,7 @@
 
 /* IR Symbol Kind */
 typedef enum irnodekind {
+   IrnodekindUnknown,
    IrnodekindRoot,
    IrnodekindAct,
    IrnodekindScene,
@@ -11,13 +12,13 @@ typedef enum irnodekind {
    IrnodekindVar,
    IrnodekindPerson,
    IrnodekindConst,
-   IrnodekindLabelNum
+   IrnodekindData
 } irnodekind_t;
 
 typedef struct irnode {
    enum {
-      DATKIND_INT,
-      DATKIND_STR
+      IrnodeDatkindInt,
+      IrnodeDatkindStr
    } datkind;
    union {
       int n;
@@ -40,6 +41,7 @@ typedef enum irvar {
 } irvar_t;
 
 typedef enum irinst {
+   IrinstUnknown,
    IrinstSet,     /* SET <var> <value> */
    IrinstEnter,   /* ENTER <character> */
    IrinstExit,
@@ -68,7 +70,8 @@ typedef enum irinst {
    IrinstRememb,
    IrinstRecall,
    IrinstJumpT,
-   IrinstJumpF
+   IrinstJumpF,
+   IrinstNegate
 } irinst_t;
 
 void irgenerate(void);

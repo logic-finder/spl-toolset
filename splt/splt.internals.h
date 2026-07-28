@@ -12,7 +12,7 @@
 #include "argparse.h"
 #include "ctxcheck.h"
 #include "dbhandler.h"
-// #include "irgen.h"
+#include "irgen.h"
 #include "transpile.h"
 #include "typecheck.h"
 #include "colorcode.h"
