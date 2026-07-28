@@ -82,6 +82,7 @@ static void generate(tree_t *t, int _) {
       case NODEKIND_PUSH   : gen_push  (t); break;
       case NODEKIND_POP    : gen_pop   (t); break;
       /* NODEKIND__DEPEND falls here; see `gen_if` */
+      /* const and operators also falls here */
       default : return;
    }
 }

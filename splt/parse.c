@@ -1242,8 +1242,8 @@ static tree_t *plant_tree(
    char *buf;
 
    if (run) {
-      buf = smalloc(len);  /* already has a room for 0 */
-      strcpy(buf, run);
+      buf = smalloc(len);  /* already has a room for \0 */
+      memcpy(buf, run, len);
    }
    else buf = NULL;
 
@@ -1263,14 +1263,11 @@ static tree_t *graft_tree_s(
    int len,
    nodekind_t kind
 ) {
-   tree_t *sub;
-
-   sub = plant_tree(
-      run,
-      len,
-      kind,
-      tok->lnum,
-      tok->lpos
+   // fixme: consider not to rely on tok
+   // 매개변수로 lnum lpos 받기
+   tree_t *sub = plant_tree(
+      run, len, kind,
+      tok->lnum, tok->lpos
    );
 
    return tree_graft(base, sub);
@@ -1278,16 +1275,16 @@ static tree_t *graft_tree_s(
 
 static tree_t *graft_tree_n(
    tree_t *base,
-   int num,
+   int val,
    nodekind_t kind
 ) {
    node_t node;
    tree_t *sub;
 
    node.datkind = DATKIND_INT;
-   node.dat.n = num;
+   node.dat.n = val;
    node.kind = kind;
-   node.lnum = tok->lnum;
+   node.lnum = tok->lnum; // fixme: 매개변수로 lnum lpos 받기
    node.lpos = tok->lpos;
    sub = tree_plant(&node, sizeof node);
 

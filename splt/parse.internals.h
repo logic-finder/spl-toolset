@@ -141,7 +141,7 @@ static tree_t *graft_tree_s(
 );
 static tree_t *graft_tree_n(
    tree_t *base,
-   int num,
+   int val,
    nodekind_t kind
 );
 

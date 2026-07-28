@@ -5,6 +5,7 @@
 #include "tree.adt.h"
 #include "argparse.h"
 
+// fixme: rename meaningfully
 #define TREE_CHDAT(t,i) ((node_t *) tree_chdat((t),(i)))
 
 typedef enum nodekind {

@@ -52,9 +52,9 @@ extern char *extfnm(const char *src, bool ext_flag) {
 
    // Handle the case 1 and 2
    if (dpos == -1)
-      strcpy(dest, src);
+      strcpy(dest, src); // fixme: consider memcpy
    else
-      strcpy(dest, &src[dpos + 1]);
+      strcpy(dest, &src[dpos + 1]); // fixme: consider memcpy
 
    // Requested to keep the extension?
    if (ext_flag)
@@ -101,7 +101,7 @@ extern char **split(
       if (!fin) {
          int rest = strlen(ini);
          buf = smalloc(rest + 1);
-         strcpy(buf, ini);
+         strcpy(buf, ini); // fixme: consider memcpy
       }
       else {
          ptrdiff_t diff = fin - ini;
@@ -190,7 +190,8 @@ extern void normalize(char *src) {
    }
    buf[strlen(buf) - 1] = '\0';
 
-   end: strcpy(src, buf);
+end:
+   strcpy(src, buf); // fixme: consider memcpy
    free(buf);
 }
 

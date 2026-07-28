@@ -171,7 +171,7 @@ static void typecheck_noun(node_t *n) {
    n->kind = kind;
    return;
 
-   handle_noun:
+handle_noun:
    ret = query_noun(n->dat.s.run, &val);
    if (!ret) {
       reason = msgs.err.sem.bad_noun;
@@ -226,6 +226,7 @@ static bool is_rnum(const char *rnum) {
       rnum += nlen;
    }
 
+   // fixme: remove ==, true, false
    return strlen(rnum) == 0 ? true : false;
 }
 

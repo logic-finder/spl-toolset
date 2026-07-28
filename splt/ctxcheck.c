@@ -20,11 +20,11 @@ static void ctxcheck_router(tree_t *t, int _) {
    }
 }
 
-static void ctxcheck_act(tree_t *t) {
+static inline void ctxcheck_act(tree_t *t) {
    act = t;
 }
 
-static void ctxcheck_scene(tree_t *t) {
+static inline void ctxcheck_scene(tree_t *t) {
    scene = t;
 }
 

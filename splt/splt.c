@@ -50,6 +50,9 @@ int main(int argc, const char **argv) {
    // generate_ir(&of, &ov);
    // fmtwrt(" " Cbgreen "done!" Creset "\n");
 
+   // (optional) optimizing IR...
+
+   // or compiling...
    // sfputs(stdout, ENPREFIX "transpiling...");
    // transpile(&of, &ov);
    // fmtwrt(" " Cbgreen "done!" Creset "\n");

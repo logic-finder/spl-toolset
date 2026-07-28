@@ -61,7 +61,7 @@ static void work_template(
       + strlen(prefix)
       + 1
    );
-   strcpy(destname, srcname);
+   strcpy(destname, srcname); // fixme: consider memcpy
    strcat(destname, prefix);
    dest = sfopen(destname, "wb");
 

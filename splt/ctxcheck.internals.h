@@ -9,8 +9,8 @@
 typedef void ctxchecker_t(tree_t *t);
 
 static tree_callback_t ctxcheck_router;
-static ctxchecker_t ctxcheck_act;
-static ctxchecker_t ctxcheck_scene;
+static inline ctxchecker_t ctxcheck_act;
+static inline ctxchecker_t ctxcheck_scene;
 static ctxchecker_t ctxcheck_goto;
 
 static void print_err(node_t *n);

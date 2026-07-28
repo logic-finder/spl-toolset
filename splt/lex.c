@@ -64,7 +64,7 @@ static void store_string(arr_t *toks, tokkind_t kind) {
    buf[idx] = '\0';
    len = idx + 1;
    run = smalloc(len);
-   strcpy(run, buf);
+   strcpy(run, buf); // fixme: consider memcpy
 
    tok.run = run;
    tok.len = len;
