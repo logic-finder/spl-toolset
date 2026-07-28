@@ -26,6 +26,11 @@ static arr_iterator_t print_token;
 static tree_callback_t print_node;
 static const char *nodekind2str(nodekind_t kind);
 
+static tree_callback_t print_irnode;
+static const char *irnodekind2str(irnodekind_t kind);
+static const char *irnodekindvar2str(irvar_t var);
+static const char *irnodekindinst2str(irinst_t inst);
+
 /*********************
  * External Variable *
  *********************/

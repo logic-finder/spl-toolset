@@ -5,9 +5,21 @@ extern void irgenerate(void) {
    tree_t *nrtv;
 
    nrtv = tree_child(pt, 2);
-   irroot = plant_tree(NULL, 0, IrnodekindRoot, 0, 0);
-   // set dpsz
+   irt = plant_tree(NULL, 0, IrnodekindRoot, 0, 0);
+   set_dpsz();
    tree_pre_traverse(nrtv, route, 0);
+}
+
+static void set_dpsz(void) {
+   tree_t *dp;
+   int dpsz;
+
+   dp = tree_child(pt, 1);
+   dpsz = tree_clen(dp);
+
+   graft_tree_n(irt, IrinstSet, IrnodekindInst, 0, 0);
+   graft_tree_n(irt, IrvarDpsz, IrnodekindVar, 0, 0);
+   graft_tree_n(irt, dpsz, IrnodekindData, 0, 0);
 }
 
 static void route(tree_t *t, int lv) {
@@ -45,7 +57,7 @@ static void handle_act(tree_t *t) {
    romnum = tree_chdat(t, 0);
 
    curr_act = graft_tree_s(
-      irroot,
+      irt,
       romnum->dat.s.run,
       romnum->dat.s.len,
       IrnodekindAct,
@@ -61,7 +73,7 @@ static void handle_scene(tree_t *t) {
    romnum = tree_chdat(t, 0);
 
    curr_scene = graft_tree_s(
-      irroot,
+      curr_act,
       romnum->dat.s.run,
       romnum->dat.s.len,
       IrnodekindScene,

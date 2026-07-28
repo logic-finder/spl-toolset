@@ -7,6 +7,7 @@
 
 typedef void handler_t(tree_t *t);
 
+static void set_dpsz(void);
 static tree_callback_t route;
 static handler_t handle_act;
 static handler_t handle_scene;
@@ -54,7 +55,8 @@ static tree_t *graft_tree_n(
 
 static void add_block(int n);
 
-static tree_t *irroot, *curr_act, *curr_scene, *curr_block;
+tree_t *irt;
+static tree_t *curr_act, *curr_scene, *curr_block;
 static int labelcnt;
 
 #endif

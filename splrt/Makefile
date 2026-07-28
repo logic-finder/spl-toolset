@@ -5,8 +5,8 @@ LIBDIR := ../lib
 SHELL := /bin/sh
 
 CC := gcc
-CFLAGS := -O -Wall -W -pedantic
-CFLAGS += -g
+CFLAGS := -Wall -W -pedantic
+CFLAGS += -O0 -g
 CFLAGS += -MMD -MP
 CFLAGS += -fpic
 CPPFLAGS = -I $(LIBDIR)

@@ -89,5 +89,6 @@ extern const char *sfname;   // from optprocessor.c
 extern msg_t msgs;           // from msg.c
 extern arr_t *ls;            // from splt.c
 extern tree_t *pt;           // from splt.c
+extern tree_t *irt;          // from irgen.c
 
 #endif

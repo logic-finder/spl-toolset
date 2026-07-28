@@ -49,6 +49,7 @@ int main(int argc, const char **argv) {
    sfputs(stdout, ENPREFIX "generating IR...");
    irgenerate();
    fmtwrt(" " Cbgreen "done!" Creset "\n");
+   tree_pre_traverse(irt, print_irnode, 0);
 
    // (optional) optimizing IR...
 
@@ -182,4 +183,109 @@ static const char *nodekind2str(nodekind_t kind) {
       default : goto unreachable;
    }
    unreachable: return NULL;
+}
+
+static void print_irnode(tree_t *t, int lv) {
+   static char buf[128];
+
+   irnode_t *n;
+   int cnt, total;
+
+   n = tree_dat(t);
+   cnt = sprintf(buf, "%d", lv);
+   buf[cnt] = '\0';
+   total = lv * strlen("  ");
+   total -= cnt;
+
+   fputs(buf, stdout);
+   for (int i = 0; i < total; i++)
+      putchar(' ');
+
+   printf("[%s] = [", irnodekind2str(n->kind));
+   switch (n->kind) {
+      case IrnodekindVar:
+         printf("%s]\n", irnodekindvar2str(n->dat.n));
+      break;
+
+      case IrnodekindInst:
+         printf("%s]\n", irnodekindinst2str(n->dat.n));
+      break;
+
+      default:
+         if (n->datkind == IrnodeDatkindInt)
+            printf("%d]\n", n->dat.n);
+         else {
+            printf("%s]",
+               n->dat.s.len
+               ? (char *) n->dat.s.run
+               : Cbblack "(empty)" Creset
+            );
+            printf(" " Cbblack "(len = %d)" Creset "\n", n->dat.s.len);
+         }
+   }
+}
+
+static const char *irnodekind2str(irnodekind_t kind) {
+   switch (kind) {
+      case IrnodekindUnknown : return "__UNKNOWN__";
+      case IrnodekindRoot    : return "ROOT";
+      case IrnodekindAct     : return "ACT";
+      case IrnodekindScene   : return "SCENE";
+      case IrnodekindBlock   : return "BLOCK";
+      case IrnodekindInst    : return "INSTRUCTION";
+      case IrnodekindVar     : return "VARIABLE";
+      case IrnodekindPerson  : return "PERSON";
+      case IrnodekindConst   : return "CONST";
+      case IrnodekindData    : return "DATA";
+      default: return NULL;
+   }
+}
+
+static const char *irnodekindvar2str(irvar_t var) {
+   switch (var) {
+      case IrvarDpsz     : return "dpsz";
+      case IrvarTeller   : return "teller";
+      case IrvarHearer   : return "hearer";
+      case IrvarConst    : return "const";
+      case IrvarOperandL : return "operand_l";
+      case IrvarOperandR : return "operand_r";
+      default: return NULL;
+   }
+}
+
+static const char *irnodekindinst2str(irinst_t inst) {
+   switch (inst) {
+      case IrinstUnknown : return "__UNKNOWN__";
+      case IrinstSet     : return "SET";
+      case IrinstEnter   : return "ENTER";
+      case IrinstExit    : return "EXIT";
+      case IrinstExeunt  : return "EXEUNT";
+      case IrinstSpeak   : return "SPEAK";
+      case IrinstPush    : return "PUSH";
+      case IrinstPop     : return "POP";
+      case IrinstSum     : return "SUM";
+      case IrinstDiff    : return "DIFF";
+      case IrinstProd    : return "PROD";
+      case IrinstQuot    : return "QUOT";
+      case IrinstRem     : return "REM";
+      case IrinstSqrt    : return "SQRT";
+      case IrinstSqur    : return "SQUR";
+      case IrinstCube    : return "CUBE";
+      case Irinst2x      : return "2X";
+      case IrinstFact    : return "FACT";
+      case IrinstOutN    : return "OUT_N";
+      case IrinstOutC    : return "OUT_C";
+      case IrinstInN     : return "IN_N";
+      case IrinstInC     : return "IN_C";
+      case IrinstGoto    : return "GOTO";
+      case IrinstEqual   : return "EQUAL";
+      case IrinstGt      : return "GT";
+      case IrinstLt      : return "LT";
+      case IrinstRememb  : return "REMEMBER";
+      case IrinstRecall  : return "RECALL";
+      case IrinstJumpT   : return "JUMPTRUE";
+      case IrinstJumpF   : return "JUMPFALSE";
+      case IrinstNegate  : return "NEGATE";
+      default: return NULL;
+   }
 }

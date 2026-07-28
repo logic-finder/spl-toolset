@@ -1,0 +1,4 @@
+#ifndef IRDUMP_INTERNALS_H
+#define IRDUMP_INTERNALS_H
+
+#endif

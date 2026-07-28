@@ -16,7 +16,7 @@ static void ctxcheck_router(tree_t *t, int _) {
       case NODEKIND_ACT   : ctxcheck_act  (t); break;
       case NODEKIND_SCENE : ctxcheck_scene(t); break;
       case NODEKIND_GOTO  : ctxcheck_goto (t); break;
-      default : ;
+      default: ;
    }
 }
 
@@ -31,20 +31,21 @@ static inline void ctxcheck_scene(tree_t *t) {
 static void ctxcheck_goto(tree_t *t) {
    const tree_t *root, *root_child;
    const char *romnum, *against;
-   node_t *n;
-   int mark, root_len;
+   node_t *node;
+   int i, root_len;
+   nodekind_t mark;
 
-   n = tree_dat(t);
-   mark = n->dat.n;
+   node = tree_dat(t);
+   mark = node->dat.n;
    romnum = TREE_CHDAT(t, 0)->dat.s.run;
 
    if (mark == NODEKIND_ACT)
-      root = nrtv;  /* root_child is NODEKIND_ACT   */
+      i = 0, root = nrtv;  /* root_child = NODEKIND_ACT */
    else  /* Scene */
-      root = act;   /* root_child is NODEKIND_SCENE */
+      i = 1, root = act;   /* root_child = NODEKIND_SCENE */
 
    root_len = tree_clen(root);
-   for (int i = 1; i < root_len; i++) {  /* [0] = NODEKIND_ROMNUM */
+   for ( ; i < root_len; i++) {
       root_child = tree_child(root, i);
       against = TREE_CHDAT(root_child, 0)->dat.s.run;
       if (!strcmp(romnum, against))
@@ -55,7 +56,7 @@ static void ctxcheck_goto(tree_t *t) {
       reason = msgs.err.sem.no_such_act;
    else
       reason = msgs.err.sem.no_such_scene;
-   semerr_unknown_label(n, romnum);
+   semerr_unknown_label(node, romnum);
 }
 
 static void print_err(node_t *n) {
