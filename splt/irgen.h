@@ -40,39 +40,39 @@ typedef enum irvar {
    IrvarOperandR   /* operator right operand */
 } irvar_t;
 
-typedef enum irinst {
-   IrinstUnknown,
-   IrinstSet,     /* SET <var> <value> */
-   IrinstEnter,   /* ENTER <character> */
-   IrinstExit,
-   IrinstExeunt,
-   IrinstSpeak,
-   IrinstPush,
-   IrinstPop,
-   IrinstSum,
-   IrinstDiff,
-   IrinstProd,
-   IrinstQuot,
-   IrinstRem,
-   IrinstSqrt,
-   IrinstSqur,
-   IrinstCube,
-   Irinst2x,
-   IrinstFact,
-   IrinstOutN,
-   IrinstOutC,
-   IrinstInN,
-   IrinstInC,
-   IrinstGoto,
-   IrinstEqual,
-   IrinstGt,
-   IrinstLt,
-   IrinstRememb,
-   IrinstRecall,
-   IrinstJumpT,
-   IrinstJumpF,
-   IrinstNegate
-} irinst_t;
+typedef enum iropcode {
+   IropcodeUnknown,
+   IropcodeSet,     /* SET <var> <value> */
+   IropcodeEnter,   /* ENTER <character> */
+   IropcodeExit,
+   IropcodeExeunt,
+   IropcodeSpeak,
+   IropcodePush,
+   IropcodePop,
+   IropcodeSum,
+   IropcodeDiff,
+   IropcodeProd,
+   IropcodeQuot,
+   IropcodeRem,
+   IropcodeSqrt,
+   IropcodeSqur,
+   IropcodeCube,
+   Iropcode2x,
+   IropcodeFact,
+   IropcodeOutN,
+   IropcodeOutC,
+   IropcodeInN,
+   IropcodeInC,
+   IropcodeGoto,
+   IropcodeEqual,
+   IropcodeGt,
+   IropcodeLt,
+   IropcodeRememb,
+   IropcodeRecall,
+   IropcodeJumpT,
+   IropcodeJumpF,
+   IropcodeNegate
+} iropcode_t;
 
 void irgenerate(void);
 

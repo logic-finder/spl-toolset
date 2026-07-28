@@ -253,39 +253,39 @@ static const char *irnodekindvar2str(irvar_t var) {
    }
 }
 
-static const char *irnodekindinst2str(irinst_t inst) {
+static const char *irnodekindinst2str(iropcode_t inst) {
    switch (inst) {
-      case IrinstUnknown : return "__UNKNOWN__";
-      case IrinstSet     : return "SET";
-      case IrinstEnter   : return "ENTER";
-      case IrinstExit    : return "EXIT";
-      case IrinstExeunt  : return "EXEUNT";
-      case IrinstSpeak   : return "SPEAK";
-      case IrinstPush    : return "PUSH";
-      case IrinstPop     : return "POP";
-      case IrinstSum     : return "SUM";
-      case IrinstDiff    : return "DIFF";
-      case IrinstProd    : return "PROD";
-      case IrinstQuot    : return "QUOT";
-      case IrinstRem     : return "REM";
-      case IrinstSqrt    : return "SQRT";
-      case IrinstSqur    : return "SQUR";
-      case IrinstCube    : return "CUBE";
-      case Irinst2x      : return "2X";
-      case IrinstFact    : return "FACT";
-      case IrinstOutN    : return "OUT_N";
-      case IrinstOutC    : return "OUT_C";
-      case IrinstInN     : return "IN_N";
-      case IrinstInC     : return "IN_C";
-      case IrinstGoto    : return "GOTO";
-      case IrinstEqual   : return "EQUAL";
-      case IrinstGt      : return "GT";
-      case IrinstLt      : return "LT";
-      case IrinstRememb  : return "REMEMBER";
-      case IrinstRecall  : return "RECALL";
-      case IrinstJumpT   : return "JUMPTRUE";
-      case IrinstJumpF   : return "JUMPFALSE";
-      case IrinstNegate  : return "NEGATE";
+      case IropcodeUnknown : return "__UNKNOWN__";
+      case IropcodeSet     : return "SET";
+      case IropcodeEnter   : return "ENTER";
+      case IropcodeExit    : return "EXIT";
+      case IropcodeExeunt  : return "EXEUNT";
+      case IropcodeSpeak   : return "SPEAK";
+      case IropcodePush    : return "PUSH";
+      case IropcodePop     : return "POP";
+      case IropcodeSum     : return "SUM";
+      case IropcodeDiff    : return "DIFF";
+      case IropcodeProd    : return "PROD";
+      case IropcodeQuot    : return "QUOT";
+      case IropcodeRem     : return "REM";
+      case IropcodeSqrt    : return "SQRT";
+      case IropcodeSqur    : return "SQUR";
+      case IropcodeCube    : return "CUBE";
+      case Iropcode2x      : return "2X";
+      case IropcodeFact    : return "FACT";
+      case IropcodeOutN    : return "OUT_N";
+      case IropcodeOutC    : return "OUT_C";
+      case IropcodeInN     : return "IN_N";
+      case IropcodeInC     : return "IN_C";
+      case IropcodeGoto    : return "GOTO";
+      case IropcodeEqual   : return "EQUAL";
+      case IropcodeGt      : return "GT";
+      case IropcodeLt      : return "LT";
+      case IropcodeRememb  : return "REMEMBER";
+      case IropcodeRecall  : return "RECALL";
+      case IropcodeJumpT   : return "JUMPTRUE";
+      case IropcodeJumpF   : return "JUMPFALSE";
+      case IropcodeNegate  : return "NEGATE";
       default: return NULL;
    }
 }

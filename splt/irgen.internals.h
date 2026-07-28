@@ -16,15 +16,15 @@ static handler_t handle_exit;
 static handler_t handle_exeunt;
 static handler_t handle_line;
 static handler_t handle_asgn;
-static void handle_io(tree_t *t, irinst_t inst);
+static void handle_io(tree_t *t, iropcode_t inst);
 static handler_t handle_goto;
 static handler_t handle_cond;
 static handler_t handle_if;
 static handler_t handle_push;
 static handler_t handle_pop;
 static void resolve_const(tree_t *t);
-static void resolve_unary_op(tree_t *t, irinst_t inst);
-static void resolve_binary_op(tree_t *t, irinst_t inst);
+static void resolve_unary_op(tree_t *t, iropcode_t inst);
+static void resolve_binary_op(tree_t *t, iropcode_t inst);
 static void resolve_noun(tree_t *t);
 static void set_operands(void);
 
