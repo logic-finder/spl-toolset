@@ -26,5 +26,6 @@ int tree_clen(const tree_t *t);
 void *tree_dat(const tree_t *t);
 tree_t *tree_child(const tree_t *t, int idx);
 void *tree_chdat(const tree_t *t, int idx);
+tree_t *tree_parent(const tree_t *t);
 
 #endif

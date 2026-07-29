@@ -71,6 +71,8 @@ extern char *extfnm(const char *src, bool ext_flag) {
 // split하면 구분자도 있어야되는데 구분자 포함 안되는 구현이기 때문에
 // 함수명을 바꾸든지 해야할듯
 // 구분자도 포함하려면 ini=fin, ini=fin=fin+marklen을 ='\0' 밑에 각각 배치
+// ㄴㄴㄴ 이게올바른동작 맞음
+// fixme: do while 도입
 extern char **split(
    const char * restrict src,
    const char * restrict mark,

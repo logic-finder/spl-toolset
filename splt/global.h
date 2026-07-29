@@ -82,6 +82,8 @@
 #define KEYWRD_RETURN "return"
 #define KEYWRD_PROCED "proceed"
 
+#define IR_EXTENSION ".splasm"
+
 /**********************
  * EXTERNAL VARIABLES *
  **********************/

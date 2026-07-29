@@ -44,14 +44,18 @@ int main(int argc, const char **argv) {
    sfputs(stdout, ENPREFIX "context-checking...");
    ctxcheck(&of, &ov);
    fmtwrt(" " Cbgreen "done!" Creset "\n");
-   // tree_pre_traverse(pt, print_node, 0);
+   tree_pre_traverse(pt, print_node, 0);
 
    sfputs(stdout, ENPREFIX "generating IR...");
    irgenerate();
    fmtwrt(" " Cbgreen "done!" Creset "\n");
-   tree_pre_traverse(irt, print_irnode, 0);
+   // tree_pre_traverse(irt, print_irnode, 0);
 
    // (optional) optimizing IR...
+
+   sfputs(stdout, ENPREFIX "dumping IR...");
+   irdump();
+   fmtwrt(" " Cbgreen "done!" Creset "\n");
 
    // or compiling...
    // sfputs(stdout, ENPREFIX "transpiling...");
@@ -207,8 +211,8 @@ static void print_irnode(tree_t *t, int lv) {
          printf("%s]\n", irnodekindvar2str(n->dat.n));
       break;
 
-      case IrnodekindInst:
-         printf("%s]\n", irnodekindinst2str(n->dat.n));
+      case IrnodekindOpcode:
+         printf("%s]\n", irnodekindopcode2str(n->dat.n));
       break;
 
       default:
@@ -232,7 +236,7 @@ static const char *irnodekind2str(irnodekind_t kind) {
       case IrnodekindAct     : return "ACT";
       case IrnodekindScene   : return "SCENE";
       case IrnodekindBlock   : return "BLOCK";
-      case IrnodekindInst    : return "INSTRUCTION";
+      case IrnodekindOpcode  : return "INSTRUCTION";
       case IrnodekindVar     : return "VARIABLE";
       case IrnodekindPerson  : return "PERSON";
       case IrnodekindConst   : return "CONST";
@@ -253,8 +257,8 @@ static const char *irnodekindvar2str(irvar_t var) {
    }
 }
 
-static const char *irnodekindinst2str(iropcode_t inst) {
-   switch (inst) {
+static const char *irnodekindopcode2str(iropcode_t opcode) {
+   switch (opcode) {
       case IropcodeUnknown : return "__UNKNOWN__";
       case IropcodeSet     : return "SET";
       case IropcodeEnter   : return "ENTER";
@@ -271,17 +275,17 @@ static const char *irnodekindinst2str(iropcode_t inst) {
       case IropcodeSqrt    : return "SQRT";
       case IropcodeSqur    : return "SQUR";
       case IropcodeCube    : return "CUBE";
-      case Iropcode2x      : return "2X";
+      case Iropcode2x      : return "2x";
       case IropcodeFact    : return "FACT";
       case IropcodeOutN    : return "OUT_N";
       case IropcodeOutC    : return "OUT_C";
       case IropcodeInN     : return "IN_N";
       case IropcodeInC     : return "IN_C";
       case IropcodeGoto    : return "GOTO";
-      case IropcodeEqual   : return "EQUAL";
+      case IropcodeEq      : return "EQ";
       case IropcodeGt      : return "GT";
       case IropcodeLt      : return "LT";
-      case IropcodeRememb  : return "REMEMBER";
+      case IropcodeRememb  : return "REMEMB";
       case IropcodeRecall  : return "RECALL";
       case IropcodeJumpT   : return "JUMPTRUE";
       case IropcodeJumpF   : return "JUMPFALSE";

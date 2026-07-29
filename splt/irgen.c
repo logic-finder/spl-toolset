@@ -26,7 +26,7 @@ static void set_dpsz(void) {
    dpsz = tree_clen(dp);
 
    opcode = graft_tree_n(
-      data_sect, IropcodeSet, IrnodekindInst, 0, 0);
+      data_sect, IropcodeSet, IrnodekindOpcode, 0, 0);
    graft_tree_n(opcode, IrvarDpsz, IrnodekindVar, 0, 0);
    graft_tree_n(opcode, dpsz, IrnodekindData, 0, 0);
 }
@@ -108,7 +108,7 @@ static void handle_enter(tree_t *t) {
       opcode = graft_tree_n(
          curr_block,
          IropcodeEnter,
-         IrnodekindInst,
+         IrnodekindOpcode,
          n->lnum,
          n->lpos
       );
@@ -133,7 +133,7 @@ static void handle_exit(tree_t *t) {
    opcode = graft_tree_n(
       curr_block,
       IropcodeExit,
-      IrnodekindInst,
+      IrnodekindOpcode,
       n->lnum,
       n->lpos
    );
@@ -160,7 +160,7 @@ static void handle_exeunt(tree_t *t) {
       graft_tree_n(
          curr_block,
          IropcodeExeunt,
-         IrnodekindInst,
+         IrnodekindOpcode,
          n->lnum,
          n->lpos
       );
@@ -173,7 +173,7 @@ static void handle_exeunt(tree_t *t) {
       opcode = graft_tree_n(
          curr_block,
          IropcodeEnter,
-         IrnodekindInst,
+         IrnodekindOpcode,
          n->lnum,
          n->lpos
       );
@@ -200,7 +200,7 @@ static void handle_line(tree_t *t) {
    opcode = graft_tree_n(
       curr_block,
       IropcodeSpeak,
-      IrnodekindInst,
+      IrnodekindOpcode,
       dat->lnum,
       dat->lpos
    );
@@ -225,20 +225,20 @@ static void handle_asgn(tree_t *t) {
    opcode = graft_tree_n(
       curr_block,
       IropcodePop,
-      IrnodekindInst,
+      IrnodekindOpcode,
       n->lnum,
       n->lpos
    );
    graft_tree_n(opcode, IrvarHearer, IrnodekindVar, 0, 0);
 }
 
-static void handle_io(tree_t *t, iropcode_t inst) {
-   /* Generates '<inst>' */
+static void handle_io(tree_t *t, iropcode_t opcode) {
+   /* Generates '<opcode>' */
    node_t *n = tree_dat(t);
    graft_tree_n(
       curr_block,
-      inst,
-      IrnodekindInst,
+      opcode,
+      IrnodekindOpcode,
       n->lnum,
       n->lpos
    );
@@ -258,7 +258,7 @@ static void handle_goto(tree_t *t) {
    opcode = graft_tree_n(
       curr_block,
       IropcodeGoto,
-      IrnodekindInst,
+      IrnodekindOpcode,
       node->lnum,
       node->lpos
    );
@@ -299,7 +299,7 @@ static void handle_cond(tree_t *t) {
       opcode = graft_tree_n(
          curr_block,
          IropcodePush,
-         IrnodekindInst,
+         IrnodekindOpcode,
          0,
          0
       );
@@ -323,7 +323,7 @@ static void handle_cond(tree_t *t) {
    op = tree_chdat(t, 2);
    switch (op->kind) {
       case NODEKIND_LT: comp = IropcodeLt; break;
-      case NODEKIND_EQ: comp = IropcodeEqual; break;
+      case NODEKIND_EQ: comp = IropcodeEq; break;
       case NODEKIND_GT: comp = IropcodeGt; break;
       /* control never reaches here */
       default: comp = IropcodeUnknown;
@@ -335,7 +335,7 @@ static void handle_cond(tree_t *t) {
    opcode = graft_tree_n(
       curr_block,
       comp,
-      IrnodekindInst,
+      IrnodekindOpcode,
       node->lnum,
       node->lpos
    );
@@ -361,7 +361,7 @@ static void handle_cond(tree_t *t) {
    graft_tree_n(
       curr_block,
       IropcodeNegate,
-      IrnodekindInst,
+      IrnodekindOpcode,
       node->lnum,
       node->lpos
    );
@@ -394,7 +394,7 @@ static void handle_if(tree_t *t) {
    opcode = graft_tree_n(
       curr_block,
       jump,
-      IrnodekindInst,
+      IrnodekindOpcode,
       ifdat->lnum,
       ifdat->lpos
    );
@@ -459,7 +459,7 @@ static void handle_pop(tree_t *t) {
    graft_tree_n(
       curr_block,
       IropcodeRecall,
-      IrnodekindInst,
+      IrnodekindOpcode,
       n->lnum,
       n->lpos
    );
@@ -498,27 +498,28 @@ static void resolve_const(tree_t *t) {
    /* Generates 'SET const (1 | -1)' */
    resolve_noun(noun);
 
-   /* Generates '2X const' */
+   /* Generates '2x const const' */
    for (size_t i = 0; i < clen - 1; i++) {  /* only adjs */
       adjdat = tree_chdat(t, i);
       opcode = graft_tree_n(
          curr_block,
          Iropcode2x,
-         IrnodekindInst,
+         IrnodekindOpcode,
          adjdat->lnum,
          adjdat->lpos
       );
+      graft_tree_n(opcode, IrvarConst, IrnodekindVar, 0, 0);
       graft_tree_n(opcode, IrvarConst, IrnodekindVar, 0, 0);
    }
 
    /* Generates 'PUSH const' */
    opcode = graft_tree_n(
-      curr_block, IropcodePush, IrnodekindInst, 0, 0);
+      curr_block, IropcodePush, IrnodekindOpcode, 0, 0);
    graft_tree_n(opcode, IrvarConst, IrnodekindVar , 0, 0);
 }
 
-static void resolve_unary_op(tree_t *t, iropcode_t inst) {
-   tree_t *c, *opcode;
+static void resolve_unary_op(tree_t *t, iropcode_t opcode) {
+   tree_t *c, *opcode_tree;
    node_t *op;
 
    /* operator -> const */
@@ -526,26 +527,26 @@ static void resolve_unary_op(tree_t *t, iropcode_t inst) {
    resolve_const(c);
 
    /* Generates 'POP operand_left */
-   opcode = graft_tree_n(
-      curr_block, IropcodePop, IrnodekindInst, 0, 0);
-   graft_tree_n(opcode, IrvarOperandL, IrnodekindVar, 0, 0);
+   opcode_tree = graft_tree_n(
+      curr_block, IropcodePop, IrnodekindOpcode, 0, 0);
+   graft_tree_n(opcode_tree, IrvarOperandL, IrnodekindVar, 0, 0);
 
    op = tree_dat(t);
 
-   /* Generates '<inst> const left */
-   opcode = graft_tree_n(
+   /* Generates '<opcode> const left */
+   opcode_tree = graft_tree_n(
       curr_block,
-      inst,
-      IrnodekindInst,
+      opcode,
+      IrnodekindOpcode,
       op->lnum,
       op->lpos
    );
-   graft_tree_n(opcode, IrvarConst, IrnodekindVar, 0, 0);
-   graft_tree_n(opcode, IrvarOperandL, IrnodekindVar, 0, 0);
+   graft_tree_n(opcode_tree, IrvarConst, IrnodekindVar, 0, 0);
+   graft_tree_n(opcode_tree, IrvarOperandL, IrnodekindVar, 0, 0);
 }
 
-static void resolve_binary_op(tree_t *t, iropcode_t inst) {
-   tree_t *lc, *rc, *opcode;
+static void resolve_binary_op(tree_t *t, iropcode_t opcode) {
+   tree_t *lc, *rc, *opcode_tree;
    node_t *op;
 
    /* operator -> lhs / rhs -> const */
@@ -560,18 +561,18 @@ static void resolve_binary_op(tree_t *t, iropcode_t inst) {
          POP operand_left */
    set_operands();
 
-   /* Generates '<inst> const left right' */
+   /* Generates '<opcode> const left right' */
    op = tree_dat(t);
-   opcode = graft_tree_n(
+   opcode_tree = graft_tree_n(
       curr_block,
-      inst,
-      IrnodekindInst,
+      opcode,
+      IrnodekindOpcode,
       op->lnum,
       op->lpos
    );
-   graft_tree_n(opcode, IrvarConst, IrnodekindVar, 0, 0);
-   graft_tree_n(opcode, IrvarOperandL, IrnodekindVar, 0, 0);
-   graft_tree_n(opcode, IrvarOperandR, IrnodekindVar, 0, 0);
+   graft_tree_n(opcode_tree, IrvarConst, IrnodekindVar, 0, 0);
+   graft_tree_n(opcode_tree, IrvarOperandL, IrnodekindVar, 0, 0);
+   graft_tree_n(opcode_tree, IrvarOperandR, IrnodekindVar, 0, 0);
 }
 
 static void resolve_noun(tree_t *t) {
@@ -586,7 +587,7 @@ static void resolve_noun(tree_t *t) {
    opcode = graft_tree_n(
       curr_block,
       IropcodeSet,
-      IrnodekindInst,
+      IrnodekindOpcode,
       node->lnum,
       node->lpos
    );
@@ -630,11 +631,11 @@ static void set_operands(void) {
    tree_t *opcode;
 
    opcode = graft_tree_n(
-      curr_block, IropcodePop, IrnodekindInst, 0, 0);
+      curr_block, IropcodePop, IrnodekindOpcode, 0, 0);
    graft_tree_n(opcode, IrvarOperandR, IrnodekindVar, 0, 0);
 
    opcode = graft_tree_n(
-      curr_block, IropcodePop, IrnodekindInst, 0, 0);
+      curr_block, IropcodePop, IrnodekindOpcode, 0, 0);
    graft_tree_n(opcode, IrvarOperandL, IrnodekindVar, 0, 0);
 }
 

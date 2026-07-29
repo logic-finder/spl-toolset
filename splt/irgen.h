@@ -8,7 +8,7 @@ typedef enum irnodekind {
    IrnodekindAct,
    IrnodekindScene,
    IrnodekindBlock,
-   IrnodekindInst,
+   IrnodekindOpcode,
    IrnodekindVar,
    IrnodekindPerson,
    IrnodekindConst,
@@ -43,35 +43,35 @@ typedef enum irvar {
 typedef enum iropcode {
    IropcodeUnknown,
    IropcodeSet,     /* SET <var> <value> */
-   IropcodeEnter,   /* ENTER <character> */
-   IropcodeExit,
-   IropcodeExeunt,
-   IropcodeSpeak,
-   IropcodePush,
-   IropcodePop,
-   IropcodeSum,
-   IropcodeDiff,
-   IropcodeProd,
-   IropcodeQuot,
-   IropcodeRem,
-   IropcodeSqrt,
-   IropcodeSqur,
-   IropcodeCube,
-   Iropcode2x,
-   IropcodeFact,
-   IropcodeOutN,
-   IropcodeOutC,
-   IropcodeInN,
-   IropcodeInC,
-   IropcodeGoto,
-   IropcodeEqual,
-   IropcodeGt,
-   IropcodeLt,
-   IropcodeRememb,
-   IropcodeRecall,
-   IropcodeJumpT,
-   IropcodeJumpF,
-   IropcodeNegate
+   IropcodeEnter,   /* ENTER <char> */
+   IropcodeExit,    /* EXIT  <char> */
+   IropcodeExeunt,  /* EXEUNT */
+   IropcodeSpeak,   /* SPEAK <char> */
+   IropcodePush,    /* PUSH <var> */
+   IropcodePop,     /* POP  <var> */
+   IropcodeSum,     /* SUM  dest op_l op_r */
+   IropcodeDiff,    /* DIFF dest op_l op_r */
+   IropcodeProd,    /* PROD dest op_l op_r */
+   IropcodeQuot,    /* QUOT dest op_l op_r */
+   IropcodeRem,     /* REM  dest op_l op_r */
+   IropcodeSqrt,    /* SQRT dest op */
+   IropcodeSqur,    /* SQUR dest op */
+   IropcodeCube,    /* CUBE dest op */
+   Iropcode2x,      /* 2x   dest op */
+   IropcodeFact,    /* FACT dest op */
+   IropcodeOutN,    /* OUTN */
+   IropcodeOutC,    /* OUTC */
+   IropcodeInN,     /* INN */
+   IropcodeInC,     /* INC */
+   IropcodeGoto,    /* GOTO <num> <string> */
+   IropcodeEq,      /* EQ op_l op_r */
+   IropcodeGt,      /* GT op_l op_r */
+   IropcodeLt,      /* LT op_l op_r */
+   IropcodeRememb,  /* REMEMB */
+   IropcodeRecall,  /* RECALL */
+   IropcodeJumpT,   /* JUMPTRUE  .Ln */
+   IropcodeJumpF,   /* JUMPFALSE .Ln */
+   IropcodeNegate   /* NEGATE */
 } iropcode_t;
 
 void irgenerate(void);

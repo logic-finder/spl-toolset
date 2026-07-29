@@ -97,3 +97,7 @@ extern tree_t *tree_child(const tree_t *t, int idx) {
 extern void *tree_chdat(const tree_t *t, int idx) {
    return t->children[idx]->dat;
 }
+
+extern tree_t *tree_parent(const tree_t *t) {
+   return t->parent;
+}

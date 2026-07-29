@@ -5,14 +5,15 @@
 #include <string.h>
 #include "msg.h"
 #include "lex.h"
+#include "irgen.h"
 #include "parse.h"
+#include "irdump.h"
 #include "global.h"
 #include "wrappers.h"
 #include "loadfile.h"
 #include "argparse.h"
 #include "ctxcheck.h"
 #include "dbhandler.h"
-#include "irgen.h"
 #include "transpile.h"
 #include "typecheck.h"
 #include "colorcode.h"
@@ -29,7 +30,7 @@ static const char *nodekind2str(nodekind_t kind);
 static tree_callback_t print_irnode;
 static const char *irnodekind2str(irnodekind_t kind);
 static const char *irnodekindvar2str(irvar_t var);
-static const char *irnodekindinst2str(iropcode_t inst);
+static const char *irnodekindopcode2str(iropcode_t opcode);
 
 /*********************
  * External Variable *
