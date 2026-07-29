@@ -975,8 +975,6 @@ static void parse_goto(void) {
       synerr();
    }
 
-   /* Note: NODEKIND value is used to determine
-      where this GOTO heads -- Act or Scene */
    gt = graft_tree_n(line, mark, NODEKIND_GOTO);
 
    gettok();

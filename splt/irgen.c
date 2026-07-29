@@ -253,8 +253,6 @@ static void handle_goto(tree_t *t) {
    type = node->dat.n;
    child = tree_chdat(t, 0);
 
-   /* Note: NODEKIND value is used to determine
-      where this GOTO heads -- Act or Scene */
    opcode = graft_tree_n(
       curr_block,
       IropcodeGoto,

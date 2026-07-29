@@ -6,7 +6,7 @@ int main(int argc, const char **argv) {
    arr_t *toks;
    int lc, wc;
 
-   // Initialize
+   /* Initialize */
    init_msg();
    parse_args(argv, &of, &ov);
    process_opts(argc, &of, &ov);
@@ -19,7 +19,7 @@ int main(int argc, const char **argv) {
 
    dbload();
 
-   // Main logic
+   /* Main Logic */
    sfputs(stdout, ENPREFIX "scanning...");
    toks = lex(&of, &ov, lc);
    fmtwrt(" " Cbgreen "done!" Creset
@@ -65,7 +65,7 @@ int main(int argc, const char **argv) {
    // transpile(&of, &ov);
    // fmtwrt(" " Cbgreen "done!" Creset "\n");
 
-   // Cleanup
+   /* Cleanup */
    tree_post_traverse(pt, cleanup_node, 0, NULL);
    tree_prune(pt);
    unloadfl(ls, lc);
@@ -206,14 +206,12 @@ static const char *nodekind2str(nodekind_t kind) {
       case NODEKIND_CUBE   : return "CUBE";
       case NODEKIND_2X     : return "2X";
       case NODEKIND_FACT   : return "FACT";
-      default : goto unreachable;
+      default: return NULL;   /* unreachable */
    }
-   unreachable: return NULL;
 }
 
 static void print_irnode(tree_t *t, int lv, void *ctx) {
    static char buf[128];
-
    irnode_t *n;
    int cnt, total;
 

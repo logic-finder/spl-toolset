@@ -116,6 +116,36 @@ static void handle_set(tree_t *t) {
    p2 = tree_chdat(t, 1);
 
    if (debug) emit_debug_data(n);
+
+   switch (p2->kind) {
+      case IrnodekindPerson : goto person;
+      case IrnodekindVar    : goto var;
+      default: goto common;
+   }
+
+person:
+   ffmtwrt(
+      fp,
+      "%s%s %s dp[%d]\n",
+      INDENT,
+      resolve_opcode(n->dat.n),
+      resolve_var(p1->dat.n),
+      p2->dat.n
+   );
+   return;
+
+var:
+   ffmtwrt(
+      fp,
+      "%s%s %s %s\n",
+      INDENT,
+      resolve_opcode(n->dat.n),
+      resolve_var(p1->dat.n),
+      resolve_var(p2->dat.n)
+   );
+   return;
+
+common:
    ffmtwrt(
       fp,
       "%s%s %s %d\n",
@@ -167,8 +197,6 @@ static void handle_goto(tree_t *t) {
 
    if (debug) emit_debug_data(n);
 
-   /* Note: NODEKIND value is used to determine
-      where this GOTO heads -- Act or Scene */
    if (p1->dat.n == NODEKIND_ACT) {
       ffmtwrt(
          fp,
