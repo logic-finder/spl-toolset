@@ -34,22 +34,25 @@ int main(int argc, const char **argv) {
       "\t(total " Cbwhite "%d" Creset " nodes)\n",
       count_tree_node(pt)
    );
-   // tree_pre_traverse(pt, print_node, 0);
+   // tree_pre_traverse(pt, print_node, 0, NULL);
 
    sfputs(stdout, ENPREFIX "type-checking...");
    typecheck(&of, &ov);
    fmtwrt(" " Cbgreen "done!" Creset "\n");
-   // tree_pre_traverse(pt, print_node, 0);
+   // tree_pre_traverse(pt, print_node, 0, NULL);
 
    sfputs(stdout, ENPREFIX "context-checking...");
    ctxcheck(&of, &ov);
    fmtwrt(" " Cbgreen "done!" Creset "\n");
-   tree_pre_traverse(pt, print_node, 0);
+   // tree_pre_traverse(pt, print_node, 0, NULL);
 
    sfputs(stdout, ENPREFIX "generating IR...");
    irgenerate();
-   fmtwrt(" " Cbgreen "done!" Creset "\n");
-   // tree_pre_traverse(irt, print_irnode, 0);
+   fmtwrt(" " Cbgreen "done!" Creset
+      "\t(total " Cbwhite "%zu" Creset " tokens)\n",
+      count_opcodes(irt)
+   );
+   // tree_pre_traverse(irt, print_irnode, 0, NULL);
 
    // (optional) optimizing IR...
 
@@ -63,7 +66,7 @@ int main(int argc, const char **argv) {
    // fmtwrt(" " Cbgreen "done!" Creset "\n");
 
    // Cleanup
-   tree_post_traverse(pt, cleanup_node, 0);
+   tree_post_traverse(pt, cleanup_node, 0, NULL);
    tree_prune(pt);
    unloadfl(ls, lc);
    dbunload();
@@ -71,10 +74,10 @@ int main(int argc, const char **argv) {
    return 0;
 }
 
-static void cleanup_node(tree_t *t, int _) {
+static void cleanup_node(tree_t *t, int lv, void *ctx) {
    node_t *n;
 
-   (void) _;
+   (void) lv, (void) ctx;
    n = tree_dat(t);
    if (n->datkind != DATKIND_STR)
       return;
@@ -85,12 +88,13 @@ static void print_token(void *dat, int idx) {
    printf("idx = [%d], token = [%s]\n", idx, ((token_t *) dat)->run);
 }
 
-static void print_node(tree_t *t, int lv) {
+static void print_node(tree_t *t, int lv, void *ctx) {
    static char buf[128];
 
    node_t *n;
    int cnt, total;
 
+   (void) ctx;
    n = tree_dat(t);
    cnt = sprintf(buf, "%d", lv);
    buf[cnt] = '\0';
@@ -127,6 +131,24 @@ static int count_tree_node(tree_t *root) {
       cnt += count_tree_node(tree_child(root, i));
 
    return cnt + 1;
+}
+
+static size_t count_opcodes(tree_t *irt) {
+   int counter = 1;  /* +1 for SET dpsz n */
+   tree_pre_traverse(irt, opcode_counter, 0, &counter);
+   return counter;
+}
+
+static void opcode_counter(tree_t *t, int lv, void *ctx) {
+   irnode_t *n;
+   int *counter;
+
+   (void) lv;
+   n = tree_dat(t);
+   if (n->kind != IrnodekindBlock)
+      return;
+   counter = ctx;
+   *counter += tree_clen(t);
 }
 
 static const char *nodekind2str(nodekind_t kind) {
@@ -189,12 +211,13 @@ static const char *nodekind2str(nodekind_t kind) {
    unreachable: return NULL;
 }
 
-static void print_irnode(tree_t *t, int lv) {
+static void print_irnode(tree_t *t, int lv, void *ctx) {
    static char buf[128];
 
    irnode_t *n;
    int cnt, total;
 
+   (void) ctx;
    n = tree_dat(t);
    cnt = sprintf(buf, "%d", lv);
    buf[cnt] = '\0';

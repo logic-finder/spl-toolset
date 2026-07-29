@@ -11,7 +11,7 @@ extern void typecheck(optflg_t *of, optval_t *ov) {
    check_namecol(dp);
 
    // Type-check
-   tree_post_traverse(pt, typecheck_router, 0);
+   tree_post_traverse(pt, typecheck_router, 0, NULL);
 }
 
 static void coalesce_title(void) {
@@ -86,7 +86,7 @@ static void check_namecol(tree_t *dp) {
    }
 }
 
-static void typecheck_router(tree_t *t, int _) {
+static void typecheck_router(tree_t *t, int lv, void *ctx) {
    typedef struct typehandler {
       nodekind_t kind;
       typechecker_t *check;
@@ -108,7 +108,7 @@ static void typecheck_router(tree_t *t, int _) {
    node_t *n;
    const typehandler_t *type;
 
-   (void) _;
+   (void) lv, (void) ctx;
    n = tree_dat(t);
 
    for (int i = 0; i < types_len; i++) {

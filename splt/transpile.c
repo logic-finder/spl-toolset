@@ -15,7 +15,7 @@ extern void transpile(optflg_t *of, optval_t *ov) {
    gen_title(title);
    sfputs(fp, "int main(void) {\n");
    gen_locals(dp);
-   tree_pre_traverse(nrtv, generate, 0);
+   tree_pre_traverse(nrtv, generate, 0, NULL);
    gen_cleanup();
    sfputs(fp, "\n" INDENT "return 0;\n}\n");
 
@@ -58,10 +58,10 @@ static void gen_cleanup(void) {
    sfputs(fp, INDENT "cleanup_memories(memories, dpsz);\n");
 }
 
-static void generate(tree_t *t, int _) {
+static void generate(tree_t *t, int lv, void *ctx) {
    node_t *n;
 
-   (void) _;
+   (void) lv, (void) ctx;
    n = tree_dat(t);
    switch (n->kind) {
       case NODEKIND_ACT    : gen_act   (t); break;

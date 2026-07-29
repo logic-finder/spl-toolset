@@ -20,6 +20,8 @@
 #include "optprocessor.h"
 
 static int count_tree_node(tree_t *root);
+static size_t count_opcodes(tree_t *irt);
+static tree_callback_t opcode_counter;
 static tree_callback_t cleanup_node;
 
 /* Miscellaneous */

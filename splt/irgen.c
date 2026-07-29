@@ -7,7 +7,7 @@ extern void irgenerate(void) {
    nrtv = tree_child(pt, 2);
    irt = plant_tree(NULL, 0, IrnodekindRoot, 0, 0);
    set_dpsz();
-   tree_pre_traverse(nrtv, route, 0);
+   tree_pre_traverse(nrtv, route, 0, NULL);
 }
 
 static void set_dpsz(void) {
@@ -31,10 +31,10 @@ static void set_dpsz(void) {
    graft_tree_n(opcode, dpsz, IrnodekindData, 0, 0);
 }
 
-static void route(tree_t *t, int lv) {
+static void route(tree_t *t, int lv, void *ctx) {
    node_t *n;
 
-   (void) lv;
+   (void) lv, (void) ctx;
    n = tree_dat(t);
 
    switch (n->kind) {

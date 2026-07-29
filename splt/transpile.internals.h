@@ -12,7 +12,7 @@
 typedef void generator_t(tree_t *t);
 typedef void resolver_t(tree_t *t);
 
-static void generate(tree_t *t, int _);
+static tree_callback_t generate;
 static void gen_header(void);
 static void gen_title(tree_t *title);
 static void gen_locals(tree_t *dp);

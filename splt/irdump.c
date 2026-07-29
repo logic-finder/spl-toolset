@@ -8,7 +8,7 @@ extern void irdump(void) {
    fp = sfopen(destname, "w");
 
    debug = false;  /* emit debugging data? */
-   tree_pre_traverse(irt, route, 0);
+   tree_pre_traverse(irt, route, 0, NULL);
 
    sfclose(fp);
    free(destname);
@@ -27,10 +27,10 @@ static char *make_destname(const char *orig) {
    return buf;
 }
 
-static void route(tree_t *t, int lv) {
+static void route(tree_t *t, int lv, void *ctx) {
    irnode_t *irn;
 
-   (void) lv;
+   (void) lv, (void) ctx;
    irn = tree_dat(t);
 
    switch (irn->kind) {

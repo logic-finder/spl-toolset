@@ -3,13 +3,13 @@
 
 extern void ctxcheck(optflg_t *of, optval_t *ov) {
    nrtv = tree_child(pt, 2);
-   tree_pre_traverse(nrtv, ctxcheck_router, 0);
+   tree_pre_traverse(nrtv, ctxcheck_router, 0, NULL);
 }
 
-static void ctxcheck_router(tree_t *t, int _) {
+static void ctxcheck_router(tree_t *t, int lv, void *ctx) {
    node_t *n;
 
-   (void) _;
+   (void) lv, (void) ctx;
    n = tree_dat(t);
 
    switch(n->kind) {
