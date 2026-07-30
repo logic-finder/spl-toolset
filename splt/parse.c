@@ -221,6 +221,7 @@ static void parse_exeunt(void) {
 // 근데 이걸 parse_const에서 하기보다는 type-check에서 하는게 맞을듯?
 // fixme: 추가로, typecheck시 소유격이나 관사가 등장한경우 오류 (parse_const시 혹시 맨앞에 있었던경우 이미 걸려졌으니까 없어야 함)
 // query한 이후 사전에 없는경우 검사하는게 효율적일듯
+// <= 이건 이미 이 함수 아랫단에서 검사되고 있는듯?
 static void parse_const(tree_t *stmt) {
    static const char *decos[] = {
       /* possessives */

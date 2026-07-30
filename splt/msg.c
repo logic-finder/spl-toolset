@@ -111,5 +111,5 @@ extern void init_msg(void) {
    msgs.err.sem.no_such_scene = "attempt of jump to nonexistent " Ccyan "Scene %s" Creset;
 
    /* Optimizer Warnings */
-   msgs.warn.optimizer.flow = "this adjective causes over/underflow but optimizing continues.";
+   msgs.warn.optimizer.flow = "this adjective causes over/underflow. Stop constant folding.";
 }

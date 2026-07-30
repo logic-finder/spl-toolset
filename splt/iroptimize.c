@@ -8,22 +8,21 @@ extern void iroptimize(void) {
 static void fold_const(tree_t *irt) {
    size_t irtsiz, actsiz, scenesiz;
    tree_t *act, *scene, *block, *new_block;
-   size_t k, m, n;  /* iterators */
 
    /* irt -> act -> scene -> block -> opcode */
 
    /* k = 1 to skip SET dpsz 0 */
    irtsiz = tree_clen(irt);
 
-   for (k = 1; k < irtsiz; k++) {
+   for (size_t k = 1; k < irtsiz; k++) {
       act = tree_child(irt, k);
       actsiz = tree_clen(act);
 
-      for (m = 0; m < actsiz; m++) {
+      for (size_t m = 0; m < actsiz; m++) {
          scene = tree_child(act, m);
          scenesiz = tree_clen(scene);
 
-         for (n = 0; n < scenesiz; n++) {
+         for (size_t n = 0; n < scenesiz; n++) {
             block = tree_child(scene, n);
             new_block = tree_plant(NULL, 0);
 
@@ -42,15 +41,15 @@ static void fold_const(tree_t *irt) {
 }
 
 static void fold_const_work(tree_t *block, tree_t *new_block) {
-   size_t blocksiz;
+   size_t blocksiz, j;
    tree_t *op, *p1, *p2, *temp;
-   irnode_t *opdat, *p1dat, *p2dat, *flag, *tempdat;
-   int val;
-   size_t i, p;  /* iterators */
+   irnode_t *opdat, *p1dat, *p2dat, *tempdat;
+   int val, flow_lnum, flow_lpos;
+   bool flow_flag;
 
    blocksiz = tree_clen(block);
 
-   for (i = 0; i < blocksiz; i++) {
+   for (size_t i = 0; i < blocksiz; i++) {
       /* Validates opcode */
       op = tree_child(block, i);
       opdat = tree_dat(op);
@@ -73,39 +72,37 @@ static void fold_const_work(tree_t *block, tree_t *new_block) {
 
       /* SET const (1 | -1) */
       val = p2dat->dat.n;
-      flag = NULL;
+      flow_flag = false;
 
       /* Advances until temp is not 2x */
-      for (p = i + 1; p < blocksiz; p++) {
+      for (j = i + 1; j < blocksiz; j++) {
          /* the next opcode must exist */
-         temp = tree_child(block, p);
+         temp = tree_child(block, j);
          tempdat = tree_dat(temp);
          if (tempdat->dat.n != Iropcode2x)
             break;
          if (val > INT_MAX / 2 || val < INT_MIN / 2)
-            if (!flag)
-               flag = tempdat;
+            if (!flow_flag) {
+               flow_flag = true;
+               flow_lnum = tempdat->lnum;
+               flow_lpos = tempdat->lpos;
+               break;  /* stops before over/underflow */
+            }
          val *= 2;
          tree_prune(temp);
       }
-      if (flag)
-         warn(tempdat);
+      if (flow_flag)
+         warn(flow_lnum, flow_lpos);
 
       p2dat->dat.n = val;
-      i = p - 1;  /* fast-forwards i */
+      i = j - 1;  /* fast-forwards i */
    graft:
       tree_graft(new_block, op);
    }
 }
 
-static void warn(irnode_t *n) {
-   size_t lnum, lpos;
-   line_t *l;
-
-   lnum = n->lnum;
-   lpos = n->lpos;
-   l = arr_peek(ls, lnum - 1);
-
+static void warn(int lnum, int lpos) {
+   line_t *l = arr_peek(ls, lnum - 1);
    fmtwrt(
       Cbred "\n<optimizer warning>" Creset " %s\n"
       "[%s:%d:%d] " Cbwhite "note:" Creset " problematic since here\n"
@@ -114,5 +111,4 @@ static void warn(irnode_t *n) {
       sfname, lnum, lpos,
       lnum, lpos - 1, l->run, &l->run[lpos - 1]
    );
-   exit(EXIT_FAILURE);
 }

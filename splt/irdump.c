@@ -289,6 +289,7 @@ static void handle_paramless_opcode(tree_t *t) {
    );
 }
 
+// fixme: 명령어의 윗줄이 아니라 명령어의 맨 끝에 위치하도록 변경하자
 static inline void emit_debug_data(irnode_t *n) {
    ffmtwrt(fp, "; %d:%d\n", n->lnum, n->lpos);
 }

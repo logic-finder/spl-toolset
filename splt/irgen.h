@@ -1,6 +1,8 @@
 #ifndef IRGEN_H
 #define IRGEN_H
 
+#include <stddef.h>
+
 /* IR Symbol Kind */
 typedef enum irnodekind {
    IrnodekindUnknown,
@@ -29,6 +31,7 @@ typedef struct irnode {
    } dat;
    irnodekind_t kind;
    int lnum, lpos;
+   size_t offset;
 } irnode_t;
 
 typedef enum irvar {

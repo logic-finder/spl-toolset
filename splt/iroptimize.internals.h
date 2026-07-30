@@ -9,6 +9,6 @@
 
 static void fold_const(tree_t *irt);
 static void fold_const_work(tree_t *block, tree_t *new_block);
-static void warn(irnode_t *n);
+static void warn(int lnum, int lpos);
 
 #endif
