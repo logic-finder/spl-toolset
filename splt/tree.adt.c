@@ -5,17 +5,18 @@ extern tree_t *tree_plant(void *data, size_t dsiz) {
    tree_t *ret;  /* a little sapling! */
 
    ret = smalloc(sizeof *ret);
-   ret->children = smalloc(INIT_CMAX * sizeof *ret->children);
-   if (data)
-      ret->dat = smalloc(dsiz);
-   else
-      ret->dat = NULL;
 
+   ret->children = smalloc(INIT_CMAX * sizeof *ret->children);
    ret->parent = NULL;
    ret->cmax = INIT_CMAX;
    ret->clen = 0;
    ret->siz = dsiz;
-   memcpy(ret->dat, data, dsiz);
+
+   if (data) {
+      ret->dat = smalloc(dsiz);
+      memcpy(ret->dat, data, dsiz);
+   }
+   else ret->dat = NULL;
 
    return ret;
 }
@@ -49,19 +50,25 @@ static void tree_enlarge(tree_t *t) {
 extern void tree_prune(tree_t *t) {
    /* exit condition */
    if (t->clen == 0) {
-      tree_prune_cb(t);
+      prune_callback(t);
       return;
    }
 
    for (int i = 0; i < t->clen; i++)
       tree_prune(t->children[i]);
 
-   tree_prune_cb(t);
+   prune_callback(t);
 }
 
-static void tree_prune_cb(tree_t *t) {
+static void prune_callback(tree_t *t) {
    free(t->children);
    free(t->dat);
+   free(t);
+}
+
+extern void tree_destroy_shallow(tree_t *t) {
+   free(t->children);
+   /* t->dat not freed intentionally */
    free(t);
 }
 
@@ -100,4 +107,16 @@ extern void *tree_chdat(const tree_t *t, int idx) {
 
 extern tree_t *tree_parent(const tree_t *t) {
    return t->parent;
+}
+
+extern void tree_setchild(const tree_t *t, int idx, tree_t *v) {
+   t->children[idx] = v;
+}
+
+extern void tree_setdat(tree_t *t, void *d) {
+   t->dat = d;
+}
+
+extern void tree_setparent(tree_t *t, tree_t *p) {
+   t->parent = p;
 }

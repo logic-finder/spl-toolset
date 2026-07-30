@@ -3,6 +3,7 @@
 
 #include <ctype.h>
 #include <string.h>
+
 #include "msg.h"
 #include "lex.h"
 #include "irgen.h"
@@ -17,6 +18,7 @@
 #include "transpile.h"
 #include "typecheck.h"
 #include "colorcode.h"
+#include "iroptimize.h"
 #include "optprocessor.h"
 
 static int count_tree_node(tree_t *root);

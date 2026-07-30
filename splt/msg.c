@@ -109,4 +109,7 @@ extern void init_msg(void) {
    /* Context Errors */
    msgs.err.sem.no_such_act = "attempt of jump to nonexistent " Ccyan "Act %s" Creset;
    msgs.err.sem.no_such_scene = "attempt of jump to nonexistent " Ccyan "Scene %s" Creset;
+
+   /* Optimizer Warnings */
+   msgs.warn.optimizer.flow = "this adjective causes over/underflow but optimizing continues.";
 }

@@ -10,12 +10,14 @@ extern void *smalloc(size_t siz) {
    return ret;
 }
 
+// fixme: take *siz
 extern void *srealloc(void *ptr, size_t siz) {
    ptr = realloc(ptr, siz);
    if (!ptr) fatal("realloc error");
    return ptr;
 }
 
+// fixme: take *siz
 extern void *srealloc_arr(void *arr, int cnt, size_t esiz) {
    arr = realloc(arr, cnt * esiz);
    if (!arr) fatal("realloc error (arr)");
@@ -65,6 +67,7 @@ extern void sfputs(FILE *stream, const char *line) {
       fatal("fputs error");
 }
 
+// fixme: function name and its description at .h
 extern void ffmtwrt(FILE *stream, const char *format, ...) {
    va_list ap;
    int ret;
@@ -75,6 +78,7 @@ extern void ffmtwrt(FILE *stream, const char *format, ...) {
    va_end(ap);
 }
 
+// fixme: this also
 extern void fmtwrt(const char *format, ...) {
    va_list ap;
    int ret;

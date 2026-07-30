@@ -441,7 +441,7 @@ static void handle_push(tree_t *t) {
    c = tree_child(t, 0);
    resolve_const(c);  /* ... PUSH const */
 
-   /* Replaces PUSH with REMEMBER */
+   /* Replaces PUSH with REMEMB */
    len = tree_clen(curr_block);
    instidx = len - 2;
 

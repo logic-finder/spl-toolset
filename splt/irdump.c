@@ -7,7 +7,7 @@ extern void irdump(void) {
    destname = make_destname("hello.spl");
    fp = sfopen(destname, "w");
 
-   debug = false;  /* emit debugging data? */
+   debug = 0;  /* emit debugging data? */
    tree_pre_traverse(irt, route, 0, NULL);
 
    sfclose(fp);
@@ -88,10 +88,11 @@ static void handle_act(tree_t *t) {
 
 static void handle_scene(tree_t *t) {
    irnode_t *n = tree_dat(t);
+   sfputc(fp, '\n');
    if (debug) emit_debug_data(n);
    ffmtwrt(
       fp,
-      "\nAct_%s_Scene_%s:\n",
+      "Act_%s_Scene_%s:\n",
       curr_act,
       n->dat.s.run
    );
@@ -178,6 +179,7 @@ static void handle_pushlike(tree_t *t) {
    n = tree_dat(t);
    p1 = tree_chdat(t, 0);
 
+   if (debug) emit_debug_data(n);
    ffmtwrt(
       fp,
       "%s%s %s\n",

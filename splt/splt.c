@@ -49,16 +49,26 @@ int main(int argc, const char **argv) {
    sfputs(stdout, ENPREFIX "generating IR...");
    irgenerate();
    fmtwrt(" " Cbgreen "done!" Creset
-      "\t(total " Cbwhite "%zu" Creset " tokens)\n",
+      "\t(total " Cbwhite "%zu" Creset " nodes)\n",
       count_opcodes(irt)
    );
    // tree_pre_traverse(irt, print_irnode, 0, NULL);
 
-   // (optional) optimizing IR...
+   if (1) {
+      sfputs(stdout, ENPREFIX "optimizing IR...");
+      iroptimize();
+      fmtwrt(" " Cbgreen "done!" Creset
+         "\t(total " Cbwhite "%zu" Creset " nodes)\n",
+         count_opcodes(irt)
+      );
+      // tree_pre_traverse(irt, print_irnode, 0, NULL);
+   }
 
-   sfputs(stdout, ENPREFIX "dumping IR...");
-   irdump();
-   fmtwrt(" " Cbgreen "done!" Creset "\n");
+   if (1) {
+      sfputs(stdout, ENPREFIX "dumping IR...");
+      irdump();
+      fmtwrt(" " Cbgreen "done!" Creset "\n");
+   }
 
    // or compiling...
    // sfputs(stdout, ENPREFIX "transpiling...");
@@ -296,7 +306,7 @@ static const char *irnodekindopcode2str(iropcode_t opcode) {
       case IropcodeSqrt    : return "SQRT";
       case IropcodeSqur    : return "SQUR";
       case IropcodeCube    : return "CUBE";
-      case Iropcode2x      : return "2x";
+      case Iropcode2x      : return "2X";
       case IropcodeFact    : return "FACT";
       case IropcodeOutN    : return "OUT_N";
       case IropcodeOutC    : return "OUT_C";

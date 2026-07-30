@@ -84,6 +84,7 @@
 
 #define IR_EXTENSION ".splasm"
 
+/* fixme: 여기 말고, 각자의 h파일로 옮길것 */
 /**********************
  * EXTERNAL VARIABLES *
  **********************/

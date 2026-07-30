@@ -18,7 +18,7 @@ struct tree {
    size_t siz;
 };
 
-static void tree_prune_cb(tree_t *t);
+static void prune_callback(tree_t *t);
 static bool tree_full(const tree_t *t);
 static void tree_enlarge(tree_t *t);
 

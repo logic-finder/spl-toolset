@@ -5,6 +5,7 @@ extern persona_t *init_personae(int siz) {
    persona_t *ret;
 
    ret = malloc(siz * sizeof ret[0]);  /* array of int */
+   // fixme: splrt 에서도 lib에 있는 함수 쓸것 (fatal 등)
    if (!ret) raise_err("malloc failure");
 
    return ret;

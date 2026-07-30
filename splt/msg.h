@@ -6,11 +6,14 @@ typedef struct msg msg_t;
 
 typedef struct msg_sys msg_sys_t;
 typedef struct msg_err msg_err_t;
+typedef struct msg_warn msg_warn_t;
 
 typedef struct msg_sys_db msg_sys_db_t;
 
 typedef struct msg_err_syn msg_err_syn_t;
 typedef struct msg_err_sem msg_err_sem_t;
+
+typedef struct msg_warn_optimizer msg_warn_optimizer_t;
 
 typedef struct msg_err_syn_title msg_err_syn_title_t;
 typedef struct msg_err_syn_dp msg_err_syn_dp_t;
@@ -224,9 +227,19 @@ struct msg_err {
    msg_err_sem_t sem;
 };
 
+struct msg_warn_optimizer {
+   msgstr_t
+      flow;
+};
+
+struct msg_warn {
+   msg_warn_optimizer_t optimizer;
+};
+
 struct msg {
-   msg_sys_t sys;
-   msg_err_t err;
+   msg_sys_t  sys;
+   msg_err_t  err;
+   msg_warn_t warn;
 };
 
 void init_msg(void);
