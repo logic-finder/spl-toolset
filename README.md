@@ -7,6 +7,7 @@ splrt (work in progress) - runtime for transpiled C program
 spla (to be implemented) - static analyzer
 spldbg (to be implemented) - debugger
 splv (to be implemented) - virtual executor
+spldoc (to be implemented) - source code formatter
 ```
 ```bash
 BUILD / USAGE
