@@ -13,7 +13,7 @@
 /**********
  * MACROS *
  **********/
-#define EXECNAME "splt"
+#define EXECNAME "splc"
 #define ENPREFIX EXECNAME ": "
 #
 #define LONGJMP_TEMPLET(e,v) longjmp((e),(v))
@@ -113,8 +113,8 @@ typedef uint64_t spl_uint_t;
  **********************/
 extern const char *sfname;   // from optprocessor.c
 extern msg_t msgs;           // from msg.c
-extern arr_t *ls;            // from splt.c
-extern tree_t *pt;           // from splt.c
+extern arr_t *ls;            // from splc.c
+extern tree_t *pt;           // from splc.c
 extern tree_t *irt;          // from irgen.c
 
 #endif

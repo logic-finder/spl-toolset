@@ -44,7 +44,7 @@ clean:
 	rm -f $(TARGET) *.o *.d
 
 # TODO:
-#  - copy word DB under /usr/local/share/splt
+#  - copy word DB under /usr/local/share/splc
 #  - copy the executable under /usr/local/bin
 #  - copy the manpage /usr/local/share/man/man1
 install: $(TARGET) $(BUILD_DB)

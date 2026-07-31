@@ -4,9 +4,9 @@
 extern void parse_args(const char **argv, optflg_t *of, optval_t *ov) {
    /*
     * SYNOPSIS
-    *    splt [OPTIONS] [--] <source>
-    *    splt (-h | --help)
-    *    splt (-v | --version)
+    *    splc [OPTIONS] [--] <source>
+    *    splc (-h | --help)
+    *    splc (-v | --version)
     *
     * OPTIONS
     *    -e, --exe

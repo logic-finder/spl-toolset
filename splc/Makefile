@@ -1,5 +1,5 @@
 ## Variables ##
-TARGET := splt
+TARGET := splc
 LIBDIR := ../lib
 SHELL := /bin/sh
 

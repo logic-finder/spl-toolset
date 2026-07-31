@@ -1,8 +1,8 @@
 ## Variables ##
-TARGETS = $(SPLT) $(SPLDBM) $(SPLRT)
+TARGETS = $(SPLC) $(SPLDBM) $(SPLRT)
 SHELL := /bin/sh
 
-SPLT := splt
+SPLC := splc
 SPLDBM := spldbm
 SPLRT := splrt
 

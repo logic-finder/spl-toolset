@@ -1,4 +1,4 @@
-#include "splt.internals.h"
+#include "splc.internals.h"
 
 int main(int argc, const char **argv) {
    optflg_t of = {0};
