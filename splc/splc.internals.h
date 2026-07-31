@@ -1,5 +1,5 @@
-#ifndef SPLT_H
-#define SPLT_H
+#ifndef SPLC_H
+#define SPLC_H
 
 #include <ctype.h>
 #include <string.h>

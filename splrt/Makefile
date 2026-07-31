@@ -43,10 +43,10 @@ clean:
 # Note: all prerequisites must be installed first
 #  - words.spldb
 #  - libsplrt.so
-# Note: need to specify SPLT_OUTPUT
+# Note: need to specify SPLC_OUTPUT
 build:
 	$(CC) $(CPPFLAGS) $(CFLAGS) -l$(NAME) -lm \
-		-o $(basename $(SPLT_OUTPUT)) $(SPLT_OUTPUT)
+		-o $(basename $(SPLC_OUTPUT)) $(SPLC_OUTPUT)
 
 # TODO:
 #  - copy libsplrt.so under ???

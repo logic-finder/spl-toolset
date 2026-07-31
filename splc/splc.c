@@ -67,7 +67,7 @@ int main(int argc, const char **argv) {
    if (1) irdump();
 
    assemble();
-   tree_pre_traverse(irt, debug_print_irnode, 0, NULL);
+   // tree_pre_traverse(irt, debug_print_irnode, 0, NULL);
 
    // or compiling...
    // sfputs(stdout, ENPREFIX "transpiling...");

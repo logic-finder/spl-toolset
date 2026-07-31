@@ -1,5 +1,5 @@
 #ifndef SPLRT_INTERNALS_H
-#define SPLTY_INTERNALS_H
+#define SPLRT_INTERNALS_H
 
 typedef void iohandler_templet_t(
    const char *fmt,
