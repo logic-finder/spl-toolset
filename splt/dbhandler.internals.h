@@ -29,7 +29,6 @@ static comparer_t compare_rec_B;
 
 static inline void dberr(const char *reason);
 
-extern msg_t msgs;  // see global.h
 static uint32_t secpos[SECTNUM];
 static uint32_t ecnts[SECTNUM];
 static void *sects[SECTNUM];

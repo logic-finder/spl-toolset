@@ -30,6 +30,11 @@ void translate(
 
 void normalize(char *src);
 
+char *make_destname(
+   const char * restrict orig,
+   const char * restrict ext
+);
+
 /* Inline Functions */
 inline char lastch(const char *line) {
    return line[strlen(line) - 1];

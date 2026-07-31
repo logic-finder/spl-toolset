@@ -3,9 +3,12 @@
 
 #include <stddef.h>
 
+#include "global.h"
+
 /* IR Symbol Kind */
 typedef enum irnodekind {
-   IrnodekindUnknown,
+   Irnodekind_Unknown,
+   IrnodekindEop,
    IrnodekindRoot,
    IrnodekindAct,
    IrnodekindScene,
@@ -31,7 +34,7 @@ typedef struct irnode {
    } dat;
    irnodekind_t kind;
    int lnum, lpos;
-   size_t offset;
+   spl_uint_t offset;
 } irnode_t;
 
 typedef enum irvar {
@@ -40,12 +43,14 @@ typedef enum irvar {
    IrvarHearer,
    IrvarConst,     /* temporary variable to calculate a number */
    IrvarOperandL,  /* (1) operator left operand (2) a sole operand */
-   IrvarOperandR   /* operator right operand */
+   IrvarOperandR,  /* operator right operand */
+   Irvar_Dp_Begin  /* dp[0] = this value */
 } irvar_t;
 
 typedef enum iropcode {
-   IropcodeUnknown,
+   Iropcode_Unknown,
    IropcodeSet,     /* SET <var> <value> */
+   IropcodeAsgn,    /* ASGN <var> <var> */
    IropcodeEnter,   /* ENTER <char> */
    IropcodeExit,    /* EXIT  <char> */
    IropcodeExeunt,  /* EXEUNT */
@@ -66,14 +71,14 @@ typedef enum iropcode {
    IropcodeOutC,    /* OUTC */
    IropcodeInN,     /* INN */
    IropcodeInC,     /* INC */
-   IropcodeGoto,    /* GOTO <num> <string> */
+   IropcodeGoto,    /* GOTO <addr> */
    IropcodeEq,      /* EQ op_l op_r */
    IropcodeGt,      /* GT op_l op_r */
    IropcodeLt,      /* LT op_l op_r */
-   IropcodeRememb,  /* REMEMB */
+   IropcodeRememb,  /* REMEMB const */
    IropcodeRecall,  /* RECALL */
-   IropcodeJumpT,   /* JUMPTRUE  .Ln */
-   IropcodeJumpF,   /* JUMPFALSE .Ln */
+   IropcodeJumpT,   /* JUMPTRUE  <addr> */
+   IropcodeJumpF,   /* JUMPFALSE <addr> */
    IropcodeNegate   /* NEGATE */
 } iropcode_t;
 

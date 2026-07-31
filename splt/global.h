@@ -1,6 +1,8 @@
 #ifndef GLOBAL_H
 #define GLOBAL_H
 
+#include <inttypes.h>
+
 #include "lex.h"
 #include "msg.h"
 #include "parse.h"
@@ -82,7 +84,28 @@
 #define KEYWRD_RETURN "return"
 #define KEYWRD_PROCED "proceed"
 
-#define IR_EXTENSION ".splasm"
+#define IR_EXTENSION  ".splasm"
+#define OBJ_EXTENSION ".splo"
+
+#define  SPL_INT_SIZ 4
+#if   SPL_INT_SIZ == 4
+#define SPL_INT_MAX INT32_MAX
+#define SPL_INT_MIN INT32_MIN
+#define SPL_UINT_FMTSPC     PRIu32
+#define SPL_UINT_FMTSPC_HEX PRIX32
+typedef int32_t  spl_int_t;
+typedef uint32_t spl_uint_t;
+#elif SPL_INT_SIZ == 8
+#define SPL_INT int64_t
+#define SPL_INT_MAX INT64_MAX
+#define SPL_INT_MIN INT64_MIN
+#define SPL_UINT_FMTSPC     PRIu64
+#define SPL_UINT_FMTSPC_HEX PRIX64
+typedef int64_t  spl_int_t;
+typedef uint64_t spl_uint_t;
+#else
+#error undefined int size
+#endif
 
 /* fixme: 여기 말고, 각자의 h파일로 옮길것 */
 /**********************

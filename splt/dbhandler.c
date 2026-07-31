@@ -8,7 +8,7 @@ extern void dbload(void) {
    load_section(SECTKIND_NOUN, NOUN_DTSIZ);
    load_section(SECTKIND_COMP, COMP_DTSIZ);
    fmtwrt(ENPREFIX
-      "loaded the database " Cgreen DBFILENAME Creset " ("
+      "loaded the database " Cbyellow DBFILENAME Creset " ("
       Cbwhite "%d" Creset " names, " Cbwhite "%d" Creset " adjs, "
       Cbwhite "%d" Creset " nouns, " Cbwhite "%d" Creset " cmps)\n",
       ecnts[SECTKIND_NAME], ecnts[SECTKIND_ADJ],

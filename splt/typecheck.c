@@ -4,6 +4,7 @@
 extern void typecheck(optflg_t *of, optval_t *ov) {
    tree_t *dp;
 
+   (void) of, (void) ov;
    // Preprocess
    coalesce_title();
    dp = tree_child(pt, 1);
@@ -198,36 +199,51 @@ static void typecheck_comp(node_t *n) {
 }
 
 static bool is_rnum(const char *rnum) {
-   static const int place_len = 9;
-   typedef const char *place_t[9];
-
-   // fixme: 순서 1~9로 바꾸고, 배열1~9를 첫번째로 변경
-   static place_t ps[] = {
-      { "CM", "DCCC", "DCC", "DC", "D", "CD", "CCC", "CC", "C" }, /* 100 */
-      { "XC", "LXXX", "LXX", "LX", "L", "XL", "XXX", "XX", "X" }, /*  10 */
-      { "IX", "VIII", "VII", "VI", "V", "IV", "III", "II", "I" }  /*   1 */
-   };
-   static const int ps_len = ARRLEN(ps);
-
-   int i, k, nlen;
+   size_t i, k, nlen;
    place_t *p;
    const char *dat;
 
    for (i = 0; i < ps_len; i++) {
       p = ps + i;
-      for (k = 0; k < place_len; k++) {
+      for (k = 0; k < 9; k++) {
          dat = (*p)[k];
          nlen = strlen(dat);
-         if (!strncmp(rnum, dat, nlen))
-            goto increment;
+         if (strncmp(rnum, dat, nlen))
+            continue;
+         rnum += nlen;
+         break;
       }
-      continue;  /* k == place_len */
-   increment:
-      rnum += nlen;
    }
 
-   // fixme: remove ==, true, false
-   return strlen(rnum) == 0 ? true : false;
+   return !strlen(rnum);
+}
+
+extern unsigned int interpret_romnum(const char *romnum) {
+   place_t *p;
+   const char *s;
+   unsigned int v, temp, len;
+
+   v = 0;
+   for (size_t i = 0; i < ps_len; i++) {
+      p = ps + i;
+      for (size_t j = 0; j < 9; j++) {
+         s = (*p)[j];
+         len = strlen(s);
+         if (strncmp(s, romnum, len))
+            continue;
+         temp = 9 - j;
+         switch (i) {
+            case 0: temp *= 100; break;
+            case 1: temp *=  10; break;
+            default: ;
+         }
+         v += temp;
+         romnum += len;
+         break;
+      }
+   }
+
+   return v;
 }
 
 static void typecheck_rnum(node_t *n) {

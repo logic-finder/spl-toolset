@@ -2,6 +2,7 @@
 #include "ctxcheck.internals.h"
 
 extern void ctxcheck(optflg_t *of, optval_t *ov) {
+   (void) of, (void) ov;
    nrtv = tree_child(pt, 2);
    tree_pre_traverse(nrtv, ctxcheck_router, 0, NULL);
 }

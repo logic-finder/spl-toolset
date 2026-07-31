@@ -4,6 +4,7 @@
 extern void transpile(optflg_t *of, optval_t *ov) {
    tree_t *title, *dp, *nrtv;
 
+   (void) of, (void) ov;
    fp = sfopen(FP_NAME, "w");
    title = tree_child(pt, 0);
    dp    = tree_child(pt, 1);

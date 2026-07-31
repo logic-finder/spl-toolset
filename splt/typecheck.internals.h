@@ -9,6 +9,7 @@
 #include "colorcode.h"
 
 typedef void typechecker_t(node_t *n);
+typedef const char *place_t[9];
 
 static void coalesce_title(void);
 static void coalesce_name(tree_t *dp);
@@ -36,5 +37,12 @@ extern tree_t *pt;  // see global.h
 extern msg_t msgs;  // see global.h
 
 static const char *reason;  // error message
+
+static place_t ps[] = {  /* The order is intended */
+   { "CM", "DCCC", "DCC", "DC", "D", "CD", "CCC", "CC", "C" }, /* 100 */
+   { "XC", "LXXX", "LXX", "LX", "L", "XL", "XXX", "XX", "X" }, /*  10 */
+   { "IX", "VIII", "VII", "VI", "V", "IV", "III", "II", "I" }  /*   1 */
+};
+static const size_t ps_len = ARRLEN(ps);
 
 #endif

@@ -3,6 +3,8 @@
 
 static const char *errmsg = "%s: unable to read";
 
+// fixme: 파일명 lineutils에서 readline으로 바꿀 것
+
 extern int readln(FILE *fp, char **line, int *len) {
    // Test whether there is nothing to read
    int ch, pos, bufsiz;

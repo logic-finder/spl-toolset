@@ -8,6 +8,8 @@ extern void irgenerate(void) {
    irt = plant_tree(NULL, 0, IrnodekindRoot, 0, 0);
    set_dpsz();
    tree_pre_traverse(nrtv, route, 0, NULL);
+   /* Marks the last node with END OF PROGRAM */
+   graft_tree_n(curr_block, 0, IrnodekindEop, 0, 0);
 }
 
 static void set_dpsz(void) {
@@ -28,7 +30,7 @@ static void set_dpsz(void) {
    opcode = graft_tree_n(
       data_sect, IropcodeSet, IrnodekindOpcode, 0, 0);
    graft_tree_n(opcode, IrvarDpsz, IrnodekindVar, 0, 0);
-   graft_tree_n(opcode, dpsz, IrnodekindData, 0, 0);
+   graft_tree_n(opcode, dpsz, IrnodekindConst, 0, 0);
 }
 
 static void route(tree_t *t, int lv, void *ctx) {
@@ -220,6 +222,9 @@ static void handle_asgn(tree_t *t) {
    c = tree_child(t, 0);
    resolve_const(c);  /* ... PUSH const */
 
+   // fixme: POP을 생성하지 말고,
+   // PUSH const를 ASGN hearer const로 고쳐도 되지 않을까?
+
    /* Generates 'POP hearer' */
    n = tree_dat(t);
    opcode = graft_tree_n(
@@ -324,7 +329,7 @@ static void handle_cond(tree_t *t) {
       case NODEKIND_EQ: comp = IropcodeEq; break;
       case NODEKIND_GT: comp = IropcodeGt; break;
       /* control never reaches here */
-      default: comp = IropcodeUnknown;
+      default: comp = Iropcode_Unknown;
    }
 
    /* Generates the comparison */
@@ -386,7 +391,7 @@ static void handle_if(tree_t *t) {
       case NODEKIND_AFFIRM: jump = IropcodeJumpF; break;
       case NODEKIND_NEGATE: jump = IropcodeJumpT; break;
       /* control never reaches here */
-      default: jump = IropcodeUnknown;
+      default: jump = Iropcode_Unknown;
    }
    ifdat = tree_dat(t);
    opcode = graft_tree_n(
@@ -463,6 +468,7 @@ static void handle_pop(tree_t *t) {
    );
 }
 
+// fixme: 두번째인자로 PUSH const를 생성할지 말지 결정하기
 static void resolve_const(tree_t *t) {
    /* CONST NODE STRUCTURE
       const -> [adj...] (noun | char)
@@ -493,7 +499,7 @@ static void resolve_const(tree_t *t) {
    clen = tree_clen(t);
    noun = tree_child(t, clen - 1);
 
-   /* Generates 'SET const (1 | -1)' */
+   /* Generates 'SET const 1|-1|teller|hearer|dp[n]' */
    resolve_noun(noun);
 
    /* Generates '2x const const' */
@@ -577,52 +583,58 @@ static void resolve_noun(tree_t *t) {
    tree_t *opcode;
    node_t *node;
    int val;
-   irnodekind_t kind;
+   irnodekind_t nodekind;
+   iropcode_t opkind;
 
-   /* Generates 'SET const (1 | -1)' */
+   /* Generates 'SET const 1|-1|teller|hearer|dp[n]' */
    node = tree_dat(t);
 
-   opcode = graft_tree_n(
-      curr_block,
-      IropcodeSet,
-      IrnodekindOpcode,
-      node->lnum,
-      node->lpos
-   );
-
-   graft_tree_n(opcode, IrvarConst, IrnodekindVar, 0, 0);
-
+   /* SET is to assign a number, while ASGN a variable */
    switch (node->kind) {
       case NODEKIND_PNOUN:
          val  = 1;
-         kind = IrnodekindConst;
+         nodekind = IrnodekindConst;
+         opkind = IropcodeSet;
       break;
 
       case NODEKIND_NNOUN:
          val  = -1;
-         kind = IrnodekindConst;
+         nodekind = IrnodekindConst;
+         opkind = IropcodeSet;
       break;
 
       case NODEKIND_P1:
          val  = IrvarTeller;
-         kind = IrnodekindVar;
+         nodekind = IrnodekindVar;
+         opkind = IropcodeAsgn;
       break;
 
       case NODEKIND_P2:
          val  = IrvarHearer;
-         kind = IrnodekindVar;
+         nodekind = IrnodekindVar;
+         opkind = IropcodeAsgn;
       break;
 
       case NODEKIND_CHAR:
-         val  = node->dat.n;
-         kind = IrnodekindPerson;
+         val  = node->dat.n + Irvar_Dp_Begin;
+         nodekind = IrnodekindPerson;
+         opkind = IropcodeAsgn;
       break;
 
       default:  /* control never reaches here */
          val = -1;
-         kind = IrnodekindUnknown;
+         nodekind = Irnodekind_Unknown;
    }
-   graft_tree_n(opcode, val, kind, 0, 0);
+
+   opcode = graft_tree_n(
+      curr_block,
+      opkind,
+      IrnodekindOpcode,
+      node->lnum,
+      node->lpos
+   );
+   graft_tree_n(opcode, IrvarConst, IrnodekindVar, 0, 0);
+   graft_tree_n(opcode, val, nodekind, 0, 0);
 }
 
 static void set_operands(void) {
@@ -659,6 +671,7 @@ static tree_t *plant_tree(
    node.kind = kind;
    node.lnum = lnum;
    node.lpos = lpos;
+   node.offset = 0;
 
    return tree_plant(&node, sizeof node);
 }
@@ -690,6 +703,7 @@ static tree_t *graft_tree_n(
    node.kind = kind;
    node.lnum = lnum;
    node.lpos = lpos;
+   node.offset = 0;
    sub = tree_plant(&node, sizeof node);
 
    return tree_graft(base, sub);

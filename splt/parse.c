@@ -1,11 +1,8 @@
 #include "parse.h"
 #include "parse.internals.h"
 
-extern tree_t *parse(
-   optflg_t *of,
-   optval_t *ov,
-   arr_t *tokens
-) {
+extern tree_t *parse(optflg_t *of, optval_t *ov, arr_t *tokens) {
+   (void) of, (void) ov;
    // Initialize global variables
    toks = tokens;
    tok = arr_peek(toks, 0);

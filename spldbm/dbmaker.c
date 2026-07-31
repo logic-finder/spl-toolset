@@ -4,6 +4,8 @@
 GENERIC_COMPARE(A)
 GENERIC_COMPARE(B)
 
+// fixme: header 제외하고 LE BE 제한 없애기
+// 관련해 기존에 endrev32 적용하고있던거 헤더제외하고 제거
 extern void dbmake(void) {
    /*
     * DATABASE STRUCTURE
@@ -208,7 +210,7 @@ static void write_sect_type_A(
 
    // Write entry count
    sfsetpos(fp, &ecnt_pos);
-   if(be) ecnt = endrev32(ecnt);
+   if (be) ecnt = endrev32(ecnt);
    sfwrite(&ecnt, ec_len, 1, fp);
    ecnts[sectkind] = ecnt;
 

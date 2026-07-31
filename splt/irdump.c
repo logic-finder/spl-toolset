@@ -4,27 +4,18 @@
 extern void irdump(void) {
    char *destname;
 
-   destname = make_destname("hello.spl");
+   destname = make_destname("hello.spl", IR_EXTENSION);
    fp = sfopen(destname, "w");
+
+   fmtwrt(ENPREFIX "dumping IR into " Cbyellow "\"%s\"" Creset "...", destname);
 
    debug = 0;  /* emit debugging data? */
    tree_pre_traverse(irt, route, 0, NULL);
 
+   fmtwrt(" " Cgreen "done!" Creset "\n");
+
    sfclose(fp);
    free(destname);
-}
-
-static char *make_destname(const char *orig) {
-   char *temp, *buf;
-   size_t tempsiz;
-
-   temp = extfnm(orig, false);
-   tempsiz = strlen(temp);
-   buf = smalloc(tempsiz + strlen(IR_EXTENSION) + 1);
-   strcpy(buf, temp);
-   strcat(buf, IR_EXTENSION);
-
-   return buf;
 }
 
 static void route(tree_t *t, int lv, void *ctx) {
@@ -48,7 +39,8 @@ static void handle_opcode(tree_t *t) {
    irn = tree_dat(t);
 
    switch (irn->dat.n) {
-      case IropcodeSet    : handle_set      (t); break;
+      case IropcodeSet    : /* fall-through */
+      case IropcodeAsgn   : handle_setlike  (t); break;
       case IropcodeEnter  : /* fall-through */
       case IropcodeExit   : /* fall-through */
       case IropcodeSpeak  : handle_enterlike(t); break;
@@ -78,6 +70,7 @@ static void handle_opcode(tree_t *t) {
       case IropcodeGoto   : handle_goto(t); break;
       case IropcodeJumpT  : /* fall-through */
       case IropcodeJumpF  : handle_jumplike(t); break;
+      default: ;
    }
 }
 
@@ -109,7 +102,7 @@ static void handle_block(tree_t *t) {
    );
 }
 
-static void handle_set(tree_t *t) {
+static void handle_setlike(tree_t *t) {
    irnode_t *n, *p1, *p2;
 
    n = tree_dat(t);
@@ -297,6 +290,7 @@ static inline void emit_debug_data(irnode_t *n) {
 static const char *resolve_opcode(iropcode_t opcode) {
    switch (opcode) {
       case IropcodeSet     : return "SET";
+      case IropcodeAsgn    : return "ASGN";
       case IropcodeEnter   : return "ENTER";
       case IropcodeExit    : return "EXIT";
       case IropcodeExeunt  : return "EXEUNT";
@@ -338,6 +332,67 @@ static const char *resolve_var(irvar_t var) {
       case IrvarConst    : return "const";
       case IrvarOperandL : return "operand_l";
       case IrvarOperandR : return "operand_r";
+      default: return NULL;
+   }
+}
+
+extern void debug_print_irnode(tree_t *t, int lv, void *ctx) {
+   static char buf[128];
+   irnode_t *n;
+   int cnt, total;
+
+   (void) ctx;
+   n = tree_dat(t);
+   cnt = sprintf(buf, "%d", lv);
+   buf[cnt] = '\0';
+   total = lv * strlen("  ");
+   total -= cnt;
+
+   fputs(buf, stdout);
+   for (int i = 0; i < total; i++)
+      putchar(' ');
+
+   printf("[%s] = [", resolve_nodekind(n->kind));
+   switch (n->kind) {
+      case IrnodekindVar:
+         printf("%s]", resolve_var(n->dat.n));
+      break;
+
+      case IrnodekindOpcode:
+         printf("%s]", resolve_opcode(n->dat.n));
+      break;
+
+      default:
+         if (n->datkind == IrnodeDatkindInt)
+            printf("%d]", n->dat.n);
+         else {
+            printf("%s]",
+               n->dat.s.len
+               ? (char *) n->dat.s.run
+               : Cbblack "(empty)" Creset
+            );
+            printf(" " Cbblack "(len = %d)" Creset "", n->dat.s.len);
+         }
+   }
+   if (n->kind != IrnodekindOpcode) {
+      putchar('\n');
+      return;
+   }
+   printf(" " Cbblack "at " Ccyan "code+0x%" SPL_UINT_FMTSPC_HEX Creset "\n", n->offset);
+}
+
+static const char *resolve_nodekind(irnodekind_t kind) {
+   switch (kind) {
+      case IrnodekindEop     : return "END OF PROGRAM";
+      case IrnodekindRoot    : return "ROOT";
+      case IrnodekindAct     : return "ACT";
+      case IrnodekindScene   : return "SCENE";
+      case IrnodekindBlock   : return "BLOCK";
+      case IrnodekindOpcode  : return "OPCODE";
+      case IrnodekindVar     : return "VARIABLE";
+      case IrnodekindPerson  : return "PERSON";
+      case IrnodekindConst   : return "CONST";
+      case IrnodekindData    : return "DATA";
       default: return NULL;
    }
 }

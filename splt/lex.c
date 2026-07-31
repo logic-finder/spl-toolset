@@ -1,11 +1,8 @@
 #include "lex.h"
 #include "lex.internals.h"  // contains typedef & prototypes
 
-extern arr_t *lex(
-   optflg_t *of,
-   optval_t *ov,
-   int lc
-) {
+extern arr_t *lex(optflg_t *of, optval_t *ov, int lc) {
+   (void) of, (void) ov;
    // Initialize global variables
    lls = lc;
    p = q = 0;

@@ -3,6 +3,11 @@
 
 extern void iroptimize(void) {
    fold_const(irt);
+   // TODO: ASGN hearer const 뒤에 hearer의 값을 변경시킬 우려가 있는
+   // 노드가 없는 상태에서 ASGN const hearer 조합이 나오면
+   // SET const 실제값 으로 변경 -- 이건 예시IR을 써놓고 before after를 비교해서
+   // 작성하는게 정확할듯
+   // TODO: 캐릭터변수의 개입이 없는 연산자 축약
 }
 
 static void fold_const(tree_t *irt) {
@@ -81,7 +86,7 @@ static void fold_const_work(tree_t *block, tree_t *new_block) {
          tempdat = tree_dat(temp);
          if (tempdat->dat.n != Iropcode2x)
             break;
-         if (val > INT_MAX / 2 || val < INT_MIN / 2)
+         if (val > SPL_INT_MAX / 2 || val < SPL_INT_MIN / 2)
             if (!flow_flag) {
                flow_flag = true;
                flow_lnum = tempdat->lnum;

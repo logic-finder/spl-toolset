@@ -3,11 +3,8 @@
 #include "optprocessor.h"
 #include "optprocessor.internals.h"
 
-extern void process_opts(
-   int argc,
-   optflg_t *of,
-   optval_t *ov
-) {
+extern void process_opts(int argc, optflg_t *of, optval_t *ov) {
+   (void) of, (void) ov;
    validate_argc(argc);
    if (!ov->src)
       ERR("no source file given; terminating");

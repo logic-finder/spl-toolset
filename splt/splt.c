@@ -13,7 +13,7 @@ int main(int argc, const char **argv) {
 
    ls = loadfile(ov.src, &lc, &wc);
    fmtwrt(ENPREFIX
-      "loaded the source file " Cgreen "%s" Creset
+      "loaded the source file " Cbyellow "%s" Creset
       " (total " Cbwhite "%d" Creset " lines, " Cbwhite "%d" Creset " chars)\n",
       ov.src, lc, wc);
 
@@ -22,7 +22,7 @@ int main(int argc, const char **argv) {
    /* Main Logic */
    sfputs(stdout, ENPREFIX "scanning...");
    toks = lex(&of, &ov, lc);
-   fmtwrt(" " Cbgreen "done!" Creset
+   fmtwrt(" " Cgreen "done!" Creset
       "\t(total " Cbwhite "%d" Creset " tokens)\n",
       arr_size(toks)
    );
@@ -30,7 +30,7 @@ int main(int argc, const char **argv) {
 
    sfputs(stdout, ENPREFIX "parsing...");
    pt = parse(&of, &ov, toks);
-   fmtwrt(" " Cbgreen "done!" Creset
+   fmtwrt(" " Cgreen "done!" Creset
       "\t(total " Cbwhite "%d" Creset " nodes)\n",
       count_tree_node(pt)
    );
@@ -38,42 +38,41 @@ int main(int argc, const char **argv) {
 
    sfputs(stdout, ENPREFIX "type-checking...");
    typecheck(&of, &ov);
-   fmtwrt(" " Cbgreen "done!" Creset "\n");
+   fmtwrt(" " Cgreen "done!" Creset "\n");
    // tree_pre_traverse(pt, print_node, 0, NULL);
 
    sfputs(stdout, ENPREFIX "context-checking...");
    ctxcheck(&of, &ov);
-   fmtwrt(" " Cbgreen "done!" Creset "\n");
+   fmtwrt(" " Cgreen "done!" Creset "\n");
    // tree_pre_traverse(pt, print_node, 0, NULL);
 
    sfputs(stdout, ENPREFIX "generating IR...");
    irgenerate();
-   fmtwrt(" " Cbgreen "done!" Creset
+   fmtwrt(" " Cgreen "done!" Creset
       "\t(total " Cbwhite "%zu" Creset " nodes)\n",
       count_opcodes(irt)
    );
-   // tree_pre_traverse(irt, print_irnode, 0, NULL);
+   // tree_pre_traverse(irt, debug_print_irnode, 0, NULL);
 
    if (1) {
       sfputs(stdout, ENPREFIX "optimizing IR...");
       iroptimize();
-      fmtwrt(" " Cbgreen "done!" Creset
+      fmtwrt(" " Cgreen "done!" Creset
          "\t(total " Cbwhite "%zu" Creset " nodes)\n",
          count_opcodes(irt)
       );
-      // tree_pre_traverse(irt, print_irnode, 0, NULL);
+      // tree_pre_traverse(irt, debug_print_irnode, 0, NULL);
    }
 
-   if (1) {
-      sfputs(stdout, ENPREFIX "dumping IR...");
-      irdump();
-      fmtwrt(" " Cbgreen "done!" Creset "\n");
-   }
+   if (1) irdump();
+
+   assemble();
+   tree_pre_traverse(irt, debug_print_irnode, 0, NULL);
 
    // or compiling...
    // sfputs(stdout, ENPREFIX "transpiling...");
    // transpile(&of, &ov);
-   // fmtwrt(" " Cbgreen "done!" Creset "\n");
+   // fmtwrt(" " Cgreen "done!" Creset "\n");
 
    /* Cleanup */
    tree_post_traverse(pt, cleanup_node, 0, NULL);
@@ -217,110 +216,5 @@ static const char *nodekind2str(nodekind_t kind) {
       case NODEKIND_2X     : return "2X";
       case NODEKIND_FACT   : return "FACT";
       default: return NULL;   /* unreachable */
-   }
-}
-
-static void print_irnode(tree_t *t, int lv, void *ctx) {
-   static char buf[128];
-   irnode_t *n;
-   int cnt, total;
-
-   (void) ctx;
-   n = tree_dat(t);
-   cnt = sprintf(buf, "%d", lv);
-   buf[cnt] = '\0';
-   total = lv * strlen("  ");
-   total -= cnt;
-
-   fputs(buf, stdout);
-   for (int i = 0; i < total; i++)
-      putchar(' ');
-
-   printf("[%s] = [", irnodekind2str(n->kind));
-   switch (n->kind) {
-      case IrnodekindVar:
-         printf("%s]\n", irnodekindvar2str(n->dat.n));
-      break;
-
-      case IrnodekindOpcode:
-         printf("%s]\n", irnodekindopcode2str(n->dat.n));
-      break;
-
-      default:
-         if (n->datkind == IrnodeDatkindInt)
-            printf("%d]\n", n->dat.n);
-         else {
-            printf("%s]",
-               n->dat.s.len
-               ? (char *) n->dat.s.run
-               : Cbblack "(empty)" Creset
-            );
-            printf(" " Cbblack "(len = %d)" Creset "\n", n->dat.s.len);
-         }
-   }
-}
-
-static const char *irnodekind2str(irnodekind_t kind) {
-   switch (kind) {
-      case IrnodekindUnknown : return "__UNKNOWN__";
-      case IrnodekindRoot    : return "ROOT";
-      case IrnodekindAct     : return "ACT";
-      case IrnodekindScene   : return "SCENE";
-      case IrnodekindBlock   : return "BLOCK";
-      case IrnodekindOpcode  : return "INSTRUCTION";
-      case IrnodekindVar     : return "VARIABLE";
-      case IrnodekindPerson  : return "PERSON";
-      case IrnodekindConst   : return "CONST";
-      case IrnodekindData    : return "DATA";
-      default: return NULL;
-   }
-}
-
-static const char *irnodekindvar2str(irvar_t var) {
-   switch (var) {
-      case IrvarDpsz     : return "dpsz";
-      case IrvarTeller   : return "teller";
-      case IrvarHearer   : return "hearer";
-      case IrvarConst    : return "const";
-      case IrvarOperandL : return "operand_l";
-      case IrvarOperandR : return "operand_r";
-      default: return NULL;
-   }
-}
-
-static const char *irnodekindopcode2str(iropcode_t opcode) {
-   switch (opcode) {
-      case IropcodeUnknown : return "__UNKNOWN__";
-      case IropcodeSet     : return "SET";
-      case IropcodeEnter   : return "ENTER";
-      case IropcodeExit    : return "EXIT";
-      case IropcodeExeunt  : return "EXEUNT";
-      case IropcodeSpeak   : return "SPEAK";
-      case IropcodePush    : return "PUSH";
-      case IropcodePop     : return "POP";
-      case IropcodeSum     : return "SUM";
-      case IropcodeDiff    : return "DIFF";
-      case IropcodeProd    : return "PROD";
-      case IropcodeQuot    : return "QUOT";
-      case IropcodeRem     : return "REM";
-      case IropcodeSqrt    : return "SQRT";
-      case IropcodeSqur    : return "SQUR";
-      case IropcodeCube    : return "CUBE";
-      case Iropcode2x      : return "2X";
-      case IropcodeFact    : return "FACT";
-      case IropcodeOutN    : return "OUT_N";
-      case IropcodeOutC    : return "OUT_C";
-      case IropcodeInN     : return "IN_N";
-      case IropcodeInC     : return "IN_C";
-      case IropcodeGoto    : return "GOTO";
-      case IropcodeEq      : return "EQ";
-      case IropcodeGt      : return "GT";
-      case IropcodeLt      : return "LT";
-      case IropcodeRememb  : return "REMEMB";
-      case IropcodeRecall  : return "RECALL";
-      case IropcodeJumpT   : return "JUMPTRUE";
-      case IropcodeJumpF   : return "JUMPFALSE";
-      case IropcodeNegate  : return "NEGATE";
-      default: return NULL;
    }
 }

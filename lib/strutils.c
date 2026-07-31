@@ -1,6 +1,8 @@
 #include "strutils.h"
 #include "strutils.internals.h"
 
+extern char lastch(const char *line);
+
 extern bool match(char ch, const char *scanset) {
    while (*scanset)
       if (ch == *scanset++)
@@ -197,4 +199,18 @@ end:
    free(buf);
 }
 
-extern char lastch(const char *line);
+extern char *make_destname(
+   const char * restrict orig,
+   const char * restrict ext
+) {
+   char *temp, *buf;
+   size_t tempsiz;
+
+   temp = extfnm(orig, false);
+   tempsiz = strlen(temp);
+   buf = smalloc(tempsiz + strlen(ext) + 1);
+   strcpy(buf, temp);
+   strcat(buf, ext);
+
+   return buf;
+}
