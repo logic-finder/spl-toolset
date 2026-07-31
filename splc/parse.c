@@ -1117,10 +1117,10 @@ static void parse_push(void) {
       reason = msgs.err.syn.push.badsyn;
       synerr();
    }
+   ungettok();
 
    parse_const(push);
 
-   gettok();
    if (!match(tok->run[0], ".!")) {
       reason = msgs.err.syn.push.badsyn;
       synerr();
