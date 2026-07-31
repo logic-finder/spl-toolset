@@ -378,7 +378,7 @@ extern void debug_print_irnode(tree_t *t, int lv, void *ctx) {
       putchar('\n');
       return;
    }
-   printf(" " Cbblack "at " Ccyan "code+0x%" SPL_UINT_FMTSPC_HEX Creset "\n", n->offset);
+   printf(" " Cbblack "at " Ccyan "code+0x%08" SPL_UINT_FMTSPC_HEX Creset "\n", n->offset);
 }
 
 static const char *resolve_nodekind(irnodekind_t kind) {
