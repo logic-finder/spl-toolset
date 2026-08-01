@@ -13,5 +13,6 @@ spldoc (to be implemented) - source code formatter
 BUILD / USAGE
 
 $ make -j
+$ cd spldbm && make db && mv words.spldb ../splc
 $ splc hello.spl
 ```

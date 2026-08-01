@@ -1,5 +1,8 @@
-#ifndef DB_MACRO_H
-#define DB_MACRO_H
+#ifndef DB_COMMON_H
+#define DB_COMMON_H
+
+// fixme: 명확성을 위해 매크로 이름 앞에 DB_ 붙이기
+// DBFILENAME은 DB_FILE_NAME으로 수정
 
 #define DBFILENAME "words.spldb"
 #define DBTEMPNAME DBFILENAME ".temp"

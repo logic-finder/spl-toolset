@@ -24,8 +24,8 @@ extern void assemble(void) {
          Section 3 - Source File : (optional section) variable size
             text data...         - variable size */
 
-   char *destname;
    assemble_ctx_t actx;
+   char *destname;
 
    actx.le = isle(), actx.be = !actx.le;
 
@@ -34,16 +34,24 @@ extern void assemble(void) {
 
    fmtwrt(ENPREFIX "generating object file " Cbyellow "\"%s\"" Creset "...", destname);
 
+   /* Fills opcode.offset field first */
    actx.offset = OBJFILE_HDSIZ;
    tree_pre_traverse(irt, setoffset_route, 0, &actx.offset);
+
+   /* Writes the code section */
    tree_pre_traverse(irt, write_route, 0, NULL);
+
+   /* Writes the debug info & source file section */
    actx.s2p = actx.offset;
    if (1) {
       write_debug_info(&actx);
       actx.s3p = actx.offset;
       write_srcfile(&actx);
    }
+
    rewind(fp);
+
+   /* Finally, writes the header section */
    write_header(1, &actx);
 
    fmtwrt(
@@ -52,6 +60,7 @@ extern void assemble(void) {
       actx.offset
    );
 
+   /* Cleans up */
    sfclose(fp);
    free(destname);
 }
@@ -363,7 +372,7 @@ static void write_srcfile(assemble_ctx_t *actx) {
    cnt = 0;
    for (size_t i = 0; i < lls; i++) {
       l = arr_peek(ls, i);
-      cnt += l->len;
+      cnt += l->len;  // fixme: 현재 len은 \0을 포함한 길이이므로 제외해야 할듯
       sfputs(fp, l->run);
    }
 

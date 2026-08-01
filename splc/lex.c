@@ -169,7 +169,7 @@ static inline void iterate_lines(processor_t *process, ...) {
       l = arr_peek(ls, ++p);
    }
    eoe = true;
-   end:;
+end: ;
 }
 
 static inline void save_state(void) {

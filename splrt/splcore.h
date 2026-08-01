@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+
 #include "stack.adt.h"
 #include "stage.adt.h"
 
@@ -16,16 +17,17 @@
 
 typedef int persona_t;
 typedef stack_t *memory_t;
+typedef int operator_t(int v);
 typedef void iohandler_t(persona_t *arr, int charidx);
 
 persona_t *init_personae(int siz);
 memory_t *init_memories(int siz);
 void cleanup_memories(memory_t *arr, int siz);
 
-int op_sqrt(int v);
-int op_squr(int v);
-int op_cube(int v);
-int op_fact(int v);
+operator_t op_sqrt;
+operator_t op_squr;
+operator_t op_cube;
+operator_t op_fact;
 
 iohandler_t io_inn;
 iohandler_t io_inc;

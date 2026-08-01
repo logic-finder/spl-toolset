@@ -5,13 +5,14 @@ extern void typecheck(optflg_t *of, optval_t *ov) {
    tree_t *dp;
 
    (void) of, (void) ov;
-   // Preprocess
+
+   /* Preprocess */
    coalesce_title();
    dp = tree_child(pt, 1);
    coalesce_name(dp);
    check_namecol(dp);
 
-   // Type-check
+   /* Type-check */
    tree_post_traverse(pt, typecheck_router, 0, NULL);
 }
 
@@ -128,6 +129,7 @@ static void typecheck_name(node_t *n) {
    semerr_badword(n);
 }
 
+// TODO: summer's처럼 명사's는 형용사로 취급하기
 static void typecheck_adj(node_t *n) {
    if (query_adj(n->dat.s.run))
       return;

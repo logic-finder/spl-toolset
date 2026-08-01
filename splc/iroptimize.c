@@ -1,13 +1,63 @@
 #include "iroptimize.h"
 #include "iroptimize.internals.h"
 
+/* OPTIMIZATION IDEAS
+   - Remove dead assigns
+      : 앞선 대입을 덮어쓰는 대입문이 있을시, 최종적인 대입문만 남기기
+         you a rose!
+         you a house!
+      위 코드에서, 첫번째 대입문에 의해 값이 rose로 설정됐지만 즉시 house로 대체되므로
+      첫번째 대입문을 삭제해도 you의 값에는 변화가 없음
+
+   - Reduce trivial operators
+      : 연산자에서, 두 피연산자가 상수로만 이루어져 있다면 연산자 제거하고 직접 계산하기
+         you are as good as the sum of 3 and 5!
+      3과 5는 상수이므로 컴파일타임에 그 값이 이미 분명하므로
+         you are 8!
+      이렇게 바꾸어도 you의 값에는 변화가 없음
+
+   - Propagate constants
+      : 변수의 값을 컴파일타임에 확정할 수 있다면 해당 변수를 상수로 대체
+         you a cookie!
+         you are the sum of 3 and yourself!
+      두 대입문 사이에 you의 값을 예측할 수 없게 하는 요소(예: 조건문+대입문)가 없으므로
+         you are the sum of 3 and 1!
+      이렇게 치환 가능할 것으로 생각됨
+
+   - Reduce if statements
+      : 같은 조건을 가지는 연속된 if문은 하나로 줄이기
+         if so, if so, ...
+      ~이면서 ~인 것은 항상 참이므로 if so 하나로 줄여도 무방
+
+   - Remove contradictions
+      : 모순되는 if문 쌍을 제거
+         if so, if not, ...
+      ~이면서 ~가 아닌 것은 항상 거짓이므로 ...가 실행될 일이 없음
+
+   - Remove trivial comparisons
+      : 비교의 두 대상을 모두 확정할 수 있다면 컴파일타임에 비교
+         Am I less confusing than me? -> x < x 이므로 무조건 거짓
+         Are you better than yourself? -> x > x 이므로 무조건 거짓
+         Am I as good as me? -> x == x 이므로 무조건 사실
+      변수에 사용되는 경우 명확한 경우는 위 3가지 밖에 없는 듯함.
+      조건 변수를 나타내는 변수를 Irvar에 추가하고, 관련 변경사항을 ir관련 소스코드에 전부 반영할 것
+      한편, x == x 꼴과 달리 x != 2 * x 와 같은 것은 x가 0일 경우 거짓이 되므로 제거 불가
+         Is a tree better than a tree? -> 1 > 1
+         Is a tree worse than a tree? -> 1 < 1
+         Is a tree as good as a tree? -> 1 == 1
+         Is a tree not as good as a shiny tree? -> 1 != 2
+      상수로만 이루어져 있을 경우 위 4가지 경우에만 명백한 듯
+*/
+
 extern void iroptimize(void) {
+   /* Note: the order fc -> pc -> ro & rc is intended */
    fold_const(irt);
-   // TODO: ASGN hearer const 뒤에 hearer의 값을 변경시킬 우려가 있는
-   // 노드가 없는 상태에서 ASGN const hearer 조합이 나오면
-   // SET const 실제값 으로 변경 -- 이건 예시IR을 써놓고 before after를 비교해서
-   // 작성하는게 정확할듯
-   // TODO: 캐릭터변수의 개입이 없는 연산자 축약
+   // propagate_const()
+   // reduce_operator()
+   // remove_comparison()
+   // remove_deadasgn()
+   // reduce_ifstmt()
+   // remove_contradict()
 }
 
 static void fold_const(tree_t *irt) {
