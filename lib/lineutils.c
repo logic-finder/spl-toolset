@@ -28,16 +28,18 @@ extern int readln(FILE *fp, char **line, int *len) {
 
    for (;;) {
       if (eol) {
-      end_of_line:
+// fixme: append \n at eol if there isn't
+   end_of_line:
          buf[pos] = '\0';
          *line = buf;
          *len = pos;  /* i.e. len == strlen(buf) + 1 */
          return 0;
       }
-
+// fixme: use getc wrapper
       ch = getc(fp);
 
       if (ch == EOF) {
+// fixme: eliminate this ferror with using of getc wrapper
          if (ferror(fp)) vfatal(errmsg, __func__);
          goto end_of_line;
       }

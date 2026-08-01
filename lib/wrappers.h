@@ -43,6 +43,8 @@ void sfclose(FILE *fp);
 void sremove(const char *filename);
 void srename(const char *old, const char *new);
 
+int safe_fgetc(FILE *fp);
+
 /**
  *
  */
@@ -90,5 +92,8 @@ void sfgetpos(FILE *fp, fpos_t *pos);
  *
  */
 void sfsetpos(FILE *fp, fpos_t *pos);
+
+void safe_fprintf(FILE *fp, const char *fmt, int n, ...);
+void safe_fscanf(FILE *fp, const char *fmt, int n, ...);
 
 #endif

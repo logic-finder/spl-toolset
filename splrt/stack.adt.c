@@ -13,8 +13,8 @@ extern stack_t *stack_create(void) {
    return ret;
 }
 
-static bool stack_empty(stack_t *stack) {
-   return stack->siz == 0;
+static bool stack_empty(stack_t *s) {
+   return s->siz == 0;
 }
 
 extern void stack_destroy(stack_t *stack) {

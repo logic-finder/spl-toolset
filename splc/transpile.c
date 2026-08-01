@@ -41,8 +41,8 @@ static void gen_locals(tree_t *dp) {
    ffmtwrt(fp, INDENT "int dpsz = %d;\n", clen);
    sfputs(fp, INDENT "bool cond = false;\n");
    sfputs(fp, INDENT "stage_t *stage = stage_create(dpsz);\n");
-   sfputs(fp, INDENT "persona_t *personae = init_personae(dpsz);\n");
-   sfputs(fp, INDENT "memory_t *memories = init_memories(dpsz);\n\n");
+   sfputs(fp, INDENT "int *personae = init_dp(dpsz);\n");
+   sfputs(fp, INDENT "stack_t **memories = init_stacks(dpsz);\n\n");
 
    for (int idx = 0; idx < clen; idx++) {
       character = tree_chdat(dp, idx);

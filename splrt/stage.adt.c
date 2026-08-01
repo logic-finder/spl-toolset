@@ -17,6 +17,8 @@ extern stage_t *stage_create(int siz) {
 }
 
 extern void stage_destroy(stage_t *stage) {
+   // fixme: destroy name[]
+   // fixme: destroy state[]
    free(stage);
 }
 

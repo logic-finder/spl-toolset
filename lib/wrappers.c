@@ -57,6 +57,13 @@ extern void srename(const char *old, const char *new) {
    vfatal("unable to rename %s to %s", old, new);
 }
 
+extern int safe_fgetc(FILE *fp) {
+   int c = fgetc(fp);
+   if (c == EOF && ferror(fp))
+      fatal("fgetc error");
+   return c;
+}
+
 extern void sfputc(FILE *stream, char ch) {
    if (fputc(ch, stream) == EOF)
       fatal("fputc error");
@@ -112,4 +119,26 @@ extern void sfgetpos(FILE *fp, fpos_t *pos) {
 extern void sfsetpos(FILE *fp, fpos_t *pos) {
    if (fsetpos(fp, pos))
       fatal("fsetpos error");
+}
+
+extern void safe_fprintf(FILE *fp, const char *fmt, int n, ...) {
+   va_list ap;
+   int ret;  /* vfprintf returns int */
+
+   va_start(ap, n);
+   ret = vfprintf(fp, fmt, ap);
+   if (ret < n)
+      fatal("vfprintf error");
+   va_end(ap);
+}
+
+extern void safe_fscanf(FILE *fp, const char *fmt, int n, ...) {
+   va_list ap;
+   int ret;  /* vfscanf returns int */
+
+   va_start(ap, n);
+   ret = vfscanf(fp, fmt, ap);
+   if (ret != n)
+      fatal("vfscanf error");
+   va_end(ap);
 }

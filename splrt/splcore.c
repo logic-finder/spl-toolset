@@ -1,110 +1,131 @@
 #include "splcore.h"
 #include "splcore.internals.h"
 
-extern persona_t *init_personae(int siz) {
-   persona_t *ret;
+extern runtime_context_t *init_runtime(size_t dpsz) {
+   runtime_context_t *rctx;
 
-   ret = malloc(siz * sizeof ret[0]);  /* array of int */
-   // fixme: splrt 에서도 lib에 있는 함수 쓸것 (fatal 등)
-   if (!ret) raise_err("malloc failure");
+   rctx = smalloc(sizeof *rctx);
 
-   return ret;
+   rctx->cond = false;
+   rctx->dp = smalloc(dpsz * ESIZ(rctx->dp));
+   rctx->dpsz = dpsz;
+   rctx->mem = init_mem(dpsz);
+   rctx->st = stage_create(dpsz);
+
+   return rctx;
 }
 
-extern memory_t *init_memories(int siz) {
-   memory_t *ret;
+extern void cleanup_runtime(runtime_context_t *rctx) {
+   stage_destroy(rctx->st);
+   cleanup_mem(rctx->mem);
+   free(rctx->dp);
+}
 
-   ret = malloc(siz * sizeof ret[0]);  /* array of stack */
-   if (!ret) raise_err("malloc failure");
-   for (int i = 0; i < siz; i++)
+extern spl_int_t op_sqrt(spl_int_t v) {
+   if (v < 0)
+      ERR("sqrt can't take a negative integer");
+   return sqrt(v);
+}
+
+extern spl_int_t op_squr(spl_int_t v) {
+   return v * v;
+}
+
+extern spl_int_t op_cube(spl_int_t v) {
+   return v * v * v;
+}
+
+extern spl_int_t op_fact(spl_int_t v) {
+   spl_int_t t;
+
+   if (v < 0)
+      ERR("factorial can't take a negative integer");
+
+   if (v == 0)
+      return 1;
+
+   t = 1;
+   while (v >= 2)
+      t *= v--;
+
+   return t;
+}
+
+extern void io_inn(runtime_context_t *rctx, size_t charidx) {
+   io_in(rctx, charidx, "%" SPL_INT_FMTSPC);
+}
+
+extern void io_inc(runtime_context_t *rctx, size_t charidx) {
+   io_in(rctx, charidx, "%c");
+}
+
+extern void io_outn(runtime_context_t *rctx, size_t charidx) {
+   io_out(rctx, charidx, "%" SPL_INT_FMTSPC);
+}
+
+extern void io_outc(runtime_context_t *rctx, size_t charidx) {
+   io_out(rctx, charidx, "%c");
+}
+
+static stack_t **init_mem(size_t dpsz) {
+   stack_t **ret;
+
+   ret = smalloc(dpsz * ESIZ(ret));  /* arr. of stack */
+   for (int i = 0; i < dpsz; i++)
       ret[i] = stack_create();
 
    return ret;
 }
 
-extern void cleanup_memories(memory_t *arr, int siz) {
-   for (int i = 0; i < siz; i++)
-      free(arr[i]);
-   free(arr);
+static void cleanup_mem(runtime_context_t *rctx) {
+   for (int i = 0; i < rctx->dpsz; i++)
+      stack_destroy(rctx->mem[i]);
+   free(rctx->mem);
 }
 
-extern int op_sqrt(int v) {
-   return sqrt(v);
+static void io_in(
+   runtime_context_t *rctx,
+   size_t charidx,
+   const char *fmt
+) {
+   if (charidx >= rctx->dpsz)
+      VERR("%s", errmsg_charidx_oob);
+
+   // fixme: write a function that counts the number of format specifiers in fmt
+   safe_fscanf(stdin, fmt, 1, &rctx->dp[charidx]);
+   clearbuf();
 }
 
-extern int op_squr(int v) {
-   return v * v;
-}
+static void io_out(
+   runtime_context_t *rctx,
+   size_t charidx,
+   const char *fmt
+) {
+   if (charidx >= rctx->dpsz)
+      VERR("%s", errmsg_charidx_oob);
 
-extern int op_cube(int v) {
-   return v * v * v;
-}
-
-extern int op_fact(int v) {
-   return tgamma(v + 1);
+   safe_fprintf(stdout, fmt, 1, rctx->dp[charidx]);
 }
 
 static void clearbuf(void) {
    int ch;
-   while ((ch = getchar()) && ch != EOF)
+   while ((ch = fgetc(stdin)) != EOF)
       /* empty */ ;
-   if (ferror(stdin))
-      raise_err("getchar error");
 }
 
-static void io_in(const char *fmt, persona_t *arr, int charidx) {
-   int ret = scanf(fmt, &arr[charidx]);
-   if (ret != 1)
-      raise_err("scanf error");
-   clearbuf();
-}
-
-extern void io_inn(persona_t *arr, int charidx) {
-   io_in("%d", arr, charidx);
-}
-
-extern void io_inc(persona_t *arr, int charidx) {
-   io_in("%c", arr, charidx);
-}
-
-static void io_out(const char *fmt, persona_t *arr, int charidx) {
-   int ret = printf(fmt, arr[charidx]);
-   if (ret < 1)
-      raise_err("printf error");
-}
-
-extern void io_outn(persona_t *arr, int charidx) {
-   io_out("%d", arr, charidx);
-}
-
-extern void io_outc(persona_t *arr, int charidx) {
-   io_out("%c", arr, charidx);
-}
-
-extern void raise_err(const char *msg, ...) {
-   va_list ap;
-
-   fputs(Cbred "<runtime error> " Creset, stderr);
-   va_start(ap, msg);
-   vfprintf(stderr, msg, ap);
-   va_end(ap);
-   fputc('\n', stderr);
-   exit(EXIT_FAILURE);
-}
-
-extern void assert_offstage(stage_t *st, int who) {
-   if (stage_onstage(st, who))
+static void assert_offstage(stage_t *st, int charidx) {
+   if (stage_onstage(st, charidx))
       return;
-   raise_err(
-      "a Line by offstage character %s",
-      stage_name(st, who)
+   VERR(
+      "a line by the offstage character %s",
+      stage_name(st, charidx)
    );
 }
 
-extern void assert_onlytwo(stage_t *st) {
+static void assert_onlytwo(stage_t *st) {
    if (stage_aretheretwo(st))
       return;
-   raise_err(
+   VERR(
       "the number of onstage characters not 2; currently %d",
       stage_cnt(st)
    );

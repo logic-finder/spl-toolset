@@ -1,28 +1,42 @@
 #ifndef SPLRT_H
 #define SPLRT_H
 
+/************
+ * INCLUDES *
+ ************/
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
 
+#include "fatal.h"
+#include "common.h"
+#include "wrappers.h"
+#include "colorcode.h"
 #include "stack.adt.h"
 #include "stage.adt.h"
 
-/**********
- * MACROS *
- **********/
-#define Creset    "\033[0m"      // color reset
-#define Cbred     "\033[0;91m"   // bright red
+/************
+ * TYPEDEFS *
+ ************/
+typedef struct {
+   bool cond;
+   spl_int_t *dp;  /* arr. of int */
+   size_t dpsz;
+   stack_t **mem;  /* arr. of stack */
+   stage_t *st;
+   size_t
+      t,  /* teller */
+      h;  /* hearer */
+} runtime_context_t;
 
-typedef int persona_t;
-typedef stack_t *memory_t;
-typedef int operator_t(int v);
-typedef void iohandler_t(persona_t *arr, int charidx);
+typedef spl_int_t operator_t(spl_int_t v);
+typedef void iohandler_t(runtime_context_t *rctx, size_t charidx);
 
-persona_t *init_personae(int siz);
-memory_t *init_memories(int siz);
-void cleanup_memories(memory_t *arr, int siz);
+/**************
+ * PROTOTYPES *
+ **************/
+runtime_context_t *init_runtime(size_t dpsz);
 
 operator_t op_sqrt;
 operator_t op_squr;
@@ -33,12 +47,5 @@ iohandler_t io_inn;
 iohandler_t io_inc;
 iohandler_t io_outn;
 iohandler_t io_outc;
-
-/*****************
- * MISCELLANEOUS *
- *****************/
-void raise_err(const char *msg, ...);
-void assert_offstage(stage_t *st, int who);
-void assert_onlytwo(stage_t *st);
 
 #endif
