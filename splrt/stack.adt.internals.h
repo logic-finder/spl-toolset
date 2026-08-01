@@ -3,18 +3,20 @@
 
 #include <stdlib.h>
 #include <stdbool.h>
+
+#include "global.h"
 #include "splcore.h"
 
-typedef struct node {
-   struct node *prev, *next;
+typedef struct stack_node stack_node_t;
+
+struct stack_node {
+   stack_node_t *prev, *next;
    int v;
-} node_t;
+};
 
 struct stack {
    int siz;
-   node_t *top;
+   stack_node_t *top;
 };
-
-static bool stack_empty(stack_t *stack);
 
 #endif

@@ -6,6 +6,7 @@ extern tree_t *tree_plant(void *data, size_t dsiz) {
 
    ret = safe_malloc(sizeof *ret);
 
+   // fixme: use ESIZ
    ret->children = safe_malloc(INIT_CMAX * sizeof *ret->children);
    ret->parent = NULL;
    ret->cmax = INIT_CMAX;

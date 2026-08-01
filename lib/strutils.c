@@ -95,6 +95,7 @@ extern char **split(
    // Prepare an array of strings
    siz = 0;
    max = 2;
+   // fixme: use ESIZ
    arr = safe_malloc(max * sizeof arr[0]);
    ini = fin = src;
 

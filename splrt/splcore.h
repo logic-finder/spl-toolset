@@ -21,9 +21,9 @@
  ************/
 typedef struct {
    bool cond;
-   spl_int_t *dp;  /* arr. of int */
+   spl_int_t *dp;  /* int [] */
    size_t dpsz;
-   stack_t **mem;  /* arr. of stack */
+   stack_t **mem;  /* stack_t * [] */
    stage_t *st;
    size_t
       t,  /* teller */

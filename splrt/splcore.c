@@ -17,7 +17,7 @@ extern runtime_context_t *init_runtime(size_t dpsz) {
 
 extern void cleanup_runtime(runtime_context_t *rctx) {
    stage_destroy(rctx->st);
-   cleanup_mem(rctx->mem);
+   cleanup_mem(rctx);
    free(rctx->dp);
 }
 
@@ -71,14 +71,14 @@ static stack_t **init_mem(size_t dpsz) {
    stack_t **ret;
 
    ret = safe_malloc(dpsz * ESIZ(ret));  /* arr. of stack */
-   for (int i = 0; i < dpsz; i++)
+   for (size_t i = 0; i < dpsz; i++)
       ret[i] = stack_create();
 
    return ret;
 }
 
 static void cleanup_mem(runtime_context_t *rctx) {
-   for (int i = 0; i < rctx->dpsz; i++)
+   for (size_t i = 0; i < rctx->dpsz; i++)
       stack_destroy(rctx->mem[i]);
    free(rctx->mem);
 }
@@ -113,15 +113,17 @@ static void clearbuf(void) {
       /* empty */ ;
 }
 
-static void assert_offstage(stage_t *st, int charidx) {
+// fixme: meaningless?
+static void assert_offstage(stage_t *st, size_t charidx) {
    if (stage_onstage(st, charidx))
       return;
    VERR(
-      "a line by the offstage character %s",
+      "a line by the offstage character \"%s\"",
       stage_name(st, charidx)
    );
 }
 
+// fixme: meaningless?
 static void assert_onlytwo(stage_t *st) {
    if (stage_aretheretwo(st))
       return;

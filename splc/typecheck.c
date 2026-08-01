@@ -59,6 +59,7 @@ static void coalesce_name(tree_t *dp) {
          // note that s.len == strlen(s.run) + 1
          total_len += TREE_CHDAT(chardecl, k)->dat.s.len;
 
+      // fixme: no need to +1?
       buf = safe_malloc(total_len + 1);  /* a room for ' ' */
       buf[0] = '\0';
       for (int k = 0; k < chardecl_len; k++) {

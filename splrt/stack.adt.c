@@ -4,8 +4,7 @@
 extern stack_t *stack_create(void) {
    stack_t *ret;
 
-   ret = malloc(sizeof *ret);
-   if (!ret) raise_err("malloc failure");
+   ret = safe_malloc(sizeof *ret);
 
    ret->siz = 0;
    ret->top = NULL;
@@ -13,42 +12,41 @@ extern stack_t *stack_create(void) {
    return ret;
 }
 
-static bool stack_empty(stack_t *s) {
-   return s->siz == 0;
+extern bool stack_empty(stack_t *s) {
+   return !s->siz;
 }
 
-extern void stack_destroy(stack_t *stack) {
-   while (stack_empty(stack))
-      stack_pop(stack, NULL);
-   free(stack);
+extern void stack_destroy(stack_t *s) {
+   while (stack_empty(s))
+      stack_pop(s, NULL);
+   free(s);
 }
 
-extern void stack_push(stack_t *stack, int v) {
-   node_t *n;
+extern void stack_push(stack_t *s, int v) {
+   stack_node_t *n;
 
-   n = malloc(sizeof *n);
-   if (!n) raise_err("malloc failure");
+   n = safe_malloc(sizeof *n);
 
-   if (stack_empty(stack)) {
-      stack->top = n;
+   if (stack_empty(s)) {
+      s->top = n;
       n->next = n->prev = NULL;
    }
    else {
-      stack->top->next = n;
-      n->prev = stack->top;
+      s->top->next = n;
+      n->prev = s->top;
       n->next = NULL;
-      stack->top = n;
+      s->top = n;
    }
 
    n->v = v;
-   stack->siz++;
+   s->siz++;
 }
 
 extern void stack_pop(stack_t *stack, int *v) {
-   node_t *n;
+   stack_node_t *n;
 
    if (stack_empty(stack))
-      raise_err("attempt to pop from an empty stack");
+      ERR("attempt to pop from an empty stack");
 
    n = stack->top;
    if (v)
