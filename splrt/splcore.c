@@ -4,10 +4,10 @@
 extern runtime_context_t *init_runtime(size_t dpsz) {
    runtime_context_t *rctx;
 
-   rctx = smalloc(sizeof *rctx);
+   rctx = safe_malloc(sizeof *rctx);
 
    rctx->cond = false;
-   rctx->dp = smalloc(dpsz * ESIZ(rctx->dp));
+   rctx->dp = safe_malloc(dpsz * ESIZ(rctx->dp));
    rctx->dpsz = dpsz;
    rctx->mem = init_mem(dpsz);
    rctx->st = stage_create(dpsz);
@@ -70,7 +70,7 @@ extern void io_outc(runtime_context_t *rctx, size_t charidx) {
 static stack_t **init_mem(size_t dpsz) {
    stack_t **ret;
 
-   ret = smalloc(dpsz * ESIZ(ret));  /* arr. of stack */
+   ret = safe_malloc(dpsz * ESIZ(ret));  /* arr. of stack */
    for (int i = 0; i < dpsz; i++)
       ret[i] = stack_create();
 

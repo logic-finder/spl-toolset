@@ -4,16 +4,16 @@
 extern tree_t *tree_plant(void *data, size_t dsiz) {
    tree_t *ret;  /* a little sapling! */
 
-   ret = smalloc(sizeof *ret);
+   ret = safe_malloc(sizeof *ret);
 
-   ret->children = smalloc(INIT_CMAX * sizeof *ret->children);
+   ret->children = safe_malloc(INIT_CMAX * sizeof *ret->children);
    ret->parent = NULL;
    ret->cmax = INIT_CMAX;
    ret->clen = 0;
    ret->siz = dsiz;
 
    if (data) {
-      ret->dat = smalloc(dsiz);
+      ret->dat = safe_malloc(dsiz);
       memcpy(ret->dat, data, dsiz);
    }
    else ret->dat = NULL;

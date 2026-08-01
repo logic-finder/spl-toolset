@@ -24,7 +24,7 @@ extern void dbunload(void) {
 static void load_section(sectkind_t kind, size_t esiz) {
    unsigned int ret;
 
-   sects[kind] = smalloc(ecnts[kind] * esiz);
+   sects[kind] = safe_malloc(ecnts[kind] * esiz);
    sfseek(db, secpos[kind], SEEK_SET);
    ret = fread(sects[kind], esiz, ecnts[kind], db);
    if (ret < ecnts[kind])

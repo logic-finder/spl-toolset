@@ -4,7 +4,7 @@
 /************
  * stdlib.h *
  ************/
-extern void *smalloc(size_t siz) {
+extern void *safe_malloc(size_t siz) {
    void *ret = malloc(siz);
    if (!ret) fatal("malloc error");
    return ret;

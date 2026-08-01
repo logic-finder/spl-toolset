@@ -8,7 +8,7 @@ extern arr_t *lex(optflg_t *of, optval_t *ov, int lc) {
    p = q = 0;
    l = arr_peek(ls, p);
    max = 128;
-   buf = smalloc(max);
+   buf = safe_malloc(max);
    eoe = false;
 
    // Construct a stream of tokens
@@ -60,7 +60,7 @@ static void store_string(arr_t *toks, tokkind_t kind) {
 
    buf[idx] = '\0';
    len = idx + 1;
-   run = smalloc(len);
+   run = safe_malloc(len);
    strcpy(run, buf); // fixme: consider memcpy
 
    tok.run = run;

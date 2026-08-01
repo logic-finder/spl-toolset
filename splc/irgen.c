@@ -660,7 +660,7 @@ static tree_t *plant_tree(
    char *buf;
 
    if (run) {
-      buf = smalloc(len);  /* already has a room for \0 */
+      buf = safe_malloc(len);  /* already has a room for \0 */
       memcpy(buf, run, len);
    }
    else buf = NULL;

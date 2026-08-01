@@ -56,7 +56,7 @@ static void work_template(
    }
    rewind(src);  /* is_archived moved forward the file position */
 
-   destname = smalloc(
+   destname = safe_malloc(
       strlen(srcname)
       + strlen(prefix)
       + 1

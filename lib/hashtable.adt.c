@@ -14,8 +14,8 @@ static int hash(const char *s, unsigned int offset) {
 extern hashtable_t *ht_create(void) {
    hashtable_t *ht;
 
-   ht = smalloc(sizeof *ht);
-   ht->arr = smalloc(HASHTABLE_SIZ * ESIZ(ht->arr));
+   ht = safe_malloc(sizeof *ht);
+   ht->arr = safe_malloc(HASHTABLE_SIZ * ESIZ(ht->arr));
    ht->siz = 0;
 
    for (int i = 0; i < HASHTABLE_SIZ; i++) {
@@ -53,7 +53,7 @@ extern void ht_set(
       idx = hash(key, ++offset);
    }
    bucket->state = BUCKETSTATE_FULL;
-   bucket->dat = smalloc(siz);
+   bucket->dat = safe_malloc(siz);
    memcpy(bucket->dat, val, siz);
    ht->siz++;
 }

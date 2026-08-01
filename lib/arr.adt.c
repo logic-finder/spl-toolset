@@ -7,8 +7,8 @@
 extern arr_t *arr_create(void) {
    arr_t *arr;
 
-   arr = smalloc(sizeof *arr);
-   arr->arr = smalloc(INIT_MAX * ESIZ(arr->arr));
+   arr = safe_malloc(sizeof *arr);
+   arr->arr = safe_malloc(INIT_MAX * ESIZ(arr->arr));
    arr->len = 0;
    arr->max = INIT_MAX;
 
@@ -27,7 +27,7 @@ extern void arr_append(arr_t *arr, const void *item, size_t siz) {
 
    if (arr_full(arr)) arr_enlarge(arr);
 
-   p = smalloc(siz);
+   p = safe_malloc(siz);
    memcpy(p, item, siz);
    arr->arr[arr->len++] = p;
 }

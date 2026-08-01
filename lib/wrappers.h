@@ -6,10 +6,10 @@
 #include <stdarg.h>
 
 /**
- * @brief `smalloc` (safe malloc) is a wrapper for `malloc`.
+ * @brief `safe_malloc` is a wrapper for `malloc`.
  * @note exits in failure.
  */
-void *smalloc(size_t siz);
+void *safe_malloc(size_t siz);
 
 /**
  * @brief `srealloc` (safe realloc) is a wrapper for `realloc`.

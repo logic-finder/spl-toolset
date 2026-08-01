@@ -50,7 +50,7 @@ extern char *extfnm(const char *src, bool ext_flag) {
       return NULL;
 
    // Copy src to dest
-   char *dest = smalloc(len + 1);
+   char *dest = safe_malloc(len + 1);
 
    // Handle the case 1 and 2
    if (dpos == -1)
@@ -95,7 +95,7 @@ extern char **split(
    // Prepare an array of strings
    siz = 0;
    max = 2;
-   arr = smalloc(max * sizeof arr[0]);
+   arr = safe_malloc(max * sizeof arr[0]);
    ini = fin = src;
 
    for (;;) {
@@ -104,17 +104,17 @@ extern char **split(
 
       if (!fin) {
          int rest = strlen(ini);
-         buf = smalloc(rest + 1);
+         buf = safe_malloc(rest + 1);
          strcpy(buf, ini); // fixme: consider memcpy
       }
       else {
          ptrdiff_t diff = fin - ini;
          if (!diff) {
-            buf = smalloc(1);
+            buf = safe_malloc(1);
             buf[0] = '\0';
          }
          else {
-            buf = smalloc(diff + 1);
+            buf = safe_malloc(diff + 1);
             strncpy(buf, ini, diff);
             buf[diff] = '\0';
          }
@@ -178,7 +178,7 @@ extern void translate(
 extern void normalize(char *src) {
    char *buf, *tok;
 
-   buf = smalloc(strlen(src) + 1);
+   buf = safe_malloc(strlen(src) + 1);
    buf[0] = '\0';
 
    tok = strtok(src, whitespaces);
@@ -208,7 +208,7 @@ extern char *make_destname(
 
    temp = extfnm(orig, false);
    tempsiz = strlen(temp);
-   buf = smalloc(tempsiz + strlen(ext) + 1);
+   buf = safe_malloc(tempsiz + strlen(ext) + 1);
    strcpy(buf, temp);
    strcat(buf, ext);
 

@@ -22,7 +22,7 @@ extern int readln(FILE *fp, char **line, int *len) {
 
    // Read chars from the file so as to construct a string
    bufsiz = READLINE_UNIT;
-   buf = smalloc(bufsiz);
+   buf = safe_malloc(bufsiz);
    pos = 0;
    eol = false;
 

@@ -34,7 +34,7 @@ static void coalesce_title(void) {
       rlen += TREE_CHDAT(title, i)->dat.s.len;
 
    rlen++;
-   buf = smalloc(rlen);
+   buf = safe_malloc(rlen);
    buf[0] = '\0';
    for (i = 0; i < clen; i++) {
       strcat(buf, TREE_CHDAT(title, i)->dat.s.run);
@@ -59,7 +59,7 @@ static void coalesce_name(tree_t *dp) {
          // note that s.len == strlen(s.run) + 1
          total_len += TREE_CHDAT(chardecl, k)->dat.s.len;
 
-      buf = smalloc(total_len + 1);  /* a room for ' ' */
+      buf = safe_malloc(total_len + 1);  /* a room for ' ' */
       buf[0] = '\0';
       for (int k = 0; k < chardecl_len; k++) {
          strcat(buf, TREE_CHDAT(chardecl, k)->dat.s.run);
