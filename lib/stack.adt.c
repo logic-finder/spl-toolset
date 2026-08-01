@@ -46,7 +46,7 @@ extern void stack_pop(stack_t *stack, int *v) {
    stack_node_t *n;
 
    if (stack_empty(stack))
-      ERR("attempt to pop from an empty stack");
+      fatal("attempt to pop from an empty stack");
 
    n = stack->top;
    if (v)
