@@ -13,13 +13,13 @@ extern void irgenerate(void) {
 }
 
 static void set_dpsz(void) {
-   tree_t *dp, *data_sect, *opcode;
+   tree_t *dp, *irt_dp, *opcode;
    int dpsz;
 
-   data_sect = graft_tree_n(
+   irt_dp = graft_tree_n(
       irt,
       0,
-      IrnodekindData,
+      IrnodekindDp,
       0,
       0
    );
@@ -28,7 +28,7 @@ static void set_dpsz(void) {
    dpsz = tree_clen(dp);
 
    opcode = graft_tree_n(
-      data_sect, IropcodeSet, IrnodekindOpcode, 0, 0);
+      irt_dp, IropcodeSet, IrnodekindOpcode, 0, 0);
    graft_tree_n(opcode, IrvarDpsz, IrnodekindVar, 0, 0);
    graft_tree_n(opcode, dpsz, IrnodekindConst, 0, 0);
 }

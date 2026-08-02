@@ -29,16 +29,16 @@ void *srealloc_arr(void *arr, int cnt, size_t esiz);
 void *scalloc(size_t n, size_t siz);
 
 /**
- * @brief `sfopen` (safe fopen) is a wrapper for `fopen`.
+ * @brief `safe_fopen` is a wrapper for `fopen`.
  * @note exits in failure.
  */
-FILE *sfopen(const char *filename, const char *mode);
+FILE *safe_fopen(const char *filename, const char *mode);
 
 /**
- * @brief `sfclose` (safe fclose) is a wrapper for `fclose`.
+ * @brief `safe_fclose` is a wrapper for `fclose`.
  * @note exits in failure.
  */
-void sfclose(FILE *fp);
+void safe_fclose(FILE *fp);
 
 void sremove(const char *filename);
 void srename(const char *old, const char *new);

@@ -5,7 +5,7 @@ extern void transpile(optflg_t *of, optval_t *ov) {
    tree_t *title, *dp, *nrtv;
 
    (void) of, (void) ov;
-   fp = sfopen(FP_NAME, "w");
+   fp = safe_fopen(FP_NAME, "w");
    title = tree_child(pt, 0);
    dp    = tree_child(pt, 1);
    nrtv  = tree_child(pt, 2);
@@ -20,7 +20,7 @@ extern void transpile(optflg_t *of, optval_t *ov) {
    gen_cleanup();
    sfputs(fp, "\n" INDENT "return 0;\n}\n");
 
-   sfclose(fp);
+   safe_fclose(fp);
 }
 
 static void gen_header(void) {

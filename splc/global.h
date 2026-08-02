@@ -84,6 +84,7 @@
 
 #define IR_EXTENSION  ".splasm"
 #define OBJ_EXTENSION ".splo"
+#define C_EXTENSION   ".c"
 
 /* fixme: 여기 말고, 각자의 h파일로 옮길것 */
 /**********************

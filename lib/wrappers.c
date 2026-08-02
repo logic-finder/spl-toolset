@@ -33,13 +33,13 @@ extern void *scalloc(size_t n, size_t siz) {
 /***********
  * stdio.h *
  ***********/
-extern FILE *sfopen(const char *filename, const char *mode) {
+extern FILE *safe_fopen(const char *filename, const char *mode) {
    FILE *fp = fopen(filename, mode);
    if (!fp) vfatal("unable to open the file: %s", filename);
    return fp;
 }
 
-extern void sfclose(FILE *fp) {
+extern void safe_fclose(FILE *fp) {
    if (fclose(fp) != EOF)
       return;
    fatal("unable to close a stream");

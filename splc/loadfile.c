@@ -16,7 +16,7 @@ extern arr_t *loadfile(
        lcnt,   // line count
        wcnt;   // word count
 
-   fp = sfopen(filename, "r");
+   fp = safe_fopen(filename, "r");
    lcnt = wcnt = 0;
    lines = arr_create();
 
@@ -42,7 +42,7 @@ extern arr_t *loadfile(
       last->len++;
    }
 
-   sfclose(fp);
+   safe_fclose(fp);
 
    // fixme: if (lc) *lc = lcnt... 식으로 변경
    *lc = lcnt;

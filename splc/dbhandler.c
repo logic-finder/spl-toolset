@@ -14,6 +14,7 @@ extern void dbload(void) {
       ecnts[SECTKIND_NAME], ecnts[SECTKIND_ADJ],
       ecnts[SECTKIND_NOUN], ecnts[SECTKIND_COMP]
    );
+   safe_fclose(db);
 }
 
 extern void dbunload(void) {
@@ -37,7 +38,7 @@ static void dbcheck(void) {
    uint8_t af;
 
    le = isle(), be = !le;
-   db = sfopen(DBFILENAME, "rb");
+   db = safe_fopen(DBFILENAME, "rb");
 
    // Check metadata section header
    ret = fread(&header, MTDT_HD, 1, db);

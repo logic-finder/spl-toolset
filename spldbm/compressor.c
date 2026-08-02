@@ -43,7 +43,7 @@ static void work_template(
    char *destname;
    bool archived;
 
-   src = sfopen(srcname, "rb");
+   src = safe_fopen(srcname, "rb");
    archived = is_archived(src);
    if ((af == 1 && archived)) {
       fmtwrt(ENPREFIX "this DB is already archived; terminating\n");
@@ -63,14 +63,14 @@ static void work_template(
    );
    strcpy(destname, srcname); // fixme: consider memcpy
    strcat(destname, prefix);
-   dest = sfopen(destname, "wb");
+   dest = safe_fopen(destname, "wb");
 
    write_metadata(src, dest, af);
    (*work)(src, dest);
 
    free(destname);
-   sfclose(src);
-   sfclose(dest);
+   safe_fclose(src);
+   safe_fclose(dest);
 }
 
 static void write_metadata(FILE *src, FILE *dest, uint8_t af) {

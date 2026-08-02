@@ -10,6 +10,8 @@ typedef enum irnodekind {
    Irnodekind_Unknown,
    IrnodekindEop,
    IrnodekindRoot,
+   IrnodekindDp,
+   IrnodekindNrtv,
    IrnodekindAct,
    IrnodekindScene,
    IrnodekindBlock,

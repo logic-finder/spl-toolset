@@ -30,7 +30,7 @@ extern void assemble(void) {
    actx.le = isle(), actx.be = !actx.le;
 
    destname = make_destname("hello.spl", OBJ_EXTENSION);
-   fp = sfopen(destname, "w");
+   fp = safe_fopen(destname, "w");
 
    fmtwrt(ENPREFIX "generating object file " Cbyellow "\"%s\"" Creset "...", destname);
 
@@ -61,7 +61,7 @@ extern void assemble(void) {
    );
 
    /* Cleans up */
-   sfclose(fp);
+   safe_fclose(fp);
    free(destname);
 }
 

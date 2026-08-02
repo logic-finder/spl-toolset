@@ -58,7 +58,7 @@ extern void dbmake(void) {
 
    le = isle(), be = !le;
    dupflg = false;
-   fp = sfopen(DBTEMPNAME, "wb");
+   fp = safe_fopen(DBTEMPNAME, "wb");
 
    // Make DB
    print_srcfiles();
@@ -91,7 +91,7 @@ extern void dbmake(void) {
    );
 
    // Rename
-   sfclose(fp);
+   safe_fclose(fp);
    (void) remove(DBFILENAME);
    srename(DBTEMPNAME, DBFILENAME);
 }
@@ -162,7 +162,7 @@ static void write_sect_type_A(
    arr_t *records;
    record_A_t temp, *r;
 
-   src = sfopen(ov.mak[sectkind], "rb");
+   src = safe_fopen(ov.mak[sectkind], "rb");
    records = arr_create();
    ecnt = 0;
 
@@ -188,7 +188,7 @@ static void write_sect_type_A(
       arr_append(records, &temp, sizeof temp);
    }
    if (!ecnt) VERR("empty %s file", sectname);
-   sfclose(src);
+   safe_fclose(src);
 
    // Sort!
    arr_sort(records, compare);
@@ -248,7 +248,7 @@ static void write_sect_type_B(
    arr_t *records;
    record_B_t temp, *r;
 
-   src = sfopen(ov.mak[sectkind], "rb");
+   src = safe_fopen(ov.mak[sectkind], "rb");
    records = arr_create();
    maxlen =
       dt_s_len     // 64
@@ -294,7 +294,7 @@ static void write_sect_type_B(
       free(ln);
    }
    if (!ecnt) VERR("empty %s file", sectname);
-   sfclose(src);
+   safe_fclose(src);
 
    // Sort!
    arr_sort(records, compare);

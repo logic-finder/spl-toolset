@@ -5,7 +5,7 @@ extern void irdump(void) {
    char *destname;
 
    destname = make_destname("hello.spl", IR_EXTENSION);
-   fp = sfopen(destname, "w");
+   fp = safe_fopen(destname, "w");
 
    fmtwrt(ENPREFIX "dumping IR into " Cbyellow "\"%s\"" Creset "...", destname);
 
@@ -14,7 +14,7 @@ extern void irdump(void) {
 
    fmtwrt(" " Cgreen "done!" Creset "\n");
 
-   sfclose(fp);
+   safe_fclose(fp);
    free(destname);
 }
 
