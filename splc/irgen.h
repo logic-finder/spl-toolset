@@ -22,20 +22,24 @@ typedef enum irnodekind {
    IrnodekindData
 } irnodekind_t;
 
+typedef enum {
+   IrnodeDatkindInt,
+   IrnodeDatkindUint,
+   IrnodeDatkindStr
+} irnode_datkind_t;
+
 typedef struct irnode {
-   enum {
-      IrnodeDatkindInt,
-      IrnodeDatkindStr
-   } datkind;
+   irnode_datkind_t datkind;
    union {
-      int n;
+      int i;
+      unsigned int ui;
       struct {
          char *run;
          int len;
       } s;
    } dat;
    irnodekind_t kind;
-   int lnum, lpos;
+   size_t lnum, lpos;
    spl_uint_t offset;
 } irnode_t;
 

@@ -10,7 +10,7 @@
 
 #define SPL_OPCODE_SIZ 1
 #define SPL_VAR_SIZ    1
-#define SPL_PERSON_SIZ 2
+#define SPL_PERSON_SIZ SPL_INT_SIZ
 #define SPL_CONST_SIZ  SPL_INT_SIZ
 #define SPL_ADDR_SIZ   4
 
@@ -18,7 +18,8 @@ typedef struct {
    bool le, be;
    spl_uint_t offset;
    uint32_t s2p, s3p;
-} assemble_ctx_t;
+   tree_t *nrtv;
+} assemble_ctx_t; // fixme: asm_ctx_t
 
 typedef void writer_t(tree_t *t);
 

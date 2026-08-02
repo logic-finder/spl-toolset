@@ -38,7 +38,7 @@ static void handle_opcode(tree_t *t) {
 
    irn = tree_dat(t);
 
-   switch (irn->dat.n) {
+   switch (irn->dat.i) {
       case IropcodeSet    : /* fall-through */
       case IropcodeAsgn   : handle_setlike  (t); break;
       case IropcodeEnter  : /* fall-through */
@@ -93,12 +93,12 @@ static void handle_scene(tree_t *t) {
 
 static void handle_block(tree_t *t) {
    irnode_t *n = tree_dat(t);
-   if (!n->dat.n)
+   if (!n->dat.i)
       return;
    ffmtwrt(
       fp,
       "\n.L%d:\n",
-      n->dat.n
+      n->dat.i
    );
 }
 
@@ -122,9 +122,9 @@ person:
       fp,
       "%s%s %s dp[%d]\n",
       INDENT,
-      resolve_opcode(n->dat.n),
-      resolve_var(p1->dat.n),
-      p2->dat.n
+      resolve_opcode(n->dat.i),
+      resolve_var(p1->dat.i),
+      p2->dat.i - Irvar_Dp_Begin
    );
    return;
 
@@ -133,9 +133,9 @@ var:
       fp,
       "%s%s %s %s\n",
       INDENT,
-      resolve_opcode(n->dat.n),
-      resolve_var(p1->dat.n),
-      resolve_var(p2->dat.n)
+      resolve_opcode(n->dat.i),
+      resolve_var(p1->dat.i),
+      resolve_var(p2->dat.i)
    );
    return;
 
@@ -144,9 +144,9 @@ common:
       fp,
       "%s%s %s %d\n",
       INDENT,
-      resolve_opcode(n->dat.n),
-      resolve_var(p1->dat.n),
-      p2->dat.n
+      resolve_opcode(n->dat.i),
+      resolve_var(p1->dat.i),
+      p2->dat.i
    );
 }
 
@@ -161,8 +161,8 @@ static void handle_enterlike(tree_t *t) {
       fp,
       "%s%s %d\n",
       INDENT,
-      resolve_opcode(n->dat.n),
-      p1->dat.n
+      resolve_opcode(n->dat.i),
+      p1->dat.i
    );
 }
 
@@ -177,8 +177,8 @@ static void handle_pushlike(tree_t *t) {
       fp,
       "%s%s %s\n",
       INDENT,
-      resolve_opcode(n->dat.n),
-      resolve_var(p1->dat.n)
+      resolve_opcode(n->dat.i),
+      resolve_var(p1->dat.i)
    );
 }
 
@@ -192,12 +192,12 @@ static void handle_goto(tree_t *t) {
 
    if (debug) emit_debug_data(n);
 
-   if (p1->dat.n == NODEKIND_ACT) {
+   if (p1->dat.i == NODEKIND_ACT) {
       ffmtwrt(
          fp,
          "%s%s Act_%s_Scene_I\n",
          INDENT,
-         resolve_opcode(n->dat.n),
+         resolve_opcode(n->dat.i),
          p2->dat.s.run
       );
       return;
@@ -211,7 +211,7 @@ static void handle_goto(tree_t *t) {
       fp,
       "%s%s Act_%s_Scene_%s\n",
       INDENT,
-      resolve_opcode(n->dat.n),
+      resolve_opcode(n->dat.i),
       act_dat->dat.s.run,
       p2->dat.s.run
    );
@@ -228,8 +228,8 @@ static void handle_jumplike(tree_t *t) {
       fp,
       "%s%s .L%d\n",
       INDENT,
-      resolve_opcode(n->dat.n),
-      p1->dat.n
+      resolve_opcode(n->dat.i),
+      p1->dat.i
    );
 }
 
@@ -246,10 +246,10 @@ static void handle_binary_op(tree_t *t) {
       fp,
       "%s%s %s %s %s\n",
       INDENT,
-      resolve_opcode(n->dat.n),
-      resolve_var(p1->dat.n),
-      resolve_var(p2->dat.n),
-      resolve_var(p3->dat.n)
+      resolve_opcode(n->dat.i),
+      resolve_var(p1->dat.i),
+      resolve_var(p2->dat.i),
+      resolve_var(p3->dat.i)
    );
 }
 
@@ -265,9 +265,9 @@ static void handle_unary_op(tree_t *t) {
       fp,
       "%s%s %s %s\n",
       INDENT,
-      resolve_opcode(n->dat.n),
-      resolve_var(p1->dat.n),
-      resolve_var(p2->dat.n)
+      resolve_opcode(n->dat.i),
+      resolve_var(p1->dat.i),
+      resolve_var(p2->dat.i)
    );
 }
 
@@ -278,7 +278,7 @@ static void handle_paramless_opcode(tree_t *t) {
       fp,
       "%s%s\n",
       INDENT,
-      resolve_opcode(n->dat.n)
+      resolve_opcode(n->dat.i)
    );
 }
 
@@ -355,16 +355,16 @@ extern void debug_print_irnode(tree_t *t, int lv, void *ctx) {
    printf("[%s] = [", resolve_nodekind(n->kind));
    switch (n->kind) {
       case IrnodekindVar:
-         printf("%s]", resolve_var(n->dat.n));
+         printf("%s]", resolve_var(n->dat.i));
       break;
 
       case IrnodekindOpcode:
-         printf("%s]", resolve_opcode(n->dat.n));
+         printf("%s]", resolve_opcode(n->dat.i));
       break;
 
       default:
          if (n->datkind == IrnodeDatkindInt)
-            printf("%d]", n->dat.n);
+            printf("%d]", n->dat.i);
          else {
             printf("%s]",
                n->dat.s.len

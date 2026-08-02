@@ -28,6 +28,7 @@ extern void assemble(void) {
    char *destname;
 
    actx.le = isle(), actx.be = !actx.le;
+   actx.nrtv = tree_child(irt, 1);
 
    destname = make_destname("hello.spl", OBJ_EXTENSION);
    fp = safe_fopen(destname, "w");
@@ -36,10 +37,10 @@ extern void assemble(void) {
 
    /* Fills opcode.offset field first */
    actx.offset = OBJFILE_HDSIZ;
-   tree_pre_traverse(irt, setoffset_route, 0, &actx.offset);
+   tree_pre_traverse(actx.nrtv, setoffset_route, 0, &actx.offset);
 
    /* Writes the code section */
-   tree_pre_traverse(irt, write_route, 0, NULL);
+   tree_pre_traverse(actx.nrtv, write_route, 0, NULL);
 
    /* Writes the debug info & source file section */
    actx.s2p = actx.offset;
@@ -69,8 +70,8 @@ static void setoffset_route(tree_t *t, int lv, void *ctx) {
    /* SIZE
          opcode  - 1 byte
          var     - 1 byte
-         person  - 2 byte
-         const   - SPL_INT_SIZ byte */
+         person  - SPL_INT_SIZ bytes
+         const   - SPL_INT_SIZ bytes */
 
    irnode_t *n;
    spl_uint_t *offset;
@@ -90,7 +91,7 @@ static void setoffset_route(tree_t *t, int lv, void *ctx) {
 
    /* Calculates the offset of the next node */
    *offset += SPL_OPCODE_SIZ;
-   switch (n->dat.n) {
+   switch (n->dat.ui) {
       case IropcodeSet    : *offset += SPL_VAR_SIZ + SPL_CONST_SIZ; break;
       case IropcodeAsgn   : *offset += 2 * SPL_VAR_SIZ; break;
       case IropcodeEnter  : /* fall-through */
@@ -127,7 +128,7 @@ static void write_route(tree_t *t, int lv, void *ctx) {
    if (n->kind != IrnodekindOpcode)
       return;
 
-   switch (n->dat.n) {
+   switch (n->dat.ui) {
       case IropcodeSet    : write_set(t); break;
       case IropcodeEnter  : /* fall-through */
       case IropcodeExit   : /* fall-through */
@@ -170,9 +171,9 @@ static void write_set(tree_t *t) {
    p1 = tree_chdat(t, 0);
    p2 = tree_chdat(t, 1);
 
-   sfwrite(&n->dat.n, SPL_OPCODE_SIZ, 1, fp);
-   sfwrite(&p1->dat.n, SPL_VAR_SIZ, 1, fp);
-   sfwrite(&p2->dat.n, SPL_CONST_SIZ, 1, fp);
+   sfwrite(&n->dat.i, SPL_OPCODE_SIZ, 1, fp);
+   sfwrite(&p1->dat.i, SPL_VAR_SIZ, 1, fp);
+   sfwrite(&p2->dat.i, SPL_CONST_SIZ, 1, fp);
 }
 
 static void write_enterlike(tree_t *t) {
@@ -181,13 +182,13 @@ static void write_enterlike(tree_t *t) {
    n = tree_dat(t);
    p1 = tree_chdat(t, 0);
 
-   sfwrite(&n->dat.n, SPL_OPCODE_SIZ, 1, fp);
-   sfwrite(&p1->dat.n, SPL_PERSON_SIZ, 1, fp);
+   sfwrite(&n->dat.i, SPL_OPCODE_SIZ, 1, fp);
+   sfwrite(&p1->dat.i, SPL_PERSON_SIZ, 1, fp);
 }
 
 static void write_paramless_opcode(tree_t *t) {
    irnode_t *n = tree_dat(t);
-   sfwrite(&n->dat.n, SPL_OPCODE_SIZ, 1, fp);
+   sfwrite(&n->dat.i, SPL_OPCODE_SIZ, 1, fp);
 }
 
 static void write_pushlike(tree_t *t) {
@@ -196,8 +197,8 @@ static void write_pushlike(tree_t *t) {
    n = tree_dat(t);
    p1 = tree_chdat(t, 0);
 
-   sfwrite(&n->dat.n, SPL_OPCODE_SIZ, 1, fp);
-   sfwrite(&p1->dat.n, SPL_VAR_SIZ, 1, fp);
+   sfwrite(&n->dat.i, SPL_OPCODE_SIZ, 1, fp);
+   sfwrite(&p1->dat.i, SPL_VAR_SIZ, 1, fp);
 }
 
 static void write_binary_op(tree_t *t) {
@@ -208,10 +209,10 @@ static void write_binary_op(tree_t *t) {
    p2 = tree_chdat(t, 1);
    p3 = tree_chdat(t, 2);
 
-   sfwrite(&n->dat.n, SPL_OPCODE_SIZ, 1, fp);
-   sfwrite(&p1->dat.n, SPL_VAR_SIZ, 1, fp);
-   sfwrite(&p2->dat.n, SPL_VAR_SIZ, 1, fp);
-   sfwrite(&p3->dat.n, SPL_VAR_SIZ, 1, fp);
+   sfwrite(&n->dat.i, SPL_OPCODE_SIZ, 1, fp);
+   sfwrite(&p1->dat.i, SPL_VAR_SIZ, 1, fp);
+   sfwrite(&p2->dat.i, SPL_VAR_SIZ, 1, fp);
+   sfwrite(&p3->dat.i, SPL_VAR_SIZ, 1, fp);
 }
 
 static void write_unary_op(tree_t *t) {
@@ -221,9 +222,9 @@ static void write_unary_op(tree_t *t) {
    p1 = tree_chdat(t, 0);
    p2 = tree_chdat(t, 1);
 
-   sfwrite(&n->dat.n, SPL_OPCODE_SIZ, 1, fp);
-   sfwrite(&p1->dat.n, SPL_VAR_SIZ, 1, fp);
-   sfwrite(&p2->dat.n, SPL_VAR_SIZ, 1, fp);
+   sfwrite(&n->dat.i, SPL_OPCODE_SIZ, 1, fp);
+   sfwrite(&p1->dat.i, SPL_VAR_SIZ, 1, fp);
+   sfwrite(&p2->dat.i, SPL_VAR_SIZ, 1, fp);
 }
 
 static void write_goto(tree_t *t) {
@@ -241,19 +242,19 @@ static void write_goto(tree_t *t) {
    act = tree_parent(scene);
    root = tree_parent(act);
 
-   if (p1->dat.n == NODEKIND_ACT) {
-      a = interpret_romnum(p2->dat.s.run);  /* idx = a */
+   if (p1->dat.i == NODEKIND_ACT) {
+      a = interpret_romnum(p2->dat.s.run) - 1;
       op = find_nearest_opcode(root, a, 0, 0);
    }
    else {  /* NODEKIND_SCENE */
       act_dat = tree_dat(act);
-      a = interpret_romnum(act_dat->dat.s.run);  /* idx = a */
-      s = interpret_romnum(p2->dat.s.run) - 1;  /* idx = s - 1 */
+      a = interpret_romnum(act_dat->dat.s.run) - 1;
+      s = interpret_romnum(p2->dat.s.run) - 1;
       op = find_nearest_opcode(root, a, s, 0);
    }
    op_dat = tree_dat(op);
 
-   sfwrite(&n->dat.n, SPL_OPCODE_SIZ, 1, fp);
+   sfwrite(&n->dat.i, SPL_OPCODE_SIZ, 1, fp);
    sfwrite(&op_dat->offset, SPL_ADDR_SIZ, 1, fp);
 }
 
@@ -276,7 +277,7 @@ static void write_jumplike(tree_t *t) {
    for (b = scene_siz - 1; b >= 0; b--) {
       block = tree_child(scene, b);
       block_dat = tree_dat(block);
-      if (block_dat->dat.n == p1->dat.n)
+      if (block_dat->dat.i == p1->dat.i)
          break;  /* must exist */
    }
 
@@ -286,24 +287,24 @@ static void write_jumplike(tree_t *t) {
    act_dat = tree_dat(act);
    scene_dat = tree_dat(scene);
 
-   a = interpret_romnum(act_dat->dat.s.run);  /* idx = a */
-   s = interpret_romnum(scene_dat->dat.s.run) - 1;  /* idx = s - 1 */
+   a = interpret_romnum(act_dat->dat.s.run) - 1;
+   s = interpret_romnum(scene_dat->dat.s.run) - 1;
 
    /* Acquires the first opcode of the requested
       block in the scene */
    op = find_nearest_opcode(root, a, s, b);
    op_dat = tree_dat(op);
 
-   sfwrite(&n->dat.n, SPL_OPCODE_SIZ, 1, fp);
+   sfwrite(&n->dat.i, SPL_OPCODE_SIZ, 1, fp);
    sfwrite(&op_dat->offset, SPL_ADDR_SIZ, 1, fp);
 }
 
 static tree_t *find_nearest_opcode(tree_t *root, int a, int s, int b) {
    tree_t *act, *scene, *block, *op;
-   int root_siz, act_siz, scene_siz;
+   int nrtv_siz, act_siz, scene_siz;
 
-   root_siz = tree_clen(root);
-   for ( ; a < root_siz; a++) {
+   nrtv_siz = tree_clen(root);
+   for ( ; a < nrtv_siz; a++) {
       act = tree_child(root, a);
       act_siz = tree_clen(act);
       for ( ; s < act_siz; s++) {
@@ -333,7 +334,7 @@ static void write_debug_info(assemble_ctx_t *actx) {
    sfgetpos(fp, &ecnt_pos);
    actx->offset += OBJFILE_DI_EC;
    before = actx->offset;
-   tree_pre_traverse(irt, write_dbginfo_route, 0, actx);
+   tree_pre_traverse(actx->nrtv, write_dbginfo_route, 0, actx);
    sfgetpos(fp, &eos_pos);
    diff = actx->offset - before;
    ecnt = diff / OBJFILE_DI_ETSIZ;

@@ -108,7 +108,7 @@ static void fold_const_work(tree_t *block, tree_t *new_block) {
       /* Validates opcode */
       op = tree_child(block, i);
       opdat = tree_dat(op);
-      if (opdat->dat.n != IropcodeSet)
+      if (opdat->dat.i != IropcodeSet)
          goto graft;
 
       /* Validates 1st parameter */
@@ -116,7 +116,7 @@ static void fold_const_work(tree_t *block, tree_t *new_block) {
       p1dat = tree_dat(p1);
       if (p1dat->kind != IrnodekindVar)
          goto graft;
-      if (p1dat->dat.n != IrvarConst)
+      if (p1dat->dat.i != IrvarConst)
          goto graft;
 
       /* Validates 2nd parameter */
@@ -126,7 +126,7 @@ static void fold_const_work(tree_t *block, tree_t *new_block) {
          goto graft;
 
       /* SET const (1 | -1) */
-      val = p2dat->dat.n;
+      val = p2dat->dat.i;
       flow_flag = false;
 
       /* Advances until temp is not 2x */
@@ -134,7 +134,7 @@ static void fold_const_work(tree_t *block, tree_t *new_block) {
          /* the next opcode must exist */
          temp = tree_child(block, j);
          tempdat = tree_dat(temp);
-         if (tempdat->dat.n != Iropcode2x)
+         if (tempdat->dat.i != Iropcode2x)
             break;
          if (val > SPL_INT_MAX / 2 || val < SPL_INT_MIN / 2)
             if (!flow_flag) {
@@ -149,7 +149,7 @@ static void fold_const_work(tree_t *block, tree_t *new_block) {
       if (flow_flag)
          warn(flow_lnum, flow_lpos);
 
-      p2dat->dat.n = val;
+      p2dat->dat.i = val;
       i = j - 1;  /* fast-forwards i */
    graft:
       tree_graft(new_block, op);

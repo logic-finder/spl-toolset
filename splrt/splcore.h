@@ -28,7 +28,7 @@ typedef struct {
    size_t
       t,  /* teller */
       h;  /* hearer */
-} runtime_context_t;
+} runtime_context_t; // fixme: rt_ctx_t
 
 typedef spl_int_t operator_t(spl_int_t v);
 typedef void iohandler_t(runtime_context_t *rctx, size_t charidx);
