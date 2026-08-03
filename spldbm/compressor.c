@@ -96,7 +96,7 @@ static void rle(FILE *src, FILE *dest) {
    int ch, cmp, orig_siz, arc_siz;
    uint8_t cnt;
 
-   sfputs(stdout, ENPREFIX "using run-length encoding...\n");
+   safe_fputs(stdout, ENPREFIX "using run-length encoding...\n");
 
    cmp = -1;
    orig_siz = arc_siz = MTDT_SIZ;
@@ -129,7 +129,7 @@ static void rrle(FILE *src, FILE *dest) {
    size_t ret;
    int orig_siz, res_siz;
 
-   sfputs(stdout, ENPREFIX "decoding run-length encoding...\n");
+   safe_fputs(stdout, ENPREFIX "decoding run-length encoding...\n");
 
    orig_siz = res_siz = MTDT_SIZ;
    for (;;) {

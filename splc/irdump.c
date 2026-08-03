@@ -3,14 +3,16 @@
 
 extern void irdump(void) {
    char *destname;
+   tree_t *nrtv;
 
    destname = make_destname("hello.spl", IR_EXTENSION);
    fp = safe_fopen(destname, "w");
 
    fmtwrt(ENPREFIX "dumping IR into " Cbyellow "\"%s\"" Creset "...", destname);
 
+   nrtv = tree_child(irt, 1);
    debug = 0;  /* emit debugging data? */
-   tree_pre_traverse(irt, route, 0, NULL);
+   tree_pre_traverse(nrtv, route, 0, NULL);
 
    fmtwrt(" " Cgreen "done!" Creset "\n");
 
@@ -85,7 +87,7 @@ static void handle_scene(tree_t *t) {
    if (debug) emit_debug_data(n);
    ffmtwrt(
       fp,
-      "Act_%s_Scene_%s:\n",
+      "Act_%s_Scene_%s:\n", // fixme: use KEYWRD_ACT _SCENE
       curr_act,
       n->dat.s.run
    );
@@ -195,7 +197,7 @@ static void handle_goto(tree_t *t) {
    if (p1->dat.i == NODEKIND_ACT) {
       ffmtwrt(
          fp,
-         "%s%s Act_%s_Scene_I\n",
+         "%s%s Act_%s_Scene_I\n",  // fixme: use KEYWRD_ACT _SCENE
          INDENT,
          resolve_opcode(n->dat.i),
          p2->dat.s.run
@@ -209,7 +211,7 @@ static void handle_goto(tree_t *t) {
 
    ffmtwrt(
       fp,
-      "%s%s Act_%s_Scene_%s\n",
+      "%s%s Act_%s_Scene_%s\n",  // fixme: use KEYWRD_ACT _SCENE
       INDENT,
       resolve_opcode(n->dat.i),
       act_dat->dat.s.run,
@@ -363,15 +365,25 @@ extern void debug_print_irnode(tree_t *t, int lv, void *ctx) {
       break;
 
       default:
-         if (n->datkind == IrnodeDatkindInt)
-            printf("%d]", n->dat.i);
-         else {
-            printf("%s]",
-               n->dat.s.len
-               ? (char *) n->dat.s.run
-               : Cbblack "(empty)" Creset
-            );
-            printf(" " Cbblack "(len = %d)" Creset "", n->dat.s.len);
+         switch (n->datkind) {
+            case IrnodeDatkindInt:
+               printf("%d]", n->dat.i);
+            break;
+
+            case IrnodeDatkindUint:
+               printf("%u]", n->dat.ui);
+            break;
+
+            case IrnodeDatkindStr:
+               printf("%s]",
+                  n->dat.s.len
+                  ? (char *) n->dat.s.run
+                  : Cbblack "(empty)" Creset
+               );
+               printf(" " Cbblack "(len = %d)" Creset "", n->dat.s.len);
+            break;
+
+            default: ;
          }
    }
    if (n->kind != IrnodekindOpcode) {
@@ -385,6 +397,8 @@ static const char *resolve_nodekind(irnodekind_t kind) {
    switch (kind) {
       case IrnodekindEop     : return "END OF PROGRAM";
       case IrnodekindRoot    : return "ROOT";
+      case IrnodekindDp      : return "DP";
+      case IrnodekindNrtv    : return "NRTV";
       case IrnodekindAct     : return "ACT";
       case IrnodekindScene   : return "SCENE";
       case IrnodekindBlock   : return "BLOCK";

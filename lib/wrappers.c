@@ -69,7 +69,7 @@ extern void sfputc(FILE *stream, char ch) {
       fatal("fputc error");
 }
 
-extern void sfputs(FILE *stream, const char *line) {
+extern void safe_fputs(FILE *stream, const char *line) {
    if (fputs(line, stream) == EOF)
       fatal("fputs error");
 }

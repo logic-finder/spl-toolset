@@ -11,20 +11,19 @@ extern void transpile(optflg_t *of, optval_t *ov) {
    nrtv  = tree_child(pt, 2);
    you_flag = false;
 
-   // Code generation
    gen_header();
    gen_title(title);
-   sfputs(fp, "int main(void) {\n");
+   safe_fputs(fp, "int main(void) {\n");
    gen_locals(dp);
    tree_pre_traverse(nrtv, generate, 0, NULL);
    gen_cleanup();
-   sfputs(fp, "\n" INDENT "return 0;\n}\n");
+   safe_fputs(fp, "\n" INDENT "return 0;\n}\n");
 
    safe_fclose(fp);
 }
 
 static void gen_header(void) {
-   sfputs(fp, "#include \"splcore.h\"\n\n");
+   safe_fputs(fp, "#include \"splcore.h\"\n\n");
 }
 
 static void gen_title(tree_t *title) {
@@ -39,10 +38,10 @@ static void gen_locals(tree_t *dp) {
    clen = tree_clen(dp);
 
    ffmtwrt(fp, INDENT "int dpsz = %d;\n", clen);
-   sfputs(fp, INDENT "bool cond = false;\n");
-   sfputs(fp, INDENT "stage_t *stage = stage_create(dpsz);\n");
-   sfputs(fp, INDENT "int *personae = init_dp(dpsz);\n");
-   sfputs(fp, INDENT "stack_t **memories = init_stacks(dpsz);\n\n");
+   safe_fputs(fp, INDENT "bool cond = false;\n");
+   safe_fputs(fp, INDENT "stage_t *stage = stage_create(dpsz);\n");
+   safe_fputs(fp, INDENT "int *personae = init_dp(dpsz);\n");
+   safe_fputs(fp, INDENT "stack_t **memories = init_stacks(dpsz);\n\n");
 
    for (int idx = 0; idx < clen; idx++) {
       character = tree_chdat(dp, idx);
@@ -54,9 +53,9 @@ static void gen_locals(tree_t *dp) {
 }
 
 static void gen_cleanup(void) {
-   sfputs(fp, "\n" INDENT "stage_destroy(stage);\n");
-   sfputs(fp, INDENT "free(personae);\n");
-   sfputs(fp, INDENT "cleanup_memories(memories, dpsz);\n");
+   safe_fputs(fp, "\n" INDENT "stage_destroy(stage);\n");
+   safe_fputs(fp, INDENT "free(personae);\n");
+   safe_fputs(fp, INDENT "cleanup_memories(memories, dpsz);\n");
 }
 
 static void generate(tree_t *t, int lv, void *ctx) {
@@ -121,7 +120,7 @@ static void eval_const(tree_t *cnst) {
    if (1) {
       sfputc(fp, '(');
       for (int i = 0; i < clen - 1; i++)
-         sfputs(fp, "2 * ");
+         safe_fputs(fp, "2 * ");
       resolve_noun(noun);
       sfputc(fp, ')');
    }
@@ -153,7 +152,7 @@ static void resolve_noun(tree_t *noun) {
    return;
 
    nnoun:
-      sfputs(fp, "-1");
+      safe_fputs(fp, "-1");
    return;
 
    p1:
@@ -219,9 +218,9 @@ static void resolve_division(tree_t *op, const char *s) {
    cnst2 = tree_child(op, 1);  /* rhs */
    cnst2 = tree_child(cnst2, 0);
 
-   sfputs(fp, "div((");
+   safe_fputs(fp, "div((");
    eval_const(cnst1);
-   sfputs(fp, "), (");
+   safe_fputs(fp, "), (");
    eval_const(cnst2);
    ffmtwrt(fp, ")).%s", s);
 }
@@ -230,7 +229,7 @@ static void resolve_unary(tree_t *op, const char *s) {
    tree_t *cnst;
 
    cnst = tree_child(op, 0);
-   sfputs(fp, s);
+   safe_fputs(fp, s);
    eval_const(cnst);
    sfputc(fp, ')');
 }
@@ -297,7 +296,7 @@ static void gen_exeunt(tree_t *t) {
 
    clen = tree_clen(t);
    if (!clen)
-      sfputs(fp, INDENT "stage_exeunt(stage);\n");
+      safe_fputs(fp, INDENT "stage_exeunt(stage);\n");
    else
       for (int i = 0; i < clen; i++) {
          charidx = TREE_CHDAT(t, i)->dat.n;
@@ -317,7 +316,7 @@ static void gen_asgn(tree_t *t) {
    ffmtwrt(fp, INDENT "assert_onlytwo(stage);\n");
    ffmtwrt(fp, INDENT "personae[stage_whoareyou(stage, %d)] = ", speaker);
    eval_const(tree_child(t, 0));
-   sfputs(fp, ";\n");
+   safe_fputs(fp, ";\n");
 }
 
 static void gen_io(const char *kind) {
@@ -393,7 +392,7 @@ static void gen_cond(tree_t *t) {
    if (kind == NODEKIND_P2)
       ffmtwrt(fp, INDENT "assert_onlytwo(stage);\n");
 
-   sfputs(fp, INDENT "cond = ");
+   safe_fputs(fp, INDENT "cond = ");
    if (mode->kind == NODEKIND_NEGATE)
       sfputc(fp, '!');
    sfputc(fp, '(');
@@ -424,7 +423,7 @@ static void gen_cond(tree_t *t) {
 
    // Right-hand side
    eval_const(tree_child(rhs, 0));
-   sfputs(fp, ");\n");
+   safe_fputs(fp, ");\n");
 
    /*
     * Since the rhs constant may have "you" as a noun,
@@ -446,10 +445,10 @@ static void gen_if(tree_t *t) {
    stmt = tree_child(conseq, 0);
    stmtdat = tree_dat(stmt);
 
-   sfputs(fp, INDENT "if (");
+   safe_fputs(fp, INDENT "if (");
    if (mode->kind == NODEKIND_NEGATE)
       sfputc(fp, '!');
-   sfputs(fp, "cond) ");
+   safe_fputs(fp, "cond) ");
 
    switch (stmtdat->kind) {
       case NODEKIND_ASGN1  : /* fall-through */
@@ -463,7 +462,7 @@ static void gen_if(tree_t *t) {
       case NODEKIND_PUSH   : gen_push(stmt); break;
       case NODEKIND_POP    : gen_pop (stmt); break;
       case NODEKIND_IF :
-         sfputs(fp, "\n");
+         safe_fputs(fp, "\n");
          gen_if(stmt);
          break;
       /* control never reaches here */
@@ -488,7 +487,7 @@ static void gen_push(tree_t *t) {
       speaker
    );
    eval_const(cnst);
-   sfputs(fp, INDENT ");\n");
+   safe_fputs(fp, INDENT ");\n");
 }
 
 static void gen_pop(tree_t *_) {

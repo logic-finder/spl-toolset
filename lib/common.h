@@ -14,6 +14,8 @@
 #define ESIZ(arr) (sizeof (arr)[0])
 #define ARRLEN(arr) (sizeof (arr) / ESIZ(arr))
 
+// fixme: 변수타입으로 쓰지 말고, 변수는 그냥 sizet 같은거 쓰되 경계값을 넘는지를 검사하도록 하자
+// 그편이 프로그램 작성이 편할거같음
 #define SPL_INT_SIZ 4
 #
 #if     SPL_INT_SIZ == 4

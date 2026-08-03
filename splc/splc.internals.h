@@ -19,6 +19,7 @@
 #include "typecheck.h"
 #include "colorcode.h"
 #include "assembler.h"
+#include "codegen2c.h"
 #include "iroptimize.h"
 #include "optprocessor.h"
 

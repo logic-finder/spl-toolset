@@ -5,9 +5,13 @@ extern void irgenerate(void) {
    irgen_ctx_t ictx;
    tree_t *pt_nrtv;
 
+   /* irt -> [0] dp
+          -> [1] nrtv */
+
    pt_nrtv = tree_child(pt, 2);
    irt = ictx.irt = plant_tree(NULL, 0, IrnodekindRoot, 0, 0);
-   set_dpsz(&ictx);
+   set_dpsz(&ictx);  /* appends the dp tree to irt */
+   ictx.nrtv = graft_tree_i(ictx.irt, 0, IrnodekindNrtv);
    tree_pre_traverse(pt_nrtv, route, 0, &ictx);
    /* Marks the last node with END OF PROGRAM */
    graft_tree_i(ictx.curr_block, 0, IrnodekindEop);
@@ -22,8 +26,8 @@ static void set_dpsz(irgen_ctx_t *ictx) {
    dpsz = tree_clen(pt_dp);
 
    opcode = graft_tree_opcode(irt_dp, IropcodeSet, 0, 0);
-   graft_tree_i(opcode, IrvarDpsz, IrnodekindVar);
-   graft_tree_i(opcode, dpsz, IrnodekindConst);
+   graft_tree_ui(opcode, IrvarDpsz, IrnodekindVar);
+   graft_tree_ui(opcode, dpsz, IrnodekindConst);
 }
 
 static void route(tree_t *t, int lv, void *ctx) {
@@ -63,7 +67,7 @@ static void handle_act(tree_t *t, irgen_ctx_t *ictx) {
    romnum = tree_chdat(t, 0);
 
    ictx->curr_act = graft_tree_s(
-      ictx->irt,
+      ictx->nrtv,
       romnum->dat.s.run,
       romnum->dat.s.len,
       IrnodekindAct,
@@ -227,7 +231,7 @@ static void handle_goto(tree_t *t, irgen_ctx_t *ictx) {
       node->lnum,
       node->lpos
    );
-   graft_tree_i(opcode, type, IrnodekindData);
+   graft_tree_ui(opcode, type, IrnodekindData);
    graft_tree_s(
       opcode,
       child->dat.s.run,
@@ -516,7 +520,10 @@ static void resolve_noun(tree_t *t, irgen_ctx_t *ictx) {
    irnodekind_t nodekind;
    iropcode_t opkind;
 
-   /* Generates 'SET const 1|-1|teller|hearer|dp[n]' */
+   /* Generates
+         SET const (1 | -1)
+      or
+         ASGN (teller | hearer | dp[n]) */
    node = tree_dat(t);
 
    /* SET is to assign a number, while ASGN a variable */

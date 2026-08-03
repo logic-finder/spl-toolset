@@ -64,25 +64,25 @@ extern void dbmake(void) {
    print_srcfiles();
    sfseek(fp, MTDT_SIZ, SEEK_SET);
 
-   sfputs(stdout, ENPREFIX "writing name section...");
+   safe_fputs(stdout, ENPREFIX "writing name section...");
    write_namesect(fp);
    DONE(SECTKIND_NAME, \t\t);
 
-   sfputs(stdout, ENPREFIX "writing adjective section...");
+   safe_fputs(stdout, ENPREFIX "writing adjective section...");
    write_adjsect(fp);
    DONE(SECTKIND_ADJ, \t);
 
-   sfputs(stdout, ENPREFIX "writing noun section...");
+   safe_fputs(stdout, ENPREFIX "writing noun section...");
    write_nounsect(fp);
    DONE(SECTKIND_NOUN, \t\t);
 
-   sfputs(stdout, ENPREFIX "writing comparative section...");
+   safe_fputs(stdout, ENPREFIX "writing comparative section...");
    write_compsect(fp);
    DONE(SECTKIND_COMP, \t);
 
    rewind(fp);
 
-   sfputs(stdout, ENPREFIX "writing metadata section...");
+   safe_fputs(stdout, ENPREFIX "writing metadata section...");
    tbytes = write_metadata(fp);
    fmtwrt(
       "\t" Cbgreen "done!" Creset
@@ -102,7 +102,7 @@ static void handle_dberr(void) {
 }
 
 static void print_srcfiles(void) {
-   sfputs(stdout, ENPREFIX "use the following files to make a database:\n");
+   safe_fputs(stdout, ENPREFIX "use the following files to make a database:\n");
    SRCFILE(name, 0);
    SRCFILE(adjective, 1);
    SRCFILE(noun, 2);

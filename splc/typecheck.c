@@ -257,7 +257,7 @@ static void typecheck_rnum(node_t *n) {
 }
 
 static inline void print_errheader(void) {
-   sfputs(stdout, Cbred "\n<semantic error> " Creset);
+   safe_fputs(stdout, Cbred "\n<semantic error> " Creset);
 }
 
 static void semerr_badword(node_t *n) {

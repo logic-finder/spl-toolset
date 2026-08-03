@@ -20,7 +20,7 @@ int main(int argc, const char **argv) {
    dbload();
 
    /* Main Logic */
-   sfputs(stdout, ENPREFIX "scanning...");
+   safe_fputs(stdout, ENPREFIX "scanning...");
    toks = lex(&of, &ov, lc);
    fmtwrt(" " Cgreen "done!" Creset
       "\t(total " Cbwhite "%d" Creset " tokens)\n",
@@ -28,7 +28,7 @@ int main(int argc, const char **argv) {
    );
    // arr_foreach(toks, print_token);
 
-   sfputs(stdout, ENPREFIX "parsing...");
+   safe_fputs(stdout, ENPREFIX "parsing...");
    pt = parse(&of, &ov, toks);
    fmtwrt(" " Cgreen "done!" Creset
       "\t(total " Cbwhite "%d" Creset " nodes)\n",
@@ -36,17 +36,17 @@ int main(int argc, const char **argv) {
    );
    // tree_pre_traverse(pt, print_node, 0, NULL);
 
-   sfputs(stdout, ENPREFIX "type-checking...");
+   safe_fputs(stdout, ENPREFIX "type-checking...");
    typecheck(&of, &ov);
    fmtwrt(" " Cgreen "done!" Creset "\n");
    // tree_pre_traverse(pt, print_node, 0, NULL);
 
-   sfputs(stdout, ENPREFIX "context-checking...");
+   safe_fputs(stdout, ENPREFIX "context-checking...");
    ctxcheck(&of, &ov);
    fmtwrt(" " Cgreen "done!" Creset "\n");
    // tree_pre_traverse(pt, print_node, 0, NULL);
 
-   sfputs(stdout, ENPREFIX "generating IR...");
+   safe_fputs(stdout, ENPREFIX "generating IR...");
    irgenerate();
    fmtwrt(" " Cgreen "done!" Creset
       "\t(total " Cbwhite "%zu" Creset " nodes)\n",
@@ -55,7 +55,7 @@ int main(int argc, const char **argv) {
    // tree_pre_traverse(irt, debug_print_irnode, 0, NULL);
 
    if (1) {
-      sfputs(stdout, ENPREFIX "optimizing IR...");
+      safe_fputs(stdout, ENPREFIX "optimizing IR...");
       iroptimize();
       fmtwrt(" " Cgreen "done!" Creset
          "\t(total " Cbwhite "%zu" Creset " nodes)\n",
@@ -69,8 +69,9 @@ int main(int argc, const char **argv) {
    assemble();
    // tree_pre_traverse(irt, debug_print_irnode, 0, NULL);
 
-   // or compiling...
-   // sfputs(stdout, ENPREFIX "transpiling...");
+   transpile2c();
+
+   // safe_fputs(stdout, ENPREFIX "transpiling...");
    // transpile(&of, &ov);
    // fmtwrt(" " Cgreen "done!" Creset "\n");
 
@@ -143,7 +144,9 @@ static int count_tree_node(tree_t *root) {
 }
 
 static size_t count_opcodes(tree_t *irt) {
-   int counter = 1;  /* +1 for SET dpsz n */
+   // fixme: meaningless?
+   // int counter = 1;  /* +1 for SET dpsz n */
+   int counter = 0;
    tree_pre_traverse(irt, opcode_counter, 0, &counter);
    return counter;
 }

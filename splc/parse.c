@@ -333,7 +333,7 @@ static void parse_cond_ineq(tree_t *cond) {
 
    ret = match_str(tok->run, comps, comps_len);
 
-   if (ret > 0) {
+   if (ret >= 0) {
       gettok();
       if (tok->kind == TOKKIND_PNT) {
          reason = msgs.err.syn.cond.badsyn;
@@ -342,6 +342,7 @@ static void parse_cond_ineq(tree_t *cond) {
       switch (ret) {
          case 0 : kind = NODEKIND_GT; break;
          case 1 : kind = NODEKIND_LT; break;
+         default: ;  /* control never reaches default */
       }
       (void) graft_tree_s(cond, tok->run, tok->len, kind);
    }
@@ -1037,7 +1038,6 @@ static void parse_cond(void) {
    if (vtype == 3)
       parse_const(p);
 
-   gettok();
    if (!strcmp(tok->run, KEYWRD_NOT)) {
       (void) graft_tree_n(condition, 0, NODEKIND_NEGATE);
       gettok();

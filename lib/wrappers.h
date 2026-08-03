@@ -51,10 +51,10 @@ int safe_fgetc(FILE *fp);
 void sfputc(FILE *stream, char ch);
 
 /**
- * @brief `sfputs` (safe fputs) is a wrapper for `fputs`.
+ * @brief `safe_fputs` is a wrapper for `fputs`.
  * @note exits in failure.
  */
-void sfputs(FILE *stream, const char *line);
+void safe_fputs(FILE *stream, const char *line);
 
 /**
  * @brief `ffmtwrt` (file format write) is a wrapper for `fprintf`.

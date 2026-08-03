@@ -50,8 +50,12 @@
 */
 
 extern void iroptimize(void) {
+   tree_t *nrtv;
+
+   nrtv = tree_child(irt, 1);
+
    /* Note: the order fc -> pc -> ro & rc is intended */
-   fold_const(irt);
+   fold_const(nrtv);
    // propagate_const()
    // reduce_operator()
    // remove_comparison()
@@ -60,17 +64,19 @@ extern void iroptimize(void) {
    // remove_contradict()
 }
 
-static void fold_const(tree_t *irt) {
-   size_t irtsiz, actsiz, scenesiz;
+static void fold_const(tree_t *nrtv) {
+   size_t nrtvsiz, actsiz, scenesiz;
    tree_t *act, *scene, *block, *new_block;
 
-   /* irt -> act -> scene -> block -> opcode */
+   /* irt -> [1] nrtv -> act -> scene -> block -> opcode */
 
-   /* k = 1 to skip SET dpsz 0 */
-   irtsiz = tree_clen(irt);
+   // fixme: no longer meaningful?
+   // /* k = 1 to skip SET dpsz 0 */
 
-   for (size_t k = 1; k < irtsiz; k++) {
-      act = tree_child(irt, k);
+   nrtvsiz = tree_clen(nrtv);
+
+   for (size_t k = 0; k < nrtvsiz; k++) {
+      act = tree_child(nrtv, k);
       actsiz = tree_clen(act);
 
       for (size_t m = 0; m < actsiz; m++) {

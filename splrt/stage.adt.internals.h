@@ -5,7 +5,7 @@
 #include <string.h>
 
 #include "global.h"
-#include "splcore.h"
+#include "splrt.h"
 
 struct stage {
    size_t cnt, dpsz;

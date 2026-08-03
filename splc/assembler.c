@@ -373,8 +373,9 @@ static void write_srcfile(assemble_ctx_t *actx) {
    cnt = 0;
    for (size_t i = 0; i < lls; i++) {
       l = arr_peek(ls, i);
-      cnt += l->len;  // fixme: 현재 len은 \0을 포함한 길이이므로 제외해야 할듯
-      sfputs(fp, l->run);
+      cnt += l->len;  // fixme: 현재 len은 \0? \n?을 포함한 길이이므로 제외해야 할듯
+      // safe_fputs(fp, l->run); // fixme: buggy (invalid read of size 1) 아마 파일맨끝 newline 문제
+      sfwrite(l->run, 1, l->len - 1, fp); // 임시변통
    }
 
    actx->offset += cnt;

@@ -22,6 +22,7 @@ extern void stack_destroy(stack_t *s) {
    free(s);
 }
 
+// fixme: change to generic
 extern void stack_push(stack_t *s, int v) {
    stack_node_t *n;
 

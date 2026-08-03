@@ -98,7 +98,7 @@ static void trace(tree_t *t, const char *type) {
 }
 
 static void semerr_unknown_label(node_t *n, const char *s) {
-   sfputs(stdout, Cbred "\n<semantic error> " Creset);
+   safe_fputs(stdout, Cbred "\n<semantic error> " Creset);
    fmtwrt(reason, s);
    print_err(n);
    trace(scene, "Scene");

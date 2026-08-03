@@ -11,10 +11,10 @@ void vfatal(const char *msg, ...) {
    int ret;
 
    va_start(ap, msg);
-   sfputs(stderr, "fatal: ");
+   safe_fputs(stderr, "fatal: ");
    ret = vfprintf(stderr, msg, ap);
    if (ret < 0) exit(EXIT_FAILURE);
    va_end(ap);
-   sfputs(stderr, "\n");
+   safe_fputs(stderr, "\n");
    exit(EXIT_FAILURE);
 }
