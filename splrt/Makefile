@@ -17,6 +17,16 @@ OBJECTS = $(SOURCES:.c=.o)
 LIBOBJS = $(notdir $(LIBSRCS:.c=.o))
 DEPENDS = $(OBJECTS:.o=.d) $(LIBOBJS:.o=.d)
 
+INSTALL := install
+INSTALL_DATA = $(INSTALL) -m 644
+INSTALL_LIB = $(INSTALL) -m 755
+INSTALL_DIR = $(INSTALL) -d
+
+PREFIX := /usr/local
+SODIR = $(PREFIX)/lib
+INCDIR = $(PREFIX)/include/$(NAME)
+MANDIR = $(PREFIX)/share/man/man3
+
 ## Targets ##
 .PHONY: all build clean install uninstall help
 
@@ -37,24 +47,35 @@ $(LIBOBJS): %.o: $(LIBDIR)/%.c
 -include $(DEPENDS)
 
 # Tasks #
-clean:
-	rm -f $(TARGET) *.o *.d
-
 # Note: all prerequisites must be installed first
 #  - words.spldb
 #  - libsplrt.so
 # Note: need to specify SPLC_OUTPUT
-build:
+build: install
 	$(CC) $(CPPFLAGS) $(CFLAGS) -l$(NAME) -lm \
 		-o $(basename $(SPLC_OUTPUT)) $(SPLC_OUTPUT)
 
-# TODO:
-#  - copy libsplrt.so under ???
-#  - copy the executable under /usr/local/bin
-#  - copy the manpage /usr/local/share/man/man1
+clean:
+	rm -f $(TARGET) *.o *.d
+
 install: $(TARGET)
+	$(INSTALL_DIR) $(SODIR)
+	$(INSTALL_DIR) $(INCDIR)
+	$(INSTALL_DIR) $(MANDIR)
+
+	$(INSTALL_LIB) $(TARGET) $(SODIR)
+	$(INSTALL_DATA) $(NAME).h $(INCDIR)
+	$(INSTALL_DATA) $(TARGET:.so=.3) $(MANDIR)
 
 uninstall:
+	rm -f $(MANDIR)/$(TARGET:.so=.3)
+	rm -f $(INCDIR)/$(NAME).h
+	rm -f $(SODIR)/$(TARGET)
 
-# TODO: write help
 help:
+	@echo "   make - builds the library"
+	@echo "   make build - links the library with a transpiled c program"
+	@echo "   make clean - removes every build artifact"
+	@echo "   make install - installs the library, header, and manual page under standard directories"
+	@echo "   make uninstall - deletes the installed files"
+	@echo "   make help - prints this manual"
