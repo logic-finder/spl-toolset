@@ -9,7 +9,7 @@ CFLAGS := -Wall -W -pedantic
 CFLAGS += -O0 -g
 CFLAGS += -MMD -MP
 CFLAGS += -fpic
-CPPFLAGS = -I $(LIBDIR)
+CPPFLAGS = -I $(LIBDIR) -I .
 
 SOURCES = $(wildcard *.c)
 LIBSRCS = $(wildcard $(LIBDIR)/*.c)
@@ -52,8 +52,8 @@ $(LIBOBJS): %.o: $(LIBDIR)/%.c
 #  - libsplrt.so
 # Note: need to specify SPLC_OUTPUT
 build: install
-	$(CC) $(CPPFLAGS) $(CFLAGS) -l$(NAME) -lm \
-		-o $(basename $(SPLC_OUTPUT)) $(SPLC_OUTPUT)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(SPLC_OUTPUT) \
+		-l$(NAME) -lm -o $(basename $(SPLC_OUTPUT))
 
 clean:
 	rm -f $(TARGET) *.o *.d
@@ -64,7 +64,7 @@ install: $(TARGET)
 	$(INSTALL_DIR) $(MANDIR)
 
 	$(INSTALL_LIB) $(TARGET) $(SODIR)
-	$(INSTALL_DATA) $(NAME).h $(INCDIR)
+	$(INSTALL_DATA) $(NAME).h global.h stage.adt.h $(INCDIR)
 	$(INSTALL_DATA) $(TARGET:.so=.3) $(MANDIR)
 
 uninstall:

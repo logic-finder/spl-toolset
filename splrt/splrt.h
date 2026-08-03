@@ -4,7 +4,10 @@
 #include <stddef.h>
 #include <stdbool.h>
 
+#include "common.h"
 #include "global.h"
+#include "stack.adt.h"
+#include "stage.adt.h"
 
 #if (defined(__GNUC__) && (__GNUC__ > 5 || (__GNUC__ == 5 && __GNUC_MINOR__ >= 1))) \
    || (defined(__clang__) && (__clang__ > 3 || (__clang__ == 3 && __clang__ >= 8)))
@@ -44,10 +47,18 @@ typedef void iohandler_t(rt_ctx_t *rctx);
  * PROTOTYPES *
  **************/
 rt_ctx_t *init_runtime(size_t dpsz);
+void cleanup_runtime(rt_ctx_t *rctx);
+
+spl_int_t op_sum(spl_int_t l, spl_int_t r);
+spl_int_t op_diff(spl_int_t l, spl_int_t r);
+spl_int_t op_prod(spl_int_t l, spl_int_t r);
+spl_int_t op_quot(spl_int_t l, spl_int_t r);
+spl_int_t op_rem(spl_int_t l, spl_int_t r);
 
 operator_t op_sqrt;
 operator_t op_squr;
 operator_t op_cube;
+operator_t op_2x  ;
 operator_t op_fact;
 
 iohandler_t io_inn;
@@ -58,6 +69,7 @@ iohandler_t io_outc;
 void rememb(rt_ctx_t *rctx, spl_int_t v);
 void recall(rt_ctx_t *rctx);
 
-static void assert_offstage(rt_ctx_t *rctx, size_t charidx);
+void assert_offstage(rt_ctx_t *rctx, size_t charidx);
+void set_hearer(rt_ctx_t *rctx);
 
 #endif

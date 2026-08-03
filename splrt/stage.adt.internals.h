@@ -4,8 +4,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "global.h"
 #include "splrt.h"
+#include "global.h"
+#include "wrappers.h"
 
 struct stage {
    size_t cnt, dpsz;

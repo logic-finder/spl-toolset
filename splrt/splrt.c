@@ -17,6 +17,7 @@ extern rt_ctx_t *init_runtime(size_t dpsz) {
 }
 
 extern void cleanup_runtime(rt_ctx_t *rctx) {
+   stack_destroy(rctx->s);
    stage_destroy(rctx->st);
    cleanup_mem(rctx);
    free(rctx->dp);

@@ -153,12 +153,12 @@ static void handle_exeunt(tree_t *t, irgen_ctx_t *ictx) {
       return;
    }
 
-   /* Generates 'ENTER <charidx>' */
+   /* Generates 'EXIT <charidx>' */
    for (size_t i = 0; i < len; i++) {
       charidx = TREE_CHDAT(t, i)->dat.n;
       opcode = graft_tree_opcode(
          ictx->curr_block,
-         IropcodeEnter,
+         IropcodeExit,
          n->lnum,
          n->lpos
       );
@@ -375,6 +375,8 @@ static void handle_if(tree_t *t, irgen_ctx_t *ictx) {
    stmtdat->kind = NODEKIND__DEPEND;
 }
 
+/* Note: this "push" means the Remember statement;
+      not to be confused with IropcodePush! */
 static void handle_push(tree_t *t, irgen_ctx_t *ictx) {
    tree_t *c;
    node_t *node;
@@ -406,6 +408,7 @@ static void handle_pop(tree_t *t, irgen_ctx_t *ictx) {
 }
 
 // fixme: 두번째인자로 PUSH const를 생성할지 말지 결정하기
+// 너무 complex해질거같긴 함 <- 아이디어만 주석으로 남겨놓는게 좋을듯
 static void resolve_const(tree_t *t, irgen_ctx_t *ictx) {
    /* CONST NODE STRUCTURE
       const -> [adj...] (noun | char)
@@ -482,6 +485,11 @@ static void resolve_unary_op(tree_t *t, irgen_ctx_t *ictx, iropcode_t opcode) {
    );
    graft_tree_var(opcode_tree, IrvarConst);
    graft_tree_var(opcode_tree, IrvarOperandL);
+
+   /* Generates 'PUSH const' */
+   opcode_tree = graft_tree_opcode(
+      ictx->curr_block, IropcodePush, 0, 0);
+   graft_tree_var(opcode_tree, IrvarConst);
 }
 
 static void resolve_binary_op(tree_t *t, irgen_ctx_t *ictx, iropcode_t opcode) {
@@ -511,6 +519,11 @@ static void resolve_binary_op(tree_t *t, irgen_ctx_t *ictx, iropcode_t opcode) {
    graft_tree_var(opcode_tree, IrvarConst);
    graft_tree_var(opcode_tree, IrvarOperandL);
    graft_tree_var(opcode_tree, IrvarOperandR);
+
+   /* Generates 'PUSH const' */
+   opcode_tree = graft_tree_opcode(
+      ictx->curr_block, IropcodePush, 0, 0);
+   graft_tree_var(opcode_tree, IrvarConst);
 }
 
 static void resolve_noun(tree_t *t, irgen_ctx_t *ictx) {

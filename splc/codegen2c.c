@@ -6,7 +6,7 @@ extern void transpile2c(void) {
    FILE *fp;
    tree_t *dp, *nrtv;
 
-   destname = make_destname("hello.spl", /*C_EXTENSION*/ ".test");
+   destname = make_destname("hello.spl", C_EXTENSION);
    fp = safe_fopen(destname, "w");
 
    fmtwrt(ENPREFIX "transpiling into the target language " Cbwhite "C" Creset "...");
@@ -14,7 +14,7 @@ extern void transpile2c(void) {
    dp = tree_child(irt, 0);
    nrtv = tree_child(irt, 1);
 
-   safe_fputs(fp, "#include \"splrt.h\"\n");
+   safe_fputs(fp, "#include <splrt/splrt.h>\n");
    codegen_title(fp);
    safe_fputs(fp, "int main(void) {\n");
    codegen_locals(dp, fp, tree_child(pt, 1));
@@ -94,7 +94,7 @@ static void handle_block(tree_t *t, FILE *fp) {
    if (n->dat.ui == 0)
       return;
 
-   ffmtwrt(fp, "\n.L%u:\n", n->dat.ui);
+   ffmtwrt(fp, "\nL%u:\n", n->dat.ui);
 }
 
 static void handle_opcode(tree_t *t, FILE *fp) {
@@ -188,7 +188,7 @@ static void codegen_enterlike(tree_t *t, FILE *fp, const char *op) {
 }
 
 static void codegen_exeunt(FILE *fp) {
-   ffmtwrt(fp, "%sstage_exeunt(rctx->st)", indent);
+   ffmtwrt(fp, "%sstage_exeunt(rctx->st);\n", indent);
 }
 
 static void codegen_speak(tree_t *t, FILE *fp) {
@@ -201,7 +201,7 @@ static void codegen_speak(tree_t *t, FILE *fp) {
 
 static void codegen_push(FILE *fp) {
    /* "PUSH const" is only possible */
-   ffmtwrt(fp, "%sstack_push(rctx->s);\n", indent);
+   ffmtwrt(fp, "%sstack_push(rctx->s, rctx->cnst);\n", indent);
 }
 
 static void codegen_pop(tree_t *t, FILE *fp) {
@@ -211,8 +211,8 @@ static void codegen_pop(tree_t *t, FILE *fp) {
 
    switch (p1->dat.ui) {
       case IrvarHearer:
-         /* Note: seems redundant; suffice to set at codegen_asgn */
-         // ffmtwrt(fp, "%sset_hearer(rctx);\n", indent);
+         // shutup: /* Note: seems redundant; suffice to set at codegen_asgn */
+         ffmtwrt(fp, "%sset_hearer(rctx);\n", indent);
          ffmtwrt(fp,
             "%sstack_pop(rctx->s, &rctx->dp[rctx->h]);\n", indent);
       break;
@@ -276,7 +276,7 @@ static void codegen_goto(tree_t *t, FILE *fp) {
 
 static void codegen_comp(FILE *fp, const char *op) {
    ffmtwrt(fp,
-      "%srctx->cond = oper_l %s oper_r;\n",
+      "%srctx->cond = rctx->ol %s rctx->or;\n",
       indent, op);
 }
 
@@ -297,7 +297,7 @@ static void codegen_jump(tree_t *t, FILE *fp, bool v) {
    neg = v ? "" : "!";
    n = tree_chdat(t, 0);
 
-   ffmtwrt(fp, "%sif (%srctx->cond) goto .L%u;\n",
+   ffmtwrt(fp, "%sif (%srctx->cond) goto L%u;\n",
       indent, neg, n->dat.ui);
 }
 
