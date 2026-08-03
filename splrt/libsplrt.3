@@ -1,0 +1,33 @@
+.TH LIBSPLRT 3 2026-08-03 v0.0.0
+.SH NAME
+libsplrt \- a C runtime library for transpiled SPL programs
+.SH SYNOPSIS
+.B #include <splrt/splrt.h>
+.PP
+Link with \fI\-lsplrt\fR.
+.SH DESCRIPTION
+For example, the call \fBsplc \-\-target=c \-\- hello.spl\fR would yield \fIhello.c\fR. However, in order for the transpile file to be compiled, it must be linked with this runtime library, \fBlibsplrt.so\fR.
+.SH FILES
+.TP
+.I /usr/local/include/splrt/splrt.h
+The header file for this runtime library.
+.TP
+.I /usr/local/lib/libsplrt.so
+The shared library binary.
+.SH BUGS
+It would be greatly appreciated if you could report bugs!
+.SH AUTHOR
+Developed by Doohyeon Won (logicseeker@naver.com).
+.PP
+For more information, please visit the GitHub repository:
+\fIhttps://github.com/logic\-finder/spl\-toolset\fR
+.SH SEE ALSO
+.BR splc (1),
+.BR spldbm (1),
+.BR splda (1),
+.BR spldbg (1),
+.BR splv (1),
+.BR splfmt (1),
+.BR splsa (1)
+.SH
+\fBlibsplrt(3)\fR is part of the \fBspl\-toolset\fR suite.
