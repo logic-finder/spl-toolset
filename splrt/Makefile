@@ -64,7 +64,7 @@ install: $(TARGET)
 	$(INSTALL_DIR) $(MANDIR)
 
 	$(INSTALL_LIB) $(TARGET) $(SODIR)
-	$(INSTALL_DATA) $(NAME).h global.h stage.adt.h $(INCDIR)
+	$(INSTALL_DATA) $(NAME).h $(INCDIR)
 	$(INSTALL_DATA) $(TARGET:.so=.3) $(MANDIR)
 
 uninstall:
