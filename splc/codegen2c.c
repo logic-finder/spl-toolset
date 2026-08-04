@@ -89,12 +89,23 @@ static void handle_scene(tree_t *t, FILE *fp) {
 }
 
 static void handle_block(tree_t *t, FILE *fp) {
-   irnode_t *n = tree_dat(t);
+   tree_t *act, *scene;
+   irnode_t *act_dat, *scene_dat, *block_dat;
 
-   if (n->dat.ui == 0)
+   scene = tree_parent(t);
+   act = tree_parent(scene);
+
+   act_dat = tree_dat(act);
+   scene_dat = tree_dat(scene);
+   block_dat = tree_dat(t);
+
+   if (block_dat->dat.ui == 0)
       return;
 
-   ffmtwrt(fp, "\nL%u:\n", n->dat.ui);
+   ffmtwrt(fp, "\nAct_%s_Scene_%s_L%u:\n",
+      act_dat->dat.s.run,
+      scene_dat->dat.s.run,
+      block_dat->dat.ui);
 }
 
 static void handle_opcode(tree_t *t, FILE *fp) {
@@ -291,14 +302,26 @@ static void codegen_recall(FILE *fp) {
 }
 
 static void codegen_jump(tree_t *t, FILE *fp, bool v) {
+   tree_t *act, *scene, *block;
+   irnode_t *act_dat, *scene_dat, *op_dat;
    const char *neg;
-   irnode_t *n;
+
+   block = tree_parent(t);
+   scene = tree_parent(block);
+   act = tree_parent(scene);
 
    neg = v ? "" : "!";
-   n = tree_chdat(t, 0);
+   act_dat = tree_dat(act);
+   scene_dat = tree_dat(scene);
+   op_dat = tree_chdat(t, 0);
 
-   ffmtwrt(fp, "%sif (%srctx->cond) goto L%u;\n",
-      indent, neg, n->dat.ui);
+   ffmtwrt(fp, "%sif (%srctx->cond) goto Act_%s_Scene_%s_L%u;\n",
+      indent,
+      neg,
+      act_dat->dat.s.run,
+      scene_dat->dat.s.run,
+      op_dat->dat.ui
+   );
 }
 
 static void codegen_negate(FILE *fp) {
