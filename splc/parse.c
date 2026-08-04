@@ -307,56 +307,6 @@ name:
    return;
 }
 
-static void parse_cond_eq(tree_t *cond) {
-   gettok();
-   if (tok->kind == TOKKIND_PNT) {
-      reason = msgs.err.syn.cond.badsyn;
-      synerr();
-   }
-
-   (void) graft_tree_s(
-      cond, tok->run, tok->len, NODEKIND_EQ);
-
-   gettok();
-   if (strcmp(tok->run, KEYWRD_AS)) {
-      reason = msgs.err.syn.cond.badsyn;
-      synerr();
-   }
-}
-
-static void parse_cond_ineq(tree_t *cond) {
-   static const char *comps[2] = { "more", "less" };
-   static const int comps_len = ARRLEN(comps);
-
-   int ret;
-   nodekind_t kind;
-
-   ret = match_str(tok->run, comps, comps_len);
-
-   if (ret >= 0) {
-      gettok();
-      if (tok->kind == TOKKIND_PNT) {
-         reason = msgs.err.syn.cond.badsyn;
-         synerr();
-      }
-      switch (ret) {
-         case 0 : kind = NODEKIND_GT; break;
-         case 1 : kind = NODEKIND_LT; break;
-         default: ;  /* control never reaches default */
-      }
-      (void) graft_tree_s(cond, tok->run, tok->len, kind);
-   }
-   else {
-      (void) graft_tree_s(
-         cond, tok->run, tok->len, NODEKIND_INEQ);
-      gettok();
-      if (strcmp(tok->run, KEYWRD_THAN)) {
-         reason = msgs.err.syn.cond.badsyn;
-         synerr();
-      }
-   }
-}
-
 static nodekind_t seek_op(void) {
    typedef struct ophandler {
       const char *name;
@@ -1006,11 +956,21 @@ static void parse_cond(void) {
           *p;
    nodekind_t kind;
 
+   /* Note: [x] = current token
+      type 0: [Am] I not better than yourself?
+      type 2: [Art] thou not more cunning than the Ghost?
+      type 3: [Is] a tree not as good as a shiny tree? */
+
    condition = graft_tree_n(line, 0, NODEKIND_COND);
    lefthand  = graft_tree_n(condition, 0, NODEKIND_LHS);
 
    reason = msgs.err.syn.cond.incomp;
    gettok();
+
+   /* Am [I] not better than yourself?
+      Art [thou] not more cunning than the Ghost?
+      Is [a] tree not as good as a shiny tree? */
+
    switch (vtype) {
       case 0 : if (strcmp(tok->run, KEYWRD_I))
                   goto hell; else break;
@@ -1018,40 +978,137 @@ static void parse_cond(void) {
                   goto hell; else break;
       case 2 : if (strcmp(tok->run, KEYWRD_THOU_L))
                   goto hell; else break;
+      /* i.e. check if "Is (I, you, thou)" */
       case 3 : if (0 <= match_str(tok->run, cond_subjs, cond_subjs_len))
                   goto hell; else break;
       hell : /* FLAMING HOT */
          reason = msgs.err.syn.cond.not_conj;
          synerr();
    }
-   if (vtype == 3) ungettok();
+
+   if (vtype == 3) {
+      /* need to ungettok before parse_const() */
+      ungettok();
+      /* [Is] a tree not as good as a shiny tree? */
+   }
 
    switch (vtype) {
       case 0  : kind = NODEKIND_P1; break;
       case 1  : /* fall-through */
       case 2  : kind = NODEKIND_P2; break;
       case 3  : kind = NODEKIND_P3; break;
-      default : kind = -1;  /* control never reaches here */
+      /* control never reaches default */
+      default : kind = NODEKIND__UNKNOWN;
    }
    p = graft_tree_n(lefthand, 0, kind);
 
-   if (vtype == 3)
+   if (vtype == 3) {
+      /* parse_const() has consumed "a tree" */
       parse_const(p);
+      /* Is a tree [not] as good as a shiny tree? */
+   } else {
+      reason = msgs.err.syn.cond.incomp;
+      gettok();
+      /* Am I [not] better than yourself?
+         Art thou [not] more cunning than the Ghost? */
+   }
 
    if (!strcmp(tok->run, KEYWRD_NOT)) {
       (void) graft_tree_n(condition, 0, NODEKIND_NEGATE);
+      reason = msgs.err.syn.cond.incomp;
       gettok();
+      /* Am I not [better] than yourself?
+         Art thou not [more] cunning than the Ghost?
+         Is a tree not [as] good as a shiny tree? */
    }
    else
       (void) graft_tree_n(condition, 0, NODEKIND_AFFIRM);
 
-   if (!strcmp(tok->run, KEYWRD_AS))
+   if (!strcmp(tok->run, KEYWRD_AS)) {
       parse_cond_eq(condition);
-   else
+      /* Is a tree not as good [as] a shiny tree? */
+   }
+   else {
       parse_cond_ineq(condition);
+      /* Am I not better [than] yourself?
+         Art thou not more cunning [than] the Ghost? */
+   }
 
    righthand = graft_tree_n(condition, 0, NODEKIND_RHS);
+   /* The last noun is to be comsumed */
    parse_const(righthand);
+   /* Am I not better than yourself[?]
+      Art thou not more cunning than the Ghost[?]
+      Is a tree not as good as a shiny tree[?] */
+}
+
+static void parse_cond_eq(tree_t *cond) {
+   /* Is a tree not [as] good as a shiny tree? */
+   gettok();
+   /* Is a tree not as [good] as a shiny tree? */
+
+   if (tok->kind == TOKKIND_PNT) {
+      reason = msgs.err.syn.cond.badsyn;
+      synerr();
+   }
+
+   (void) graft_tree_s(
+      cond, tok->run, tok->len, NODEKIND_EQ);
+
+   gettok();
+   /* Is a tree not as good [as] a shiny tree? */
+
+   if (strcmp(tok->run, KEYWRD_AS)) {
+      reason = msgs.err.syn.cond.badsyn;
+      synerr();
+   }
+}
+
+static void parse_cond_ineq(tree_t *cond) {
+   static const char *comps[2] = { "more", "less" };
+   static const int comps_len = ARRLEN(comps);
+
+   int ret;
+   nodekind_t kind;
+
+   /* Art thou not [more] cunning than the Ghost?
+      Am I not [better] than yourself? */
+
+   ret = match_str(tok->run, comps, comps_len);
+
+   /* like "more beautiful" or "less interesting" */
+   if (ret >= 0) {
+      reason = msgs.err.syn.cond.incomp;
+      gettok();
+      /* Art thou not more [cunning] than the Ghost? */
+
+      if (tok->kind == TOKKIND_PNT) {
+         reason = msgs.err.syn.cond.badsyn;
+         synerr();
+      }
+
+      switch (ret) {
+         case 0 : kind = NODEKIND_GT; break;
+         case 1 : kind = NODEKIND_LT; break;
+         default: ;  /* control never reaches default */
+      }
+
+      (void) graft_tree_s(cond, tok->run, tok->len, kind);
+   }
+   /* one word comparative like "better" or "worse" */
+   else
+      (void) graft_tree_s(
+         cond, tok->run, tok->len, NODEKIND_INEQ);
+
+   reason = msgs.err.syn.cond.incomp;
+   gettok();
+   /* Am I not better [than] yourself?
+      Art thou not more cunning [than] the Ghost? */
+
+   if (strcmp(tok->run, KEYWRD_THAN)) {
+      reason = msgs.err.syn.cond.badsyn;
+      synerr();
+   }
 }
 
 static int seek_if(void) {
