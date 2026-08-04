@@ -1,7 +1,7 @@
 #ifndef PARSE_H
 #define PARSE_H
 
-#include "arr.adt.h"
+#include "array.adt.h"
 #include "tree.adt.h"
 #include "argparse.h"
 
@@ -105,7 +105,7 @@ typedef struct node {
 tree_t *parse(
    optflg_t *of,
    optval_t *ov,
-   arr_t *tokens
+   array_t *tokens
 );
 
 void setndn(node_t *n, int v);

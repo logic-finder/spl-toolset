@@ -152,18 +152,18 @@ static void write_sect_type_A(
    int ec_len,
    int dt_l_len,
    int dt_s_len,
-   arr_sorter_t *compare
+   array_sorter_t *compare
 ) {
    FILE *src;
    fpos_t ecnt_pos, eos_pos;
    char *ln;
    int llen, residual;
    uint32_t ecnt;
-   arr_t *records;
+   array_t *records;
    record_A_t temp, *r;
 
    src = safe_fopen(ov.mak[sectkind], "rb");
-   records = arr_create();
+   records = array_create();
    ecnt = 0;
 
    // Write header
@@ -185,19 +185,19 @@ static void write_sect_type_A(
       temp.len = llen;
       temp.run = ln;
       temp.lnum = ecnt;
-      arr_append(records, &temp, sizeof temp);
+      array_append(records, &temp, sizeof temp);
    }
    if (!ecnt) VERR("empty %s file", sectname);
    safe_fclose(src);
 
    // Sort!
-   arr_sort(records, compare);
+   array_sort(records, compare);
    if (dupflg) handle_dberr();
 
    // Write the records
    sfseek(fp, ec_len, SEEK_CUR);
    for (uint32_t i = 0; i < ecnt; i++) {
-      r = arr_peek(records, i);
+      r = array_peek(records, i);
       sfwrite(&r->len, dt_l_len, 1, fp);
       sfwrite(r->run, 1, r->len, fp);
       residual = dt_s_len - r->len;
@@ -205,7 +205,7 @@ static void write_sect_type_A(
          sfputc(fp, '\0');  /* zero-padding */
       free(r->run);  /* free ln */
    }
-   arr_destroy(records);
+   array_destroy(records);
    sfgetpos(fp, &eos_pos);  /* end of section */
 
    // Write entry count
@@ -228,7 +228,7 @@ static void write_sect_type_B(
    int dt_k_len,
    int dt_l_len,
    int dt_s_len,
-   arr_sorter_t *compare
+   array_sorter_t *compare
 ) {
    FILE *src;
    fpos_t ecnt_pos, eos_pos;
@@ -245,11 +245,11 @@ static void write_sect_type_B(
       maxlen,  // maximum length of ln = 66 chars long
       residual;
    uint32_t ecnt;
-   arr_t *records;
+   array_t *records;
    record_B_t temp, *r;
 
    src = safe_fopen(ov.mak[sectkind], "rb");
-   records = arr_create();
+   records = array_create();
    maxlen =
       dt_s_len     // 64
       + 1          // comma = 1 byte
@@ -288,7 +288,7 @@ static void write_sect_type_B(
       temp.len = slen;
       temp.run = str;  /* to be freed later */
       temp.lnum = ecnt;
-      arr_append(records, &temp, sizeof temp);
+      array_append(records, &temp, sizeof temp);
 
       free(kind);
       free(elems);
@@ -298,13 +298,13 @@ static void write_sect_type_B(
    safe_fclose(src);
 
    // Sort!
-   arr_sort(records, compare);
+   array_sort(records, compare);
    if (dupflg) handle_dberr();
 
    // Write the records
    sfseek(fp, ec_len, SEEK_CUR);
    for (uint32_t i = 0; i < ecnt; i++) {
-      r = arr_peek(records, i);
+      r = array_peek(records, i);
       sfwrite(&r->kind, dt_k_len, 1, fp);
       sfwrite(&r->len, dt_l_len, 1, fp);
       sfwrite(r->run, 1, r->len, fp);
@@ -313,7 +313,7 @@ static void write_sect_type_B(
          sfputc(fp, '\0');
       free(r->run);  /* free elems[0] */
    }
-   arr_destroy(records);
+   array_destroy(records);
    sfgetpos(fp, &eos_pos);
 
    // Write entry count

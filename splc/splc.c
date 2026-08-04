@@ -3,7 +3,7 @@
 int main(int argc, const char **argv) {
    optflg_t of = {0};
    optval_t ov;
-   arr_t *toks;
+   array_t *toks;
    int lc, wc;
 
    /* Initialize */
@@ -24,9 +24,9 @@ int main(int argc, const char **argv) {
    toks = lex(&of, &ov, lc);
    fmtwrt(" " Cgreen "done!" Creset
       "\t(total " Cbwhite "%d" Creset " tokens)\n",
-      arr_size(toks)
+      array_size(toks)
    );
-   // arr_foreach(toks, print_token);
+   // array_foreach(toks, print_token);
 
    safe_fputs(stdout, ENPREFIX "parsing...");
    pt = parse(&of, &ov, toks);

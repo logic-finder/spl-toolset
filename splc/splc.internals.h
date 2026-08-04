@@ -29,14 +29,14 @@ static tree_callback_t opcode_counter;
 static tree_callback_t cleanup_node;
 
 /* Miscellaneous */
-static arr_iterator_t print_token;
+static array_iterator_t print_token;
 static tree_callback_t print_node;
 static const char *nodekind2str(nodekind_t kind);
 
 /*********************
  * External Variable *
  *********************/
-arr_t *ls;
+array_t *ls;
 tree_t *pt;
 
 #endif

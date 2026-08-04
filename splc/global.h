@@ -94,7 +94,7 @@
  **********************/
 extern const char *sfname;   // from optprocessor.c
 extern msg_t msgs;           // from msg.c
-extern arr_t *ls;            // from splc.c
+extern array_t *ls;            // from splc.c
 extern tree_t *pt;           // from splc.c
 extern tree_t *irt;          // from irgen.c
 

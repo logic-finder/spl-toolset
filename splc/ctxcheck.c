@@ -66,7 +66,7 @@ static void print_err(node_t *n) {
 
    lnum = n->lnum;
    lpos = n->lpos;
-   l = arr_peek(ls, lnum - 1);
+   l = array_peek(ls, lnum - 1);
 
    fmtwrt(
       "\n[%s:%d:%d] " Cbwhite "note:" Creset " at this goto statement"
@@ -84,7 +84,7 @@ static void trace(tree_t *t, const char *type) {
    rootnode = tree_dat(t);
    lnum = rootnode->lnum;
    lpos = rootnode->lpos;
-   l = arr_peek(ls, lnum - 1);
+   l = array_peek(ls, lnum - 1);
    childnode = tree_chdat(t, 0);
 
    fmtwrt(

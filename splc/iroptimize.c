@@ -163,7 +163,7 @@ static void fold_const_work(tree_t *block, tree_t *new_block) {
 }
 
 static void warn(int lnum, int lpos) {
-   line_t *l = arr_peek(ls, lnum - 1);
+   line_t *l = array_peek(ls, lnum - 1);
    fmtwrt(
       Cbred "\n<optimizer warning>" Creset " %s\n"
       "[%s:%d:%d] " Cbwhite "note:" Creset " problematic since here\n"

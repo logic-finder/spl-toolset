@@ -1,12 +1,12 @@
 #include "parse.h"
 #include "parse.internals.h"
 
-extern tree_t *parse(optflg_t *of, optval_t *ov, arr_t *tokens) {
+extern tree_t *parse(optflg_t *of, optval_t *ov, array_t *tokens) {
    (void) of, (void) ov;
    // Initialize global variables
    toks = tokens;
-   tok = arr_peek(toks, 0);
-   len = arr_size(toks);
+   tok = array_peek(toks, 0);
+   len = array_size(toks);
    idx = -1;
    pt = plant_tree(NULL, 0, NODEKIND_ROOT, 0, 0);
 
@@ -36,8 +36,8 @@ extern tree_t *parse(optflg_t *of, optval_t *ov, arr_t *tokens) {
    EOE:;
 
    // Cleanup
-   arr_foreach(toks, &cleanup_tokstream);
-   arr_destroy(toks);
+   array_foreach(toks, &cleanup_tokstream);
+   array_destroy(toks);
 
    return pt;
 }
@@ -1190,7 +1190,7 @@ static void parse_pop(void) {
 
 static void nexttok(void) {
    if (++idx == len) synerr();
-   tok = arr_peek(toks, idx);
+   tok = array_peek(toks, idx);
 }
 
 static void gettok(void) {
@@ -1201,17 +1201,17 @@ static void gettok(void) {
 static void gettokn(int n) {
    if (idx + n >= len) synerr();
    idx += n;
-   tok = arr_peek(toks, idx);
+   tok = array_peek(toks, idx);
    etok = tok;
 }
 
 static void ungettok(void) {
-   tok = arr_peek(toks, --idx);
+   tok = array_peek(toks, --idx);
 }
 
 static void ungettokn(int n) {
    idx -= n;
-   tok = arr_peek(toks, idx);
+   tok = array_peek(toks, idx);
 }
 
 static void skiptoks(char sentinel) {
@@ -1263,7 +1263,7 @@ static inline void archive_tokstate(void) {
 
 static inline void rewind_tokstate(void) {
    idx = tidx;
-   tok = arr_peek(toks, idx);
+   tok = array_peek(toks, idx);
 }
 
 static void synerr(void) {
@@ -1272,7 +1272,7 @@ static void synerr(void) {
 
    lnum = etok->lnum;
    lpos = etok->lpos;
-   l = arr_peek(ls, lnum - 1);
+   l = array_peek(ls, lnum - 1);
 
    fmtwrt(
       Cbred "\n<syntax error>" Creset " %s\n"

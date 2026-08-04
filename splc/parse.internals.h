@@ -125,7 +125,7 @@ static inline void rewind_tokstate(void);
 static inline void synerr(void);
 
 /* Miscellnaeous */
-static arr_iterator_t cleanup_tokstream;
+static array_iterator_t cleanup_tokstream;
 static tree_t *plant_tree(
    const char *run,
    int len,
@@ -149,7 +149,7 @@ static tree_t *graft_tree_n(
  * IMPORTANT GLOBAL VARIABLES *
  ******************************/
 /* Token Stream */
-static arr_t *toks;
+static array_t *toks;
 static token_t
    *tok,    // toks[idx]
    *etok;   // used in `tell()` for printing an error

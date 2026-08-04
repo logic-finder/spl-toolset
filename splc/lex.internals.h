@@ -32,8 +32,8 @@ static void read_nchar(int n);
 
 /* Utils */
 static inline void save_state(void);
-static void store_token(arr_t *toks);
-static void store_punct(arr_t *toks);
+static void store_token(array_t *toks);
+static void store_punct(array_t *toks);
 
 /* Miscellaneous */
 static inline void iterate_lines(processor_t *process, ...);
@@ -42,20 +42,20 @@ static processor_t process_read;
 static checker_t check_space;
 static checker_t check_cntlessthan;
 static checker_t check_token;
-static void store_string(arr_t *toks, tokkind_t kind);
+static void store_string(array_t *toks, tokkind_t kind);
 
 /******************************
  * IMPORTANT GLOBAL VARIABLES *
  ******************************/
 /* Line Access */
 
-// extern arr_t *ls;    // array of line_t (see global.h)
+// extern array_t *ls;    // array of line_t (see global.h)
 
 static int lls;      // length of ls
 
 static int p;        // line number
 static int q;        // position in line
-static line_t *l;    // l = arr_peek(ls, p)
+static line_t *l;    // l = array_peek(ls, p)
 
 static int tp;       // temp. var. for p
 static int tq;       // temp. var. for q

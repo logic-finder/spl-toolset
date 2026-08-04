@@ -1,7 +1,7 @@
 #ifndef LEX_H
 #define LEX_H
 
-#include "arr.adt.h"
+#include "array.adt.h"
 #include "loadfile.h"
 #include "argparse.h"
 
@@ -35,7 +35,7 @@ typedef struct token {
  * @param ov option value
  * @param lc the length of ls
  */
-arr_t *lex(
+array_t *lex(
    optflg_t *of,
    optval_t *ov,
    int lc

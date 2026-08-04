@@ -8,7 +8,7 @@
 #include "global.h"
 #include "wrappers.h"
 #include "strutils.h"
-#include "arr.adt.h"
+#include "array.adt.h"
 #include "db.common.h"
 #include "lineutils.h"
 #include "colorcode.h"
@@ -77,7 +77,7 @@ static void write_sect_type_A(
    int ec_len,
    int dt_l_len,
    int dt_s_len,
-   arr_sorter_t *compare
+   array_sorter_t *compare
 );
 static void write_sect_type_B(
    FILE *fp,
@@ -89,7 +89,7 @@ static void write_sect_type_B(
    int dt_k_len,
    int dt_l_len,
    int dt_s_len,
-   arr_sorter_t *compare
+   array_sorter_t *compare
 );
 
 static uint32_t write_metadata(FILE *fp);
@@ -98,10 +98,10 @@ static writer_t write_adjsect;
 static writer_t write_nounsect;
 static writer_t write_compsect;
 
-static arr_sorter_t compare_name;
-static arr_sorter_t compare_adj;
-static arr_sorter_t compare_noun;
-static arr_sorter_t compare_comp;
+static array_sorter_t compare_name;
+static array_sorter_t compare_adj;
+static array_sorter_t compare_noun;
+static array_sorter_t compare_comp;
 
 static void print_srcfiles(void);
 static void handle_dberr(void);

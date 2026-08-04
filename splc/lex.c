@@ -1,18 +1,18 @@
 #include "lex.h"
 #include "lex.internals.h"  // contains typedef & prototypes
 
-extern arr_t *lex(optflg_t *of, optval_t *ov, int lc) {
+extern array_t *lex(optflg_t *of, optval_t *ov, int lc) {
    (void) of, (void) ov;
    // Initialize global variables
    lls = lc;
    p = q = 0;
-   l = arr_peek(ls, p);
+   l = array_peek(ls, p);
    max = 128;
    buf = safe_malloc(max);
    eoe = false;
 
    // Construct a stream of tokens
-   arr_t *toks = arr_create();
+   array_t *toks = array_create();
 
    if (!setjmp(LONGJMP_ENV))
       goto tokenize;
@@ -41,19 +41,19 @@ extern arr_t *lex(optflg_t *of, optval_t *ov, int lc) {
    return toks;
 }
 
-static void store_token(arr_t *toks) {
+static void store_token(array_t *toks) {
    if (idx == 0)
       return;
    store_string(toks, TOKKIND_TOK);
 }
 
-static void store_punct(arr_t *toks) {
+static void store_punct(array_t *toks) {
    if (isspace(buf[0]))
       return;
    store_string(toks, TOKKIND_PNT);
 }
 
-static void store_string(arr_t *toks, tokkind_t kind) {
+static void store_string(array_t *toks, tokkind_t kind) {
    token_t tok;
    char *run;
    int len;
@@ -69,7 +69,7 @@ static void store_string(arr_t *toks, tokkind_t kind) {
    tok.lnum = tp;
    tok.lpos = tq;
 
-   arr_append(toks, &tok, sizeof tok);
+   array_append(toks, &tok, sizeof tok);
 }
 
 static void skip_space(void) {
@@ -166,7 +166,7 @@ static inline void iterate_lines(processor_t *process, ...) {
          if (!ret) goto end;
       }
       q = 0;
-      l = arr_peek(ls, ++p);
+      l = array_peek(ls, ++p);
    }
    eoe = true;
 end: ;

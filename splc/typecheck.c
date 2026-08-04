@@ -266,7 +266,7 @@ static void semerr_badword(node_t *n) {
 
    lnum = n->lnum;
    lpos = n->lpos;
-   l = arr_peek(ls, lnum - 1);
+   l = array_peek(ls, lnum - 1);
 
    print_errheader();
    fmtwrt(
@@ -287,8 +287,8 @@ static void semerr_dupname(
 ) {
    line_t *cl, *pl;
 
-   cl = arr_peek(ls, curr->lnum - 1);
-   pl = arr_peek(ls, prev->lnum - 1);
+   cl = array_peek(ls, curr->lnum - 1);
+   pl = array_peek(ls, prev->lnum - 1);
 
    print_errheader();
    fmtwrt(
