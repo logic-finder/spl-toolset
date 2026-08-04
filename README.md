@@ -16,4 +16,6 @@ BUILD / USAGE
 $ make -j
 $ cd spldbm && make db && mv words.spldb ../splc
 $ cd ../splc && splc ../dat/hello.spl
+$ cd ../splrt && make build SPLC_OUTPUT=../splc/hello.c
+$ cd ../splc && ./hello
 ```
