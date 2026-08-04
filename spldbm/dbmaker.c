@@ -268,6 +268,7 @@ static void write_sect_type_B(
          ln[llen] = '\0';  /* overwrite \n */
       }
 
+      // fixme: replace all VERRs in this file with dberr function (use stdout, not stderr)
       if (llen > maxlen)
          VERR("%s entry #%d too long", sectname, ecnt + 1);
 
