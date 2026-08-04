@@ -19,7 +19,7 @@ typedef struct {
    spl_uint_t offset;
    uint32_t s2p, s3p;
    tree_t *nrtv;
-} assemble_ctx_t; // fixme: asm_ctx_t
+} asm_ctx_t;
 
 typedef void writer_t(tree_t *t);
 
@@ -38,9 +38,9 @@ static writer_t write_jumplike;
 
 static tree_t *find_nearest_opcode(tree_t *root, int a, int s, int b);
 
-static void write_debug_info(assemble_ctx_t *actx);
-static void write_srcfile(assemble_ctx_t *actx);
-static void write_header(bool debug_flag, assemble_ctx_t *actx);
+static void write_debug_info(asm_ctx_t *actx);
+static void write_srcfile(asm_ctx_t *actx);
+static void write_header(bool debug_flag, asm_ctx_t *actx);
 
 static FILE *fp;
 

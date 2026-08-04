@@ -24,7 +24,7 @@ extern void assemble(void) {
          Section 3 - Source File : (optional section) variable size
             text data...         - variable size */
 
-   assemble_ctx_t actx;
+   asm_ctx_t actx;
    char *destname;
 
    actx.le = isle(), actx.be = !actx.le;
@@ -326,7 +326,7 @@ static tree_t *find_nearest_opcode(tree_t *root, int a, int s, int b) {
    return NULL;
 }
 
-static void write_debug_info(assemble_ctx_t *actx) {
+static void write_debug_info(asm_ctx_t *actx) {
    fpos_t ecnt_pos, eos_pos;
    spl_uint_t before, diff;
    uint32_t ecnt;
@@ -346,7 +346,7 @@ static void write_debug_info(assemble_ctx_t *actx) {
 
 static void write_dbginfo_route(tree_t *t, int lv, void *ctx) {
    irnode_t *n;
-   assemble_ctx_t *actx;
+   asm_ctx_t *actx;
 
    (void) lv;
    actx = ctx;
@@ -364,7 +364,7 @@ static void write_dbginfo_route(tree_t *t, int lv, void *ctx) {
    actx->offset += OBJFILE_DI_ETSIZ;
 }
 
-static void write_srcfile(assemble_ctx_t *actx) {
+static void write_srcfile(asm_ctx_t *actx) {
    // fixme: 프로젝트 전역에서 쓰는 컨텍스트 구조체를 마련해서 거기서 값을 가져다쓰는게 나을듯
    size_t lls, cnt;
    line_t *l;
@@ -381,7 +381,7 @@ static void write_srcfile(assemble_ctx_t *actx) {
    actx->offset += cnt;
 }
 
-static void write_header(bool debug_flag, assemble_ctx_t *actx) {
+static void write_header(bool debug_flag, asm_ctx_t *actx) {
    uint32_t fi, s0p, s1p;
 
    fi = OBJFILE_FI;
