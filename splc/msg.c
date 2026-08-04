@@ -81,8 +81,6 @@ extern void init_msg(void) {
    msgs.err.syn.gt.incomp = "incomplete goto statement";
    msgs.err.syn.gt.badsyn = "incorrect goto statement syntax";
    msgs.err.syn.gt.unmatched = "incomprehensible goto statement";
-   msgs.err.syn.gt.act_misspell = "misspelling detected; it's Act, not act";
-   msgs.err.syn.gt.scene_misspell = "misspelling detected; it's Scene, not scene";
 
    msgs.err.syn.cond.incomp = "incomplete interrogative sentence";
    msgs.err.syn.cond.not_conj = "not conjugated interrogative sentence";

@@ -908,19 +908,13 @@ static void parse_goto(void) {
    }
 
    gettok();
-   if (!strcmp(tok->run, KEYWRD_ACT))
+   if (!strcmp(tok->run, KEYWRD_ACT_L))
       mark = NODEKIND_ACT;
    else
-   if (!strcmp(tok->run, KEYWRD_SCENE))
+   if (!strcmp(tok->run, KEYWRD_SCENE_L))
       mark = NODEKIND_SCENE;
    else {
-      if (!strcmp(tok->run, "act"))
-         reason = msgs.err.syn.gt.act_misspell;
-      else
-      if (!strcmp(tok->run, "scene"))
-         reason = msgs.err.syn.gt.scene_misspell;
-      else
-         reason = msgs.err.syn.gt.badsyn;
+      reason = msgs.err.syn.gt.badsyn;
       synerr();
    }
 
@@ -935,7 +929,7 @@ static void parse_goto(void) {
    (void) graft_tree_s(gt, tok->run, tok->len, NODEKIND_ROMNUM);
 
    gettok();
-   if (!match(tok->run[0], ".!")) {  // fixme: .! 변수화
+   if (!match(tok->run[0], ".!")) {
       reason = msgs.err.syn.gt.badsyn;
       synerr();
    }

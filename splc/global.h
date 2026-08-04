@@ -18,6 +18,8 @@
 #
 #define KEYWRD_ACT    "Act"
 #define KEYWRD_SCENE  "Scene"
+#define KEYWRD_ACT_L  "act"
+#define KEYWRD_SCENE_L "scene"
 #define KEYWRD_ENTER  "Enter"
 #define KEYWRD_EXIT   "Exit"
 #define KEYWRD_EXEUNT "Exeunt"

@@ -154,9 +154,7 @@ struct msg_err_syn_goto {
    msgstr_t
       incomp,
       badsyn,
-      unmatched,
-      act_misspell,
-      scene_misspell;
+      unmatched;
 };
 
 struct msg_err_syn_cond {
