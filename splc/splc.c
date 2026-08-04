@@ -168,7 +168,7 @@ static const char *nodekind2str(nodekind_t kind) {
       case NODEKIND_ROOT   : return "ROOT";
       case NODEKIND_DATA   : return "DATA";
       case NODEKIND_ROMNUM : return "ROMAN_NUMERAL";
-      case NODEKIND_SUBJ   : return "SUBJECT";
+      case NODEKIND_SUBJ   : return "SUBJECT"; // fixme: in use?
       case NODEKIND_CONST  : return "CONST";
       case NODEKIND_ADJ    : return "ADJ";
       case NODEKIND_NOUN   : return "NOUN";

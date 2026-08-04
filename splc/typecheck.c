@@ -131,6 +131,7 @@ static void typecheck_name(node_t *n) {
 }
 
 // TODO: summer's처럼 명사's는 형용사로 취급하기
+// ㄴㄴ 형용사가 아니라 summer's day 자체가 하나의 명사
 static void typecheck_adj(node_t *n) {
    if (query_adj(n->dat.s.run))
       return;

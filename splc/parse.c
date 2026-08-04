@@ -221,23 +221,77 @@ static void parse_exeunt(void) {
 // <= 이건 이미 이 함수 아랫단에서 검사되고 있는듯?
 static void parse_const(tree_t *stmt) {
    static const char *decos[] = {
-      /* possessives */
-      KEYWRD_MY, KEYWRD_YOUR, KEYWRD_THY, KEYWRD_THINE,
-      KEYWRD_HIS, KEYWRD_HER, KEYWRD_ITS,
-      /* articles */
+   /* Possessives */
+      /* 1st */ KEYWRD_MY, KEYWRD_MINE,
+      /* 2nd */ KEYWRD_YOUR, KEYWRD_THY, KEYWRD_THINE,
+      /* 3rd */ KEYWRD_HIS, KEYWRD_HER, KEYWRD_ITS, KEYWRD_THEIR,
+   /* Articles */
       KEYWRD_A, KEYWRD_AN, KEYWRD_THE
    };
    static const int decos_len = ARRLEN(decos);
 
-   tree_t *constant;
+   /* Before going further, let's recall where constants are used.
+
+      Note:
+         - <x> means x is optional.
+         - (x|y) means x or y must be present.
+         - "ap" means adjective phrase: "happy delightful nice".
+         - "np" means noun phrase: "summer's day", "stone wall".
+            - incidentally, a noun phrase is treated as a single noun!
+         - "art" means articles: "a", "an", or "the".
+         - "pos" means possessives: "my", "your", etc.
+         - "pronoun": "me", "you", etc.
+         - "ref" means reflexives: "myself", "yourself", etc.
+
+      Constants can have one of the following forms:
+         TYPE A: <adj|ap> (noun|np)
+         TYPE B: (art|pos) <adj|ap> (noun|np)  // i.e. (art|pos) A
+         TYPE C: (pronoun|ref|name)
+         TYPE D: (nothing|zero)
+
+      1. Assignment Statements
+         You A(.|!)
+         You be as adj as (B|C|D)(.|!)
+         You be (B|C|D)(.|!)
+
+      2. Questions
+         Be (B|C|D) <not> (comp|<more|less> adj) than (B|C|D)?
+
+      3. As Operands Of Operators
+         the sum of (B|C|D) and (B|C|D)
+
+      4. Remember Statements
+         Remember (B|C|D)(.|!)
+
+      This remind shows us that TYPE A is only used in the
+      "YOU A" assignment statement. Also, the combination of
+      B, C, and D is widely used.
+
+      With that in mind, now let's begin parsing. */
+
+   tree_t *cnst;
    bool opcond, cond1, cond2, cond3, cond4, cond5, cond6;
    int ret;
    nodekind_t kind;
 
-   // Make a constant node
-   constant = graft_tree_n(stmt, 0, NODEKIND_CONST);
+   /* Makes a tree that represents a constant node */
+   cnst = graft_tree_n(stmt, 0, NODEKIND_CONST);
+
    reason = msgs.err.syn.cnst.incomp;
    gettok();
+
+   /* First of all, we check whether this token is
+      a pronoun, a reflexive, a name, or a nil */
+
+   /* If not, this is either TYPE A or TYPE B. Meanwhile,
+      TYPE B = (art|pos) + TYPE A. Let's exploit this structure */
+
+   // if there is, ignore art|pos!
+
+   // 형용사, 명사 체크를 여기서 해버리고 (명사구도 여기서해버리기)
+   // context check에서는 conjugation이 제대로 됐는지같은걸 검사하도록 하자 (이건 warning을 띄워야 할듯)
+   // context check에서는 미선언이름사용, 이름중복선언, 미사용이름체크, scene/act 중복선언 같은것을 체크
+   // typecheck의 필요성이 없는거같은데 삭제 고려
 
    /*
     * Since names can begin with 'the', we first check
@@ -498,6 +552,8 @@ static void parse_op_fact(tree_t *op) {
 
 // fixme: dp를 파싱한 다음에 바로 이름을 합치기
 // 현재 typecheck.c에서 coalesce_name 하니까 isname에서 일일히 트리를 순회해야해서 불편함
+// ㄴㄴ 토큰스트림 단계에서는 이렇게 하는게 맞을듯 여러 이름이 토큰에 나뉘어져 있으니까
+
 // fixme: title 도 파싱한 다음에 바로 coalesce_title 해버리기 (typecheck.c에서 옮기기)
 static int isname(void) {
    tree_t *dp, *character;
@@ -624,6 +680,21 @@ static int seek_asgn(void) {
 }
 
 static void parse_asgn(void) {
+   /* ap: adjective phrase, e.g. "lying stupid fatherless"
+      np: noun phrase, e.g. "summer's day", "stone wall"
+      art: article, e.g. "a", "an", "the"
+      pos: possessive, e.g. "my", "your"
+      ref: reflexive, e.g. "myself", "yourself"
+      pronoun: e.g. "me", "you", "I"
+      name: e.g. "Romeo", "Juliet"
+
+      You <ap> (noun|np)(.|!)
+      You be as adj as (art|pos) <ap> (noun|np)(.|!)
+      You be as adj as (pronoun|ref|name)(.|!)
+      You be (nothing|zero)(.|!)
+
+      Note: a noun phrase is treated as a single noun! */
+
    int type;
    bool cond1, cond2;
 
