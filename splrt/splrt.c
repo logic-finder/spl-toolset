@@ -236,7 +236,7 @@ static void io_out(
 
 static void clearbuf(void) {
    int ch;
-   while ((ch = fgetc(stdin)) != EOF)
+   while ((ch = fgetc(stdin)) != '\n' && ch != EOF)
       /* empty */ ;
 }
 
