@@ -23,10 +23,10 @@ void *srealloc(void *ptr, size_t siz);
 void *srealloc_arr(void *arr, int cnt, size_t esiz);
 
 /**
- * @brief `scalloc` (safe calloc) is a wrapper for `calloc`.
+ * @brief `safe_calloc` is a wrapper for `calloc`.
  * @note exits in failure.
  */
-void *scalloc(size_t n, size_t siz);
+void *safe_calloc(size_t n, size_t siz);
 
 /**
  * @brief `safe_fopen` is a wrapper for `fopen`.

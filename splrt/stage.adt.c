@@ -8,7 +8,7 @@ extern stage_t *stage_create(size_t dpsz) {
 
    ret->cnt = 0;
    ret->dpsz = dpsz;
-   ret->states = scalloc(dpsz, ESIZ(ret->states));  /* bool [] */
+   ret->states = safe_calloc(dpsz, ESIZ(ret->states));  /* bool [] */
    ret->names = safe_malloc(dpsz * ESIZ(ret->names));  /* string [] */
 
    return ret;

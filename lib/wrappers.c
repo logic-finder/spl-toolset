@@ -24,7 +24,7 @@ extern void *srealloc_arr(void *arr, int cnt, size_t esiz) {
    return arr;
 }
 
-extern void *scalloc(size_t n, size_t siz) {
+extern void *safe_calloc(size_t n, size_t siz) {
    void *ret = calloc(n, siz);
    if (!ret) fatal("calloc error");
    return ret;
