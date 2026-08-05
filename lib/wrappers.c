@@ -45,7 +45,7 @@ extern void safe_fclose(FILE *fp) {
    fatal("unable to close a stream");
 }
 
-extern void sremove(const char *filename) {
+extern void safe_remove(const char *filename) {
    if (!remove(filename))
       return;
    vfatal("unable to remove the file: %s", filename);
