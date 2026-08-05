@@ -47,6 +47,9 @@
          Is a tree as good as a tree? -> 1 == 1
          Is a tree not as good as a shiny tree? -> 1 != 2
       상수로만 이루어져 있을 경우 위 4가지 경우에만 명백한 듯
+
+   - Remove trivial operators
+      : * 1 이나 + 0 은 의미가 없으므로 제거
 */
 
 extern void iroptimize(void) {

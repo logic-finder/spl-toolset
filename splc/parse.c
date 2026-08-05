@@ -242,6 +242,7 @@ static void parse_const(tree_t *stmt) {
          - "pos" means possessives: "my", "your", etc.
          - "pronoun": "me", "you", etc.
          - "ref" means reflexives: "myself", "yourself", etc.
+         - "comp" means comparatives: "better", "worse", etc
 
       Constants can have one of the following forms:
          TYPE A: <adj|ap> (noun|np)
@@ -255,7 +256,7 @@ static void parse_const(tree_t *stmt) {
          You be (B|C|D)(.|!)
 
       2. Questions
-         Be (B|C|D) <not> (comp|<more|less> adj) than (B|C|D)?
+         Be (B|C|D) <not> (comp|(<more|less> adj)) than (B|C|D)?
 
       3. As Operands Of Operators
          the sum of (B|C|D) and (B|C|D)
