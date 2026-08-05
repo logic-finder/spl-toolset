@@ -93,7 +93,7 @@ extern void dbmake(void) {
    // Rename
    safe_fclose(fp);
    (void) remove(DBFILENAME);
-   srename(DBTEMPNAME, DBFILENAME);
+   safe_rename(DBTEMPNAME, DBFILENAME);
 }
 
 static void handle_dberr(void) {

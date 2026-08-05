@@ -41,7 +41,7 @@ FILE *safe_fopen(const char *filename, const char *mode);
 void safe_fclose(FILE *fp);
 
 void safe_remove(const char *filename);
-void srename(const char *old, const char *new);
+void safe_rename(const char *old, const char *new);
 
 int safe_fgetc(FILE *fp);
 

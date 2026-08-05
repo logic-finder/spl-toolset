@@ -51,7 +51,7 @@ extern void safe_remove(const char *filename) {
    vfatal("unable to remove the file: %s", filename);
 }
 
-extern void srename(const char *old, const char *new) {
+extern void safe_rename(const char *old, const char *new) {
    if (!rename(old, new))
       return;
    vfatal("unable to rename %s to %s", old, new);
