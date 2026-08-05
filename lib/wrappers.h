@@ -48,7 +48,7 @@ int safe_fgetc(FILE *fp);
 /**
  *
  */
-void sfputc(FILE *stream, char ch);
+void safe_fputc(FILE *stream, char ch);
 
 /**
  * @brief `safe_fputs` is a wrapper for `fputs`.

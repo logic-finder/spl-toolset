@@ -64,7 +64,7 @@ extern int safe_fgetc(FILE *fp) {
    return c;
 }
 
-extern void sfputc(FILE *stream, char ch) {
+extern void safe_fputc(FILE *stream, char ch) {
    if (fputc(ch, stream) == EOF)
       fatal("fputc error");
 }

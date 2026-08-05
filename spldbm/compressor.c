@@ -81,7 +81,7 @@ static void write_metadata(FILE *src, FILE *dest, uint8_t af) {
       ch = getc(src);
       if (ch == EOF && ferror(src))
          ERR("getc error");
-      sfputc(dest, ch);
+      safe_fputc(dest, ch);
    }
 
    // Update the archive flag
@@ -143,7 +143,7 @@ static void rrle(FILE *src, FILE *dest) {
       orig_siz += 2;
       res_siz += pair[Cnt];
       while (pair[Cnt]--)
-         sfputc(dest, pair[Ch]);
+         safe_fputc(dest, pair[Ch]);
    }
    fmtwrt(ENPREFIX
       "restoring done! %d bytes -> %d bytes (%d%%)\n",

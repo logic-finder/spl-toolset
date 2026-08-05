@@ -118,11 +118,11 @@ static void eval_const(tree_t *cnst) {
    noun = tree_child(cnst, clen - 1);
    // fixme: here
    if (1) {
-      sfputc(fp, '(');
+      safe_fputc(fp, '(');
       for (int i = 0; i < clen - 1; i++)
          safe_fputs(fp, "2 * ");
       resolve_noun(noun);
-      sfputc(fp, ')');
+      safe_fputc(fp, ')');
    }
    else {
       v = 1;
@@ -148,7 +148,7 @@ static void resolve_noun(tree_t *noun) {
    }
 
    pnoun:
-      sfputc(fp, '1');
+      safe_fputc(fp, '1');
    return;
 
    nnoun:
@@ -183,7 +183,7 @@ static void resolve_cube(tree_t *op) {
 
 static void resolve_2x(tree_t *op) {
    resolve_unary(op, "(2 * (");
-   sfputc(fp, ')');
+   safe_fputc(fp, ')');
 }
 
 static void resolve_fact(tree_t *op) {
@@ -231,7 +231,7 @@ static void resolve_unary(tree_t *op, const char *s) {
    cnst = tree_child(op, 0);
    safe_fputs(fp, s);
    eval_const(cnst);
-   sfputc(fp, ')');
+   safe_fputc(fp, ')');
 }
 
 static void resolve_binary(tree_t *op, char c) {
@@ -242,11 +242,11 @@ static void resolve_binary(tree_t *op, char c) {
    cnst2 = tree_child(op, 1);  /* rhs */
    cnst2 = tree_child(cnst2, 0);
 
-   sfputc(fp, '(');
+   safe_fputc(fp, '(');
    eval_const(cnst1);
    ffmtwrt(fp, ") %c (", c);
    eval_const(cnst2);
-   sfputc(fp, ')');
+   safe_fputc(fp, ')');
 }
 
 static void gen_act(tree_t *t) {
@@ -394,8 +394,8 @@ static void gen_cond(tree_t *t) {
 
    safe_fputs(fp, INDENT "cond = ");
    if (mode->kind == NODEKIND_NEGATE)
-      sfputc(fp, '!');
-   sfputc(fp, '(');
+      safe_fputc(fp, '!');
+   safe_fputc(fp, '(');
 
    // Left-hand side
    switch (kind) {
@@ -447,7 +447,7 @@ static void gen_if(tree_t *t) {
 
    safe_fputs(fp, INDENT "if (");
    if (mode->kind == NODEKIND_NEGATE)
-      sfputc(fp, '!');
+      safe_fputc(fp, '!');
    safe_fputs(fp, "cond) ");
 
    switch (stmtdat->kind) {

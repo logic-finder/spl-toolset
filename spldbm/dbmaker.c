@@ -97,7 +97,7 @@ extern void dbmake(void) {
 }
 
 static void handle_dberr(void) {
-   sfputc(stdout, '\n');
+   safe_fputc(stdout, '\n');
    exit(EXIT_FAILURE);
 }
 
@@ -202,7 +202,7 @@ static void write_sect_type_A(
       safe_fwrite(r->run, 1, r->len, fp);
       residual = dt_s_len - r->len;
       for (int k = 0; k < residual; k++)
-         sfputc(fp, '\0');  /* zero-padding */
+         safe_fputc(fp, '\0');  /* zero-padding */
       free(r->run);  /* free ln */
    }
    array_destroy(records);
@@ -310,7 +310,7 @@ static void write_sect_type_B(
       safe_fwrite(r->run, 1, r->len, fp);
       residual = dt_s_len - r->len;
       for (int k = 0; k < residual; k++)
-         sfputc(fp, '\0');
+         safe_fputc(fp, '\0');
       free(r->run);  /* free elems[0] */
    }
    array_destroy(records);

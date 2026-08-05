@@ -83,7 +83,7 @@ static void handle_act(tree_t *t) {
 
 static void handle_scene(tree_t *t) {
    irnode_t *n = tree_dat(t);
-   sfputc(fp, '\n');
+   safe_fputc(fp, '\n');
    if (debug) emit_debug_data(n);
    ffmtwrt(
       fp,

@@ -103,6 +103,6 @@ static void semerr_unknown_label(node_t *n, const char *s) {
    print_err(n);
    trace(scene, "Scene");
    trace(act, "Act");
-   sfputc(stdout, '\n');
+   safe_fputc(stdout, '\n');
    exit(EXIT_FAILURE);
 }
