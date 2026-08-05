@@ -111,7 +111,7 @@ extern void sfseek(FILE *fp, long offset, int whence) {
       fatal("fseek error");
 }
 
-extern void sfgetpos(FILE *fp, fpos_t *pos) {
+extern void safe_fgetpos(FILE *fp, fpos_t *pos) {
    if (fgetpos(fp, pos))
       fatal("fgetpos error");
 }

@@ -86,7 +86,7 @@ void sfseek(FILE *fp, long offset, int whence);
 /**
  *
  */
-void sfgetpos(FILE *fp, fpos_t *pos);
+void safe_fgetpos(FILE *fp, fpos_t *pos);
 
 /**
  *

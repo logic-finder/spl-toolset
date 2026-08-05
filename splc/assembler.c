@@ -331,11 +331,11 @@ static void write_debug_info(asm_ctx_t *actx) {
    spl_uint_t before, diff;
    uint32_t ecnt;
 
-   sfgetpos(fp, &ecnt_pos);
+   safe_fgetpos(fp, &ecnt_pos);
    actx->offset += OBJFILE_DI_EC;
    before = actx->offset;
    tree_pre_traverse(actx->nrtv, write_dbginfo_route, 0, actx);
-   sfgetpos(fp, &eos_pos);
+   safe_fgetpos(fp, &eos_pos);
    diff = actx->offset - before;
    ecnt = diff / OBJFILE_DI_ETSIZ;
    sfsetpos(fp, &ecnt_pos);

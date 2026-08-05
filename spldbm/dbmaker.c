@@ -169,7 +169,7 @@ static void write_sect_type_A(
    // Write header
    if (le) header = endrev32(header);
    sfwrite(&header, 1, hd_len, fp);
-   sfgetpos(fp, &ecnt_pos);
+   safe_fgetpos(fp, &ecnt_pos);
 
    // Store entries
    while (!readln(src, &ln, &llen)) {
@@ -206,7 +206,7 @@ static void write_sect_type_A(
       free(r->run);  /* free ln */
    }
    array_destroy(records);
-   sfgetpos(fp, &eos_pos);  /* end of section */
+   safe_fgetpos(fp, &eos_pos);  /* end of section */
 
    // Write entry count
    sfsetpos(fp, &ecnt_pos);
@@ -259,7 +259,7 @@ static void write_sect_type_B(
    // Write header
    if (le) header = endrev32(header);
    sfwrite(&header, 1, hd_len, fp);
-   sfgetpos(fp, &ecnt_pos);
+   safe_fgetpos(fp, &ecnt_pos);
 
    // Store entries
    while (!readln(src, &ln, &llen)) {
@@ -314,7 +314,7 @@ static void write_sect_type_B(
       free(r->run);  /* free elems[0] */
    }
    array_destroy(records);
-   sfgetpos(fp, &eos_pos);
+   safe_fgetpos(fp, &eos_pos);
 
    // Write entry count
    sfsetpos(fp, &ecnt_pos);
