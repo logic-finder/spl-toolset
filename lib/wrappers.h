@@ -81,7 +81,7 @@ void sfwrite(
 /**
  *
  */
-void sfseek(FILE *fp, long offset, int whence);
+void safe_fseek(FILE *fp, long offset, int whence);
 
 /**
  *

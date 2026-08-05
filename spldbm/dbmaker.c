@@ -62,7 +62,7 @@ extern void dbmake(void) {
 
    // Make DB
    print_srcfiles();
-   sfseek(fp, MTDT_SIZ, SEEK_SET);
+   safe_fseek(fp, MTDT_SIZ, SEEK_SET);
 
    safe_fputs(stdout, ENPREFIX "writing name section...");
    write_namesect(fp);
@@ -195,7 +195,7 @@ static void write_sect_type_A(
    if (dupflg) handle_dberr();
 
    // Write the records
-   sfseek(fp, ec_len, SEEK_CUR);
+   safe_fseek(fp, ec_len, SEEK_CUR);
    for (uint32_t i = 0; i < ecnt; i++) {
       r = array_peek(records, i);
       sfwrite(&r->len, dt_l_len, 1, fp);
@@ -302,7 +302,7 @@ static void write_sect_type_B(
    if (dupflg) handle_dberr();
 
    // Write the records
-   sfseek(fp, ec_len, SEEK_CUR);
+   safe_fseek(fp, ec_len, SEEK_CUR);
    for (uint32_t i = 0; i < ecnt; i++) {
       r = array_peek(records, i);
       sfwrite(&r->kind, dt_k_len, 1, fp);

@@ -106,7 +106,7 @@ extern void sfwrite(
       fatal("fwrite error");
 }
 
-extern void sfseek(FILE *fp, long offset, int whence) {
+extern void safe_fseek(FILE *fp, long offset, int whence) {
    if (fseek(fp, offset, whence))
       fatal("fseek error");
 }

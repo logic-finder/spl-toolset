@@ -26,7 +26,7 @@ static void load_section(sectkind_t kind, size_t esiz) {
    unsigned int ret;
 
    sects[kind] = safe_malloc(ecnts[kind] * esiz);
-   sfseek(db, secpos[kind], SEEK_SET);
+   safe_fseek(db, secpos[kind], SEEK_SET);
    ret = fread(sects[kind], esiz, ecnts[kind], db);
    if (ret < ecnts[kind])
       ERR("fread error");
@@ -87,7 +87,7 @@ static void check_secthead(
    int ret;
    uint32_t header;
 
-   sfseek(db, secpos[kind], SEEK_SET);
+   safe_fseek(db, secpos[kind], SEEK_SET);
    ret = fread(&header, hdsiz, 1, db);
    if (ret < 1) ERR("fread error");
    if (le) header = endrev32(header);

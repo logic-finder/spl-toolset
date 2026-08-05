@@ -23,7 +23,7 @@ static bool is_archived(FILE *src) {
    uint8_t af;
    int ret;
 
-   sfseek(src, MTDT_HD, SEEK_SET);
+   safe_fseek(src, MTDT_HD, SEEK_SET);
    ret = fread(&af, MTDT_AF, 1, src);
    if (ret < 1)
       ERR("fread error");
@@ -85,11 +85,11 @@ static void write_metadata(FILE *src, FILE *dest, uint8_t af) {
    }
 
    // Update the archive flag
-   sfseek(dest, MTDT_HD, SEEK_SET);
+   safe_fseek(dest, MTDT_HD, SEEK_SET);
    sfwrite(&af, MTDT_AF, 1, dest);
 
    // Prepare the next work
-   sfseek(dest, MTDT_SIZ, SEEK_SET);
+   safe_fseek(dest, MTDT_SIZ, SEEK_SET);
 }
 
 static void rle(FILE *src, FILE *dest) {
