@@ -209,13 +209,13 @@ static void write_sect_type_A(
    safe_fgetpos(fp, &eos_pos);  /* end of section */
 
    // Write entry count
-   sfsetpos(fp, &ecnt_pos);
+   safe_fsetpos(fp, &ecnt_pos);
    if (be) ecnt = endrev32(ecnt);
    sfwrite(&ecnt, ec_len, 1, fp);
    ecnts[sectkind] = ecnt;
 
    // Prepare the next section
-   sfsetpos(fp, &eos_pos);
+   safe_fsetpos(fp, &eos_pos);
 }
 
 static void write_sect_type_B(
@@ -317,13 +317,13 @@ static void write_sect_type_B(
    safe_fgetpos(fp, &eos_pos);
 
    // Write entry count
-   sfsetpos(fp, &ecnt_pos);
+   safe_fsetpos(fp, &ecnt_pos);
    if (be) ecnt = endrev32(ecnt);
    sfwrite(&ecnt, ec_len, 1, fp);
    ecnts[sectkind] = ecnt;
 
    // Prepare the next section
-   sfsetpos(fp, &eos_pos);
+   safe_fsetpos(fp, &eos_pos);
 }
 
 static void write_namesect(FILE *fp) {

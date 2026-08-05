@@ -338,10 +338,10 @@ static void write_debug_info(asm_ctx_t *actx) {
    safe_fgetpos(fp, &eos_pos);
    diff = actx->offset - before;
    ecnt = diff / OBJFILE_DI_ETSIZ;
-   sfsetpos(fp, &ecnt_pos);
+   safe_fsetpos(fp, &ecnt_pos);
    if (actx->be) ecnt = endrev32(ecnt);
    sfwrite(&ecnt, OBJFILE_DI_EC, 1, fp);
-   sfsetpos(fp, &eos_pos);
+   safe_fsetpos(fp, &eos_pos);
 }
 
 static void write_dbginfo_route(tree_t *t, int lv, void *ctx) {

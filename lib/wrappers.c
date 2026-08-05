@@ -116,7 +116,7 @@ extern void safe_fgetpos(FILE *fp, fpos_t *pos) {
       fatal("fgetpos error");
 }
 
-extern void sfsetpos(FILE *fp, fpos_t *pos) {
+extern void safe_fsetpos(FILE *fp, fpos_t *pos) {
    if (fsetpos(fp, pos))
       fatal("fsetpos error");
 }
