@@ -119,10 +119,10 @@ static uint32_t write_metadata(FILE *fp) {
 
    // header
    if (le) header = endrev32(header);
-   sfwrite(&header, 1, MTDT_HD, fp);
+   safe_fwrite(&header, 1, MTDT_HD, fp);
 
    // archive flag
-   sfwrite(&arcflg, MTDT_AF, 1, fp);
+   safe_fwrite(&arcflg, MTDT_AF, 1, fp);
 
    // section positions
    int dtsizs[SECTNUM] = {
@@ -135,7 +135,7 @@ static uint32_t write_metadata(FILE *fp) {
    pos = MTDT_SIZ;
    for (int i = 0; i < SECTNUM; i++) {
       if (be) pos = endrev32(pos);
-      sfwrite(&pos, MTDT_SP, 1, fp);
+      safe_fwrite(&pos, MTDT_SP, 1, fp);
       pos += mtdtsizs[i];
       pos += ecnts[i] * dtsizs[i];
    }
@@ -168,7 +168,7 @@ static void write_sect_type_A(
 
    // Write header
    if (le) header = endrev32(header);
-   sfwrite(&header, 1, hd_len, fp);
+   safe_fwrite(&header, 1, hd_len, fp);
    safe_fgetpos(fp, &ecnt_pos);
 
    // Store entries
@@ -198,8 +198,8 @@ static void write_sect_type_A(
    safe_fseek(fp, ec_len, SEEK_CUR);
    for (uint32_t i = 0; i < ecnt; i++) {
       r = array_peek(records, i);
-      sfwrite(&r->len, dt_l_len, 1, fp);
-      sfwrite(r->run, 1, r->len, fp);
+      safe_fwrite(&r->len, dt_l_len, 1, fp);
+      safe_fwrite(r->run, 1, r->len, fp);
       residual = dt_s_len - r->len;
       for (int k = 0; k < residual; k++)
          sfputc(fp, '\0');  /* zero-padding */
@@ -211,7 +211,7 @@ static void write_sect_type_A(
    // Write entry count
    safe_fsetpos(fp, &ecnt_pos);
    if (be) ecnt = endrev32(ecnt);
-   sfwrite(&ecnt, ec_len, 1, fp);
+   safe_fwrite(&ecnt, ec_len, 1, fp);
    ecnts[sectkind] = ecnt;
 
    // Prepare the next section
@@ -258,7 +258,7 @@ static void write_sect_type_B(
 
    // Write header
    if (le) header = endrev32(header);
-   sfwrite(&header, 1, hd_len, fp);
+   safe_fwrite(&header, 1, hd_len, fp);
    safe_fgetpos(fp, &ecnt_pos);
 
    // Store entries
@@ -305,9 +305,9 @@ static void write_sect_type_B(
    safe_fseek(fp, ec_len, SEEK_CUR);
    for (uint32_t i = 0; i < ecnt; i++) {
       r = array_peek(records, i);
-      sfwrite(&r->kind, dt_k_len, 1, fp);
-      sfwrite(&r->len, dt_l_len, 1, fp);
-      sfwrite(r->run, 1, r->len, fp);
+      safe_fwrite(&r->kind, dt_k_len, 1, fp);
+      safe_fwrite(&r->len, dt_l_len, 1, fp);
+      safe_fwrite(r->run, 1, r->len, fp);
       residual = dt_s_len - r->len;
       for (int k = 0; k < residual; k++)
          sfputc(fp, '\0');
@@ -319,7 +319,7 @@ static void write_sect_type_B(
    // Write entry count
    safe_fsetpos(fp, &ecnt_pos);
    if (be) ecnt = endrev32(ecnt);
-   sfwrite(&ecnt, ec_len, 1, fp);
+   safe_fwrite(&ecnt, ec_len, 1, fp);
    ecnts[sectkind] = ecnt;
 
    // Prepare the next section

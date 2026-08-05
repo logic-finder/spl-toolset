@@ -71,7 +71,7 @@ void fmtwrt(const char *format, ...);
 /**
  *
  */
-void sfwrite(
+void safe_fwrite(
    void *src,
    size_t siz,
    unsigned int cnt,

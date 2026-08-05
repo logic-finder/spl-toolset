@@ -96,7 +96,7 @@ extern void fmtwrt(const char *format, ...) {
    va_end(ap);
 }
 
-extern void sfwrite(
+extern void safe_fwrite(
    void *src,
    size_t siz,
    unsigned int cnt,

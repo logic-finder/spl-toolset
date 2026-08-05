@@ -171,9 +171,9 @@ static void write_set(tree_t *t) {
    p1 = tree_chdat(t, 0);
    p2 = tree_chdat(t, 1);
 
-   sfwrite(&n->dat.i, SPL_OPCODE_SIZ, 1, fp);
-   sfwrite(&p1->dat.i, SPL_VAR_SIZ, 1, fp);
-   sfwrite(&p2->dat.i, SPL_CONST_SIZ, 1, fp);
+   safe_fwrite(&n->dat.i, SPL_OPCODE_SIZ, 1, fp);
+   safe_fwrite(&p1->dat.i, SPL_VAR_SIZ, 1, fp);
+   safe_fwrite(&p2->dat.i, SPL_CONST_SIZ, 1, fp);
 }
 
 static void write_enterlike(tree_t *t) {
@@ -182,13 +182,13 @@ static void write_enterlike(tree_t *t) {
    n = tree_dat(t);
    p1 = tree_chdat(t, 0);
 
-   sfwrite(&n->dat.i, SPL_OPCODE_SIZ, 1, fp);
-   sfwrite(&p1->dat.i, SPL_PERSON_SIZ, 1, fp);
+   safe_fwrite(&n->dat.i, SPL_OPCODE_SIZ, 1, fp);
+   safe_fwrite(&p1->dat.i, SPL_PERSON_SIZ, 1, fp);
 }
 
 static void write_paramless_opcode(tree_t *t) {
    irnode_t *n = tree_dat(t);
-   sfwrite(&n->dat.i, SPL_OPCODE_SIZ, 1, fp);
+   safe_fwrite(&n->dat.i, SPL_OPCODE_SIZ, 1, fp);
 }
 
 static void write_pushlike(tree_t *t) {
@@ -197,8 +197,8 @@ static void write_pushlike(tree_t *t) {
    n = tree_dat(t);
    p1 = tree_chdat(t, 0);
 
-   sfwrite(&n->dat.i, SPL_OPCODE_SIZ, 1, fp);
-   sfwrite(&p1->dat.i, SPL_VAR_SIZ, 1, fp);
+   safe_fwrite(&n->dat.i, SPL_OPCODE_SIZ, 1, fp);
+   safe_fwrite(&p1->dat.i, SPL_VAR_SIZ, 1, fp);
 }
 
 static void write_binary_op(tree_t *t) {
@@ -209,10 +209,10 @@ static void write_binary_op(tree_t *t) {
    p2 = tree_chdat(t, 1);
    p3 = tree_chdat(t, 2);
 
-   sfwrite(&n->dat.i, SPL_OPCODE_SIZ, 1, fp);
-   sfwrite(&p1->dat.i, SPL_VAR_SIZ, 1, fp);
-   sfwrite(&p2->dat.i, SPL_VAR_SIZ, 1, fp);
-   sfwrite(&p3->dat.i, SPL_VAR_SIZ, 1, fp);
+   safe_fwrite(&n->dat.i, SPL_OPCODE_SIZ, 1, fp);
+   safe_fwrite(&p1->dat.i, SPL_VAR_SIZ, 1, fp);
+   safe_fwrite(&p2->dat.i, SPL_VAR_SIZ, 1, fp);
+   safe_fwrite(&p3->dat.i, SPL_VAR_SIZ, 1, fp);
 }
 
 static void write_unary_op(tree_t *t) {
@@ -222,9 +222,9 @@ static void write_unary_op(tree_t *t) {
    p1 = tree_chdat(t, 0);
    p2 = tree_chdat(t, 1);
 
-   sfwrite(&n->dat.i, SPL_OPCODE_SIZ, 1, fp);
-   sfwrite(&p1->dat.i, SPL_VAR_SIZ, 1, fp);
-   sfwrite(&p2->dat.i, SPL_VAR_SIZ, 1, fp);
+   safe_fwrite(&n->dat.i, SPL_OPCODE_SIZ, 1, fp);
+   safe_fwrite(&p1->dat.i, SPL_VAR_SIZ, 1, fp);
+   safe_fwrite(&p2->dat.i, SPL_VAR_SIZ, 1, fp);
 }
 
 static void write_goto(tree_t *t) {
@@ -254,8 +254,8 @@ static void write_goto(tree_t *t) {
    }
    op_dat = tree_dat(op);
 
-   sfwrite(&n->dat.i, SPL_OPCODE_SIZ, 1, fp);
-   sfwrite(&op_dat->offset, SPL_ADDR_SIZ, 1, fp);
+   safe_fwrite(&n->dat.i, SPL_OPCODE_SIZ, 1, fp);
+   safe_fwrite(&op_dat->offset, SPL_ADDR_SIZ, 1, fp);
 }
 
 static void write_jumplike(tree_t *t) {
@@ -295,8 +295,8 @@ static void write_jumplike(tree_t *t) {
    op = find_nearest_opcode(root, a, s, b);
    op_dat = tree_dat(op);
 
-   sfwrite(&n->dat.i, SPL_OPCODE_SIZ, 1, fp);
-   sfwrite(&op_dat->offset, SPL_ADDR_SIZ, 1, fp);
+   safe_fwrite(&n->dat.i, SPL_OPCODE_SIZ, 1, fp);
+   safe_fwrite(&op_dat->offset, SPL_ADDR_SIZ, 1, fp);
 }
 
 static tree_t *find_nearest_opcode(tree_t *root, int a, int s, int b) {
@@ -340,7 +340,7 @@ static void write_debug_info(asm_ctx_t *actx) {
    ecnt = diff / OBJFILE_DI_ETSIZ;
    safe_fsetpos(fp, &ecnt_pos);
    if (actx->be) ecnt = endrev32(ecnt);
-   sfwrite(&ecnt, OBJFILE_DI_EC, 1, fp);
+   safe_fwrite(&ecnt, OBJFILE_DI_EC, 1, fp);
    safe_fsetpos(fp, &eos_pos);
 }
 
@@ -357,9 +357,9 @@ static void write_dbginfo_route(tree_t *t, int lv, void *ctx) {
 
    // fixme: 프로젝트 전체적으로 lnum lpos 사이즈 spl_...로 통일
    // fixme: 프로젝트에서 size_t를 쓰는게 적절한곳엔 size_t 사용
-   sfwrite(&actx->offset, OBJFILE_DI_ET_OP, 1, fp);
-   sfwrite(&n->lnum, OBJFILE_DI_ET_SL, 1, fp);
-   sfwrite(&n->lpos, OBJFILE_DI_ET_SP, 1, fp);
+   safe_fwrite(&actx->offset, OBJFILE_DI_ET_OP, 1, fp);
+   safe_fwrite(&n->lnum, OBJFILE_DI_ET_SL, 1, fp);
+   safe_fwrite(&n->lpos, OBJFILE_DI_ET_SP, 1, fp);
 
    actx->offset += OBJFILE_DI_ETSIZ;
 }
@@ -375,7 +375,7 @@ static void write_srcfile(asm_ctx_t *actx) {
       l = array_peek(ls, i);
       cnt += l->len;  // fixme: 현재 len은 \0? \n?을 포함한 길이이므로 제외해야 할듯
       // safe_fputs(fp, l->run); // fixme: buggy (invalid read of size 1) 아마 파일맨끝 newline 문제
-      sfwrite(l->run, 1, l->len - 1, fp); // 임시변통
+      safe_fwrite(l->run, 1, l->len - 1, fp); // 임시변통
    }
 
    actx->offset += cnt;
@@ -389,10 +389,10 @@ static void write_header(bool debug_flag, asm_ctx_t *actx) {
    s0p = 0;
    s1p = OBJFILE_HDSIZ;
 
-   sfwrite(&fi, sizeof fi, 1, fp);
-   sfwrite(&debug_flag, 1, 1, fp);
-   sfwrite(&s0p, sizeof s0p, 1, fp);
-   sfwrite(&s1p, sizeof s1p, 1, fp);
-   sfwrite(&actx->s2p, sizeof actx->s2p, 1, fp);
-   sfwrite(&actx->s3p, sizeof actx->s3p, 1, fp);
+   safe_fwrite(&fi, sizeof fi, 1, fp);
+   safe_fwrite(&debug_flag, 1, 1, fp);
+   safe_fwrite(&s0p, sizeof s0p, 1, fp);
+   safe_fwrite(&s1p, sizeof s1p, 1, fp);
+   safe_fwrite(&actx->s2p, sizeof actx->s2p, 1, fp);
+   safe_fwrite(&actx->s3p, sizeof actx->s3p, 1, fp);
 }

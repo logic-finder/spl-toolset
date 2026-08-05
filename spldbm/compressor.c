@@ -86,7 +86,7 @@ static void write_metadata(FILE *src, FILE *dest, uint8_t af) {
 
    // Update the archive flag
    safe_fseek(dest, MTDT_HD, SEEK_SET);
-   sfwrite(&af, MTDT_AF, 1, dest);
+   safe_fwrite(&af, MTDT_AF, 1, dest);
 
    // Prepare the next work
    safe_fseek(dest, MTDT_SIZ, SEEK_SET);
@@ -105,8 +105,8 @@ static void rle(FILE *src, FILE *dest) {
       if (ch != cmp || ch == EOF || cnt == UINT8_MAX) {
          if (ferror(src)) ERR("getc error");
          if (cmp != -1) {
-            sfwrite(&cnt, 1, 1, dest);
-            sfwrite(&cmp, 1, 1, dest);
+            safe_fwrite(&cnt, 1, 1, dest);
+            safe_fwrite(&cmp, 1, 1, dest);
             orig_siz += cnt;
             arc_siz += 2;
          }
