@@ -10,7 +10,7 @@
 #include "strutils.h"
 #include "array.adt.h"
 #include "db.common.h"
-#include "lineutils.h"
+#include "readline.h"
 #include "colorcode.h"
 
 #define SRCFILE(sectname, idx)      \

@@ -1,5 +1,5 @@
-#ifndef LINEUTILS_INTERNALS_H
-#define LINEUTILS_INTERNALS_H
+#ifndef READLINE_INTERNALS_H
+#define READLINE_INTERNALS_H
 
 #include <ctype.h>
 #include <stdbool.h>

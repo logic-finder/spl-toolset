@@ -5,7 +5,7 @@
 #include "global.h"
 #include "wrappers.h"
 #include "strutils.h"
-#include "lineutils.h"
+#include "readline.h"
 
 #define INIT_SIZE 128
 

@@ -1,5 +1,5 @@
-#ifndef LINEUTILS_H
-#define LINEUTILS_H
+#ifndef READLINE_H
+#define READLINE_H
 
 #include <stdio.h>
 
