@@ -270,7 +270,7 @@ static void semerr_badword(node_t *n) {
    l = array_peek(ls, lnum - 1);
 
    print_errheader();
-   fmtwrt(
+   safe_vprintf(
       "%s " Cbcyan "%s" Creset "\n"
       "[%s:%d:%d] " Cbwhite "note:" Creset " problematic at here\n"
       "%4d|%.*s" Cbblue "%s" Creset "%s\n",
@@ -292,7 +292,7 @@ static void semerr_dupname(
    pl = array_peek(ls, prev->lnum - 1);
 
    print_errheader();
-   fmtwrt(
+   safe_vprintf(
       "duplicate name " Cbcyan "%s" Creset "\n"
       "[%s:%d:%d] " Cbwhite "note:" Creset " at here\n"
       "%4d|%.*s" Cbblue "%s" Creset "%s"

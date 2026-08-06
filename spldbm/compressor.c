@@ -46,12 +46,12 @@ static void work_template(
    src = safe_fopen(srcname, "rb");
    archived = is_archived(src);
    if ((af == 1 && archived)) {
-      fmtwrt(ENPREFIX "this DB is already archived; terminating\n");
+      safe_vprintf(ENPREFIX "this DB is already archived; terminating\n");
       exit(2);
    }
    else
    if ((af == 0 && !archived)) {
-      fmtwrt(ENPREFIX "this DB is not archived; terminating\n");
+      safe_vprintf(ENPREFIX "this DB is not archived; terminating\n");
       exit(3);
    }
    rewind(src);  /* is_archived moved forward the file position */
@@ -117,7 +117,7 @@ static void rle(FILE *src, FILE *dest) {
       else cnt++;
    }
 
-   fmtwrt(ENPREFIX
+   safe_vprintf(ENPREFIX
       "archiving done! %d bytes -> %d bytes (%d%%)\n",
       orig_siz, arc_siz, (arc_siz * 100 / orig_siz)
    );
@@ -145,7 +145,7 @@ static void rrle(FILE *src, FILE *dest) {
       while (pair[Cnt]--)
          safe_fputc(dest, pair[Ch]);
    }
-   fmtwrt(ENPREFIX
+   safe_vprintf(ENPREFIX
       "restoring done! %d bytes -> %d bytes (%d%%)\n",
       orig_siz, res_siz, (res_siz * 100 / orig_siz)
    );

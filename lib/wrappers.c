@@ -86,7 +86,7 @@ extern void ffmtwrt(FILE *stream, const char *format, ...) {
 }
 
 // fixme: this also
-extern void fmtwrt(const char *format, ...) {
+extern void safe_vprintf(const char *format, ...) {
    va_list ap;
    int ret;
 

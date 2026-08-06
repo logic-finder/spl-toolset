@@ -68,7 +68,7 @@ static void print_err(node_t *n) {
    lpos = n->lpos;
    l = array_peek(ls, lnum - 1);
 
-   fmtwrt(
+   safe_vprintf(
       "\n[%s:%d:%d] " Cbwhite "note:" Creset " at this goto statement"
       "\n%4d|%s",
       sfname, lnum, lpos,
@@ -87,7 +87,7 @@ static void trace(tree_t *t, const char *type) {
    l = array_peek(ls, lnum - 1);
    childnode = tree_chdat(t, 0);
 
-   fmtwrt(
+   safe_vprintf(
       "\n[%s:%d:%d] " Cbwhite "note:" Creset
       " in the " Cbmagenta "%s %s" Creset
       "\n%4d|%s",
@@ -99,7 +99,7 @@ static void trace(tree_t *t, const char *type) {
 
 static void semerr_unknown_label(node_t *n, const char *s) {
    safe_fputs(stdout, Cbred "\n<semantic error> " Creset);
-   fmtwrt(reason, s);
+   safe_vprintf(reason, s);
    print_err(n);
    trace(scene, "Scene");
    trace(act, "Act");

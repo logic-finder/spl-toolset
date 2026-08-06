@@ -84,7 +84,7 @@ extern void dbmake(void) {
 
    safe_fputs(stdout, ENPREFIX "writing metadata section...");
    tbytes = write_metadata(fp);
-   fmtwrt(
+   safe_vprintf(
       "\t" Cbgreen "done!" Creset
       " (" Cbwhite "%" PRIu32 Creset " bytes in total)\n",
       tbytes

@@ -8,13 +8,13 @@ extern void irdump(void) {
    destname = make_destname("hello.spl", IR_EXTENSION);
    fp = safe_fopen(destname, "w");
 
-   fmtwrt(ENPREFIX "dumping IR into " Cbyellow "\"%s\"" Creset "...", destname);
+   safe_vprintf(ENPREFIX "dumping IR into " Cbyellow "\"%s\"" Creset "...", destname);
 
    nrtv = tree_child(irt, 1);
    debug = 0;  /* emit debugging data? */
    tree_pre_traverse(nrtv, route, 0, NULL);
 
-   fmtwrt(" " Cgreen "done!" Creset "\n");
+   safe_vprintf(" " Cgreen "done!" Creset "\n");
 
    safe_fclose(fp);
    free(destname);

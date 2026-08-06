@@ -12,7 +12,7 @@ int main(int argc, const char **argv) {
    process_opts(argc, &of, &ov);
 
    ls = loadfile(ov.src, &lc, &wc);
-   fmtwrt(ENPREFIX
+   safe_vprintf(ENPREFIX
       "loaded the source file " Cbyellow "%s" Creset
       " (total " Cbwhite "%d" Creset " lines, " Cbwhite "%d" Creset " chars)\n",
       ov.src, lc, wc);
@@ -22,7 +22,7 @@ int main(int argc, const char **argv) {
    /* Main Logic */
    safe_fputs(stdout, ENPREFIX "scanning...");
    toks = lex(&of, &ov, lc);
-   fmtwrt(" " Cgreen "done!" Creset
+   safe_vprintf(" " Cgreen "done!" Creset
       "\t(total " Cbwhite "%d" Creset " tokens)\n",
       array_size(toks)
    );
@@ -30,7 +30,7 @@ int main(int argc, const char **argv) {
 
    safe_fputs(stdout, ENPREFIX "parsing...");
    pt = parse(&of, &ov, toks);
-   fmtwrt(" " Cgreen "done!" Creset
+   safe_vprintf(" " Cgreen "done!" Creset
       "\t(total " Cbwhite "%d" Creset " nodes)\n",
       count_tree_node(pt)
    );
@@ -38,17 +38,17 @@ int main(int argc, const char **argv) {
 
    safe_fputs(stdout, ENPREFIX "type-checking...");
    typecheck(&of, &ov);
-   fmtwrt(" " Cgreen "done!" Creset "\n");
+   safe_vprintf(" " Cgreen "done!" Creset "\n");
    // tree_pre_traverse(pt, print_node, 0, NULL);
 
    safe_fputs(stdout, ENPREFIX "context-checking...");
    ctxcheck(&of, &ov);
-   fmtwrt(" " Cgreen "done!" Creset "\n");
+   safe_vprintf(" " Cgreen "done!" Creset "\n");
    // tree_pre_traverse(pt, print_node, 0, NULL);
 
    safe_fputs(stdout, ENPREFIX "generating IR...");
    irgenerate();
-   fmtwrt(" " Cgreen "done!" Creset
+   safe_vprintf(" " Cgreen "done!" Creset
       "\t(total " Cbwhite "%zu" Creset " nodes)\n",
       count_opcodes(irt)
    );
@@ -57,7 +57,7 @@ int main(int argc, const char **argv) {
    if (1) {
       safe_fputs(stdout, ENPREFIX "optimizing IR...");
       iroptimize();
-      fmtwrt(" " Cgreen "done!" Creset
+      safe_vprintf(" " Cgreen "done!" Creset
          "\t(total " Cbwhite "%zu" Creset " nodes)\n",
          count_opcodes(irt)
       );
@@ -73,7 +73,7 @@ int main(int argc, const char **argv) {
 
    // safe_fputs(stdout, ENPREFIX "transpiling...");
    // transpile(&of, &ov);
-   // fmtwrt(" " Cgreen "done!" Creset "\n");
+   // safe_vprintf(" " Cgreen "done!" Creset "\n");
 
    /* Cleanup */
    tree_post_traverse(pt, cleanup_node, 0, NULL);

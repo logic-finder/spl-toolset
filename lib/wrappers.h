@@ -63,10 +63,10 @@ void safe_fputs(FILE *stream, const char *line);
 void ffmtwrt(FILE *stream, const char *format, ...);
 
 /**
- * @brief `fmtwrt` (format write) is a wrapper for `printf`.
+ * @brief `safe_vprintf` is a wrapper for `vprintf`.
  * @note exits in failure.
  */
-void fmtwrt(const char *format, ...);
+void safe_vprintf(const char *format, ...);
 
 /**
  *

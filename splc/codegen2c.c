@@ -9,7 +9,7 @@ extern void transpile2c(void) {
    destname = make_destname("hello.spl", C_EXTENSION);
    fp = safe_fopen(destname, "w");
 
-   fmtwrt(ENPREFIX "transpiling into the target language " Cbwhite "C" Creset "...");
+   safe_vprintf(ENPREFIX "transpiling into the target language " Cbwhite "C" Creset "...");
 
    dp = tree_child(irt, 0);
    nrtv = tree_child(irt, 1);
@@ -23,7 +23,7 @@ extern void transpile2c(void) {
    ffmtwrt(fp, "\n%sreturn 0;\n", indent);
    safe_fputs(fp, "}\n");
 
-   fmtwrt(" " Cgreen "done!" Creset "\n");
+   safe_vprintf(" " Cgreen "done!" Creset "\n");
 
    safe_fclose(fp);
    free(destname);

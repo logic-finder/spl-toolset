@@ -7,7 +7,7 @@ extern void dbload(void) {
    load_section(SECTKIND_ADJ ,  ADJ_DTSIZ);
    load_section(SECTKIND_NOUN, NOUN_DTSIZ);
    load_section(SECTKIND_COMP, COMP_DTSIZ);
-   fmtwrt(ENPREFIX
+   safe_vprintf(ENPREFIX
       "loaded the database " Cbyellow DBFILENAME Creset " ("
       Cbwhite "%d" Creset " names, " Cbwhite "%d" Creset " adjs, "
       Cbwhite "%d" Creset " nouns, " Cbwhite "%d" Creset " cmps)\n",
@@ -175,7 +175,7 @@ static int compare_rec_B(const void *key, const void *elem) {
 }
 
 static inline void dberr(const char *reason) {
-   fmtwrt(
+   safe_vprintf(
       Cbred "<DB error>" Creset "%s\n",
       reason
    );

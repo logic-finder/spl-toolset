@@ -33,7 +33,7 @@ extern void assemble(void) {
    destname = make_destname("hello.spl", OBJ_EXTENSION);
    fp = safe_fopen(destname, "w");
 
-   fmtwrt(ENPREFIX "generating object file " Cbyellow "\"%s\"" Creset "...", destname);
+   safe_vprintf(ENPREFIX "generating object file " Cbyellow "\"%s\"" Creset "...", destname);
 
    /* Fills opcode.offset field first */
    actx.offset = OBJFILE_HDSIZ;
@@ -55,7 +55,7 @@ extern void assemble(void) {
    /* Finally, writes the header section */
    write_header(1, &actx);
 
-   fmtwrt(
+   safe_vprintf(
       " " Cgreen "done!" Creset
       " (total " Cbwhite "%" SPL_UINT_FMTSPC Creset " bytes) \n",
       actx.offset

@@ -1346,7 +1346,7 @@ static void synerr(void) {
    lpos = etok->lpos;
    l = array_peek(ls, lnum - 1);
 
-   fmtwrt(
+   safe_vprintf(
       Cbred "\n<syntax error>" Creset " %s\n"
       "[%s:%d:%d] " Cbwhite "note:" Creset " problematic since here\n"
       "%4d|%.*s" Cbblue "%s" Creset "\n",
