@@ -75,48 +75,60 @@ extern char **split(
    const char * restrict mark,
    int *retsiz
 ) {
-   /* EXAMPLE
+   /* EXAMPLE USAGE
          mark = "**"
          input  = "**a****b**"
          output = ["a", "b"] */
 
+   /* Declares variables */
    const int marklen = strlen(mark);
 
-   ptrdiff_t diff;
-   int siz, max;
+   char **arr;  /* result array */
+   int siz;     /* the current size of arr */
+   int max;     /* the max size of arr */
+
+   /* 0123456789012
+      I like tacos!
+             ^    ^
+           ini    fin
+      diff = fin - ini
+         = 12 - 7
+         = 5
+         = strlen(tacos) */
+
    const char *ini, *fin;
-   char *buf, **arr;
+   ptrdiff_t diff;
+
+   char *buf;  /* a buffer to copy a substring */
+   int len;    /* a length of a string */
 
    /* Prepares an array of strings */
    siz = 0;
    max = 2;
    // fixme: use ESIZ
    arr = safe_malloc(max * sizeof arr[0]);
-   ini = fin = src;
 
-   do {
+   /* Parsing */
+   ini = src;
+   for (;;) {
       /* Searches the location of the next mark */
-      fin = strstr(fin, mark);
+      fin = strstr(ini, mark);
 
-      /* no mark found? */
+      /* No mark found? */
       if (!fin) {
-         int rest = strlen(ini);
-         buf = safe_malloc(rest + 1);
+         /* since there is no more mark, copies the rest of
+            the string into buf */
+         len = strlen(ini);
+         buf = safe_malloc(len + 1);
          strcpy(buf, ini); // fixme: consider memcpy
+         break;
       }
-      /* found? */
-      else {
-         diff = fin - ini;
-         if (!diff) {
-            buf = safe_malloc(1);
-            buf[0] = '\0';
-         }
-         else {
-            buf = safe_malloc(diff + 1);
-            strncpy(buf, ini, diff);
-            buf[diff] = '\0';
-         }
-      }
+
+      /* Copies the substring into buf */
+      diff = fin - ini;  /* equals the token length */
+      buf = safe_malloc(diff + 1);  /* +1 for \0 */
+      strncpy(buf, ini, diff);  // fixme: consider memcpy
+      buf[diff] = '\0';
 
       /* Stores the buffer into the array */
       if (siz == max) {
@@ -126,8 +138,8 @@ extern char **split(
       arr[siz++] = buf;
 
       /* Updates parsing states */
-      ini = fin = fin + marklen;
-   } while (fin);  /* Escapes this do-while when fin == NULL */
+      ini = fin + marklen;  /* skips the mark found */
+   }
 
    *retsiz = siz;
    return arr;
