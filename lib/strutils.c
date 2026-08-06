@@ -22,52 +22,44 @@ extern size_t match_str(
    return arrlen;
 }
 
-extern char *extfnm(const char *src, bool ext_flag) {
+extern char *basename(const char *src) {
    /* There are four possible cases for src:
          (1) .../name
          (2) name
          (3) .../
          (4) \0   */
 
-   static const char dirsep = '/';  /* directory separator */
+   size_t len;  /* the length of src */
+   char *dpos,  /* position of '/' */
+        *dest;  /* a buffer to hold the result */
 
-   int len, dpos;
-   char *epos;
-
-   /* Finds the position of a dirsep from the end */
+   /* Finds the position of '/' from the end */
    len = strlen(src);
-   dpos = -1;
 
-   for (int i = len - 1; i >= 0; i--) {
-      if (src[i] != dirsep)
-         continue;
-      dpos = i;
-      break;
-   }
+   for (dpos = src + len - 1; dpos >= src; dpos--)
+      if (*dpos == '/')
+         break;
 
-   /* Handles the case 3 and 4 */
-   if (src[dpos + 1] == '\0')
+   /* case 3 & 4 */
+   if (*(dpos + 1) == '\0')
       return NULL;
 
-   /* Copies src to dest */
-   char *dest = safe_malloc(len + 1);
-
-   /* Handles the case 1 and 2 */
-   if (dpos == -1)
-      strcpy(dest, src); // fixme: consider memcpy
-   else
-      strcpy(dest, &src[dpos + 1]); // fixme: consider memcpy
-
-   /* Requested to keep the extension? */
-   if (ext_flag)
-      return dest;
-
-   /* Removes the extension */
-   epos = strrchr(dest, '.');
-   if (epos)
-      *epos = '\0';
+   /* case 1 & 2 */
+   dest = safe_malloc(len + 1);  /* max size */
+   strcpy(dest, dpos + 1);
 
    return dest;
+}
+
+extern char *stem(const char *src) {
+   char *ret, *cpos;
+
+   ret = basename(src);
+   cpos = strrchr(ret, '.');
+   if (cpos)
+      *cpos = '\0';
+
+   return ret;
 }
 
 extern char **split(

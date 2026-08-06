@@ -13,7 +13,9 @@ size_t match_str(
    size_t arrlen
 );
 
-char *extfnm(const char *src, bool ext_flag);
+char *basename(const char *src);
+
+char *stem(const char *src);
 
 char **split(
    const char * restrict src,
