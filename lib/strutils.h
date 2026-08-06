@@ -31,6 +31,7 @@ void translate(
    const char * restrict to
 );
 
+/* modifies src */
 void normalize(char *src);
 
 char *make_destname(
@@ -42,7 +43,5 @@ char *make_destname(
 inline char lastch(const char *line) {
    return line[strlen(line) - 1];
 }
-
-extern const char *whitespaces;
 
 #endif

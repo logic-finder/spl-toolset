@@ -178,27 +178,18 @@ extern void translate(
 }
 
 extern void normalize(char *src) {
-   char *buf, *tok;
+   static const char *whitespaces = " \n\r\t\a\b\v\f";
 
-   buf = safe_malloc(strlen(src) + 1);
-   buf[0] = '\0';
+   char *tok;
 
    tok = strtok(src, whitespaces);
-   if (!tok) {
-      strcat(buf, " ");
-      goto end;
-   }
+   if (!tok)
+      return;
 
-   while (tok) {
-      strcat(buf, tok);
-      strcat(buf, " ");
+   do {
+      *tok = ' ';
       tok = strtok(NULL, whitespaces);
-   }
-   buf[strlen(buf) - 1] = '\0';
-
-end:
-   strcpy(src, buf); // fixme: consider memcpy
-   free(buf);
+   } while (!tok);
 }
 
 extern char *make_destname(
