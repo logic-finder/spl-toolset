@@ -70,37 +70,32 @@ extern char *extfnm(const char *src, bool ext_flag) {
    return dest;
 }
 
-// split하면 구분자도 있어야되는데 구분자 포함 안되는 구현이기 때문에
-// 함수명을 바꾸든지 해야할듯
-// 구분자도 포함하려면 ini=fin, ini=fin=fin+marklen을 ='\0' 밑에 각각 배치
-// ㄴㄴㄴ 이게올바른동작 맞음
-// fixme: do while 도입
 extern char **split(
    const char * restrict src,
    const char * restrict mark,
    int *retsiz
 ) {
-   /*
-    * An example input & output
-    * mark = "**"
-    * src  = "**a****b**"
-    * arr  = ["a", "b"]
-    */
+   /* EXAMPLE
+         mark = "**"
+         input  = "**a****b**"
+         output = ["a", "b"] */
+
    const int marklen = strlen(mark);
 
+   ptrdiff_t diff;
    int siz, max;
    const char *ini, *fin;
    char *buf, **arr;
 
-   // Prepare an array of strings
+   /* Prepares an array of strings */
    siz = 0;
    max = 2;
    // fixme: use ESIZ
    arr = safe_malloc(max * sizeof arr[0]);
    ini = fin = src;
 
-   for (;;) {
-      // find the location of the next mark
+   do {
+      /* Searches the location of the next mark */
       fin = strstr(fin, mark);
 
       if (!fin) {
@@ -109,7 +104,7 @@ extern char **split(
          strcpy(buf, ini); // fixme: consider memcpy
       }
       else {
-         ptrdiff_t diff = fin - ini;
+         diff = fin - ini;
          if (!diff) {
             buf = safe_malloc(1);
             buf[0] = '\0';
@@ -121,20 +116,18 @@ extern char **split(
          }
       }
 
-      // store the buffer into the array
+      /* Stores the buffer into the array */
       if (siz == max) {
          max *= 2;
          arr = safe_realloc2x(arr, max);
       }
       arr[siz++] = buf;
 
-      // update the states
-      if (!fin)
-         goto end;
+      /* Updates parsing states */
       ini = fin = fin + marklen;
-   }
-   end: *retsiz = siz;
+   } while (fin);  /* Escapes this do-while when fin == NULL */
 
+   *retsiz = siz;
    return arr;
 }
 
