@@ -22,7 +22,7 @@ char *stem(const char *src);
 char **split(
    const char * restrict src,
    const char * restrict mark,
-   int *retsiz
+   size_t *retsiz
 );
 
 void trim(char *src);

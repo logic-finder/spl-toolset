@@ -68,7 +68,7 @@ extern char *stem(const char *src) {
 extern char **split(
    const char * restrict src,
    const char * restrict mark,
-   int *retsiz
+   size_t *retsiz
 ) {
    /* EXAMPLE USAGE
          mark = "**"
@@ -79,8 +79,8 @@ extern char **split(
    const int marklen = strlen(mark);
 
    char **arr;  /* result array */
-   int siz;     /* the current size of arr */
-   int max;     /* the max size of arr */
+   size_t siz;     /* the current size of arr */
+   size_t max;     /* the max size of arr */
 
    /* 0123456789012
       I like tacos!
@@ -95,7 +95,7 @@ extern char **split(
    ptrdiff_t diff;
 
    char *buf;  /* a buffer to copy a substring */
-   int len;    /* a length of a string */
+   size_t rest;    /* a length of a string */
 
    /* Prepares an array of strings */
    siz = 0;
@@ -112,9 +112,9 @@ extern char **split(
       if (!fin) {
          /* since there is no more mark, copies
             the rest of the string into buf */
-         len = strlen(ini);
-         buf = safe_malloc(len + 1);
-         memcpy(buf, ini, len + 1);  /* includes \0 */
+         rest = strlen(ini);
+         buf = safe_malloc(rest + 1);
+         memcpy(buf, ini, rest + 1);  /* includes \0 */
          break;
       }
 
