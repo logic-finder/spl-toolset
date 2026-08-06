@@ -1,8 +1,6 @@
 #include "readline.h"
 #include "readline.internals.h"
 
-static const char *errmsg = "%s: unable to read";
-
 extern int readln(FILE *fp, char **line, int *len) {
    // Test whether there is nothing to read
    int ch, pos, bufsiz;
