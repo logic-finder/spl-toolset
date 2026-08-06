@@ -154,7 +154,7 @@ extern void trim(char *src) {
    src[len] = '\0';
 
    /* Finds the index of first non-ws char */
-   i = strspn(src, " \a\b\t\n\v\f\r");
+   i = strspn(src, whitespaces);
 
    /* Removes the preceding whitespaces */
    len -= i;
