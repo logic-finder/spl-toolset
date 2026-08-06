@@ -55,6 +55,9 @@ extern char *stem(const char *src) {
    char *ret, *cpos;
 
    ret = basename(src);
+   if (!ret)
+      return NULL;
+
    cpos = strrchr(ret, '.');
    if (cpos)
       *cpos = '\0';
