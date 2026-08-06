@@ -1,6 +1,7 @@
 #include "strutils.h"
 #include "strutils.internals.h"
 
+/* Note: refer to strutils.h for the inline definition */
 extern char lastch(const char *line);
 
 extern bool match(char ch, const char *scanset) {
@@ -22,19 +23,18 @@ extern int match_str(
 }
 
 extern char *extfnm(const char *src, bool ext_flag) {
-   /*
-    * There are four possible cases for src:
-    *    (1) .../name
-    *    (2) name
-    *    (3) .../
-    *    (4) \0
-    */
-   static const char dirsep = '/';
+   /* There are four possible cases for src:
+         (1) .../name
+         (2) name
+         (3) .../
+         (4) \0   */
+
+   static const char dirsep = '/';  /* directory separator */
 
    int len, dpos;
    char *epos;
 
-   // Find the position of a dirsep from the end
+   /* Finds the position of a dirsep from the end */
    len = strlen(src);
    dpos = -1;
 
@@ -45,24 +45,24 @@ extern char *extfnm(const char *src, bool ext_flag) {
       break;
    }
 
-   // Handle the case 3 and 4
+   /* Handles the case 3 and 4 */
    if (src[dpos + 1] == '\0')
       return NULL;
 
-   // Copy src to dest
+   /* Copies src to dest */
    char *dest = safe_malloc(len + 1);
 
-   // Handle the case 1 and 2
+   /* Handles the case 1 and 2 */
    if (dpos == -1)
       strcpy(dest, src); // fixme: consider memcpy
    else
       strcpy(dest, &src[dpos + 1]); // fixme: consider memcpy
 
-   // Requested to keep the extension?
+   /* Requested to keep the extension? */
    if (ext_flag)
       return dest;
 
-   // Remove the extension
+   /* Removes the extension */
    epos = strrchr(dest, '.');
    if (epos)
       *epos = '\0';
@@ -98,11 +98,13 @@ extern char **split(
       /* Searches the location of the next mark */
       fin = strstr(fin, mark);
 
+      /* no mark found? */
       if (!fin) {
          int rest = strlen(ini);
          buf = safe_malloc(rest + 1);
          strcpy(buf, ini); // fixme: consider memcpy
       }
+      /* found? */
       else {
          diff = fin - ini;
          if (!diff) {
@@ -136,19 +138,19 @@ extern void trim(char *src) {
 
    len = strlen(src);
 
-   // Find the index of last non-whitespace char
+   /* Finds the index of last non-whitespace char */
    for (f = len - 1; f >= 0; f--)
       if (!isspace(src[f]))
          break;
 
-   // Remove the trailing whitespaces
+   /* Removes the trailing whitespaces */
    len = f + 1;
    src[len] = '\0';
 
-   // Find the index of first non-ws char
+   /* Finds the index of first non-ws char */
    i = strspn(src, " \a\b\t\n\v\f\r");
 
-   // Remove the preceding whitespaces
+   /* Removes the preceding whitespaces */
    len -= i;
    memmove(src, src + i, len + 1);  /* 1 for \0 */
 }
