@@ -50,6 +50,8 @@
 
    - Remove trivial operators
       : * 1 이나 + 0 은 의미가 없으므로 제거
+
+   - (2 + a) + 3 == a + 5 이런식으로 바꿀수도 있을듯 (나눗셈은 예외케이스 있을듯)
 */
 
 extern void iroptimize(void) {
