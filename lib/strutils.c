@@ -178,8 +178,6 @@ extern void translate(
 }
 
 extern void normalize(char *src) {
-   static const char *whitespaces = " \n\r\t\a\b\v\f";
-
    char *tok;
 
    tok = strtok(src, whitespaces);

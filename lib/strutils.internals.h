@@ -7,4 +7,6 @@
 #include "common.h"
 #include "wrappers.h"
 
+static const char *whitespaces = " \n\r\t\a\b\v\f";
+
 #endif
