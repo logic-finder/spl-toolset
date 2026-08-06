@@ -140,25 +140,28 @@ extern char **split(
 }
 
 extern void trim(char *src) {
-   int f, i, len;
+   char *fin, *ini;
+   size_t len;
 
    len = strlen(src);
 
-   /* Finds the index of last non-whitespace char */
-   for (f = len - 1; f >= 0; f--)
-      if (!isspace(src[f]))
+   /* Searches for a non-whitespace character from the back */
+   for (fin = src + len - 1; fin >= src; fin--)
+      if (!isspace(*fin))
          break;
 
    /* Removes the trailing whitespaces */
-   len = f + 1;
-   src[len] = '\0';
+   *(fin + 1) = '\0';
 
-   /* Finds the index of first non-ws char */
-   i = strspn(src, whitespaces);
+   if (fin == src - 1)  /* when src consists of only whitespaces */
+      return;
 
-   /* Removes the preceding whitespaces */
-   len -= i;
-   memmove(src, src + i, len + 1);  /* 1 for \0 */
+   /* Finds the first non-whitespace character */
+   ini = src + strspn(src, whitespaces);
+
+   /* Removes the preceding whitespaces by moving ini to src */
+   len = strlen(ini);
+   memmove(src, ini, len + 1);  /* +1 for \0 */
 }
 
 extern void translate(

@@ -25,6 +25,7 @@ char **split(
    size_t *retsiz
 );
 
+/* modifies src */
 void trim(char *src);
 
 void translate(
