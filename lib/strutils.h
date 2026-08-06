@@ -13,8 +13,10 @@ size_t match_str(
    size_t arrlen
 );
 
+/* need to free the return value later */
 char *basename(const char *src);
 
+/* need to free the return value later */
 char *stem(const char *src);
 
 char **split(
