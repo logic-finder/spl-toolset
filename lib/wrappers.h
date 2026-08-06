@@ -57,10 +57,10 @@ void safe_fputc(FILE *stream, char ch);
 void safe_fputs(FILE *stream, const char *line);
 
 /**
- * @brief `ffmtwrt` (file format write) is a wrapper for `fprintf`.
+ * @brief `safe_vfprintf` is a wrapper for `vfprintf`.
  * @note exits in failure.
  */
-void ffmtwrt(FILE *stream, const char *format, ...);
+void safe_vfprintf(FILE *stream, const char *format, ...);
 
 /**
  * @brief `safe_vprintf` is a wrapper for `vprintf`.

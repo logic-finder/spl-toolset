@@ -75,7 +75,7 @@ extern void safe_fputs(FILE *stream, const char *line) {
 }
 
 // fixme: function name and its description at .h
-extern void ffmtwrt(FILE *stream, const char *format, ...) {
+extern void safe_vfprintf(FILE *stream, const char *format, ...) {
    va_list ap;
    int ret;
 

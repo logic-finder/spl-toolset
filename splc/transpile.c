@@ -28,7 +28,7 @@ static void gen_header(void) {
 
 static void gen_title(tree_t *title) {
    node_t *n = tree_dat(title);
-   ffmtwrt(fp, "/* %s */\n\n", n->dat.s.run);
+   safe_vfprintf(fp, "/* %s */\n\n", n->dat.s.run);
 }
 
 static void gen_locals(tree_t *dp) {
@@ -37,7 +37,7 @@ static void gen_locals(tree_t *dp) {
 
    clen = tree_clen(dp);
 
-   ffmtwrt(fp, INDENT "int dpsz = %d;\n", clen);
+   safe_vfprintf(fp, INDENT "int dpsz = %d;\n", clen);
    safe_fputs(fp, INDENT "bool cond = false;\n");
    safe_fputs(fp, INDENT "stage_t *stage = stage_create(dpsz);\n");
    safe_fputs(fp, INDENT "int *personae = init_dp(dpsz);\n");
@@ -45,7 +45,7 @@ static void gen_locals(tree_t *dp) {
 
    for (int idx = 0; idx < clen; idx++) {
       character = tree_chdat(dp, idx);
-      ffmtwrt(fp,
+      safe_vfprintf(fp,
          INDENT "stage_setname(stage, %d, \"%s\");\n",
          idx, character->dat.s.run
       );
@@ -128,7 +128,7 @@ static void eval_const(tree_t *cnst) {
       v = 1;
       for (int i = 0; i < clen - 1; i++)
          v *= 2;
-      ffmtwrt(fp, "%d * ", v);
+      safe_vfprintf(fp, "%d * ", v);
       resolve_noun(noun);
    }
 }
@@ -156,16 +156,16 @@ static void resolve_noun(tree_t *noun) {
    return;
 
    p1:
-      ffmtwrt(fp, "personae[%d]", speaker);
+      safe_vfprintf(fp, "personae[%d]", speaker);
    return;
 
    p2:
-      ffmtwrt(fp, "personae[stage_whoareyou(stage, %d)]", speaker);
+      safe_vfprintf(fp, "personae[stage_whoareyou(stage, %d)]", speaker);
       you_flag = true;
    return;
 
    persona:
-      ffmtwrt(fp, "personae[%d]", n->dat.n);
+      safe_vfprintf(fp, "personae[%d]", n->dat.n);
    return;
 }
 
@@ -222,7 +222,7 @@ static void resolve_division(tree_t *op, const char *s) {
    eval_const(cnst1);
    safe_fputs(fp, "), (");
    eval_const(cnst2);
-   ffmtwrt(fp, ")).%s", s);
+   safe_vfprintf(fp, ")).%s", s);
 }
 
 static void resolve_unary(tree_t *op, const char *s) {
@@ -244,7 +244,7 @@ static void resolve_binary(tree_t *op, char c) {
 
    safe_fputc(fp, '(');
    eval_const(cnst1);
-   ffmtwrt(fp, ") %c (", c);
+   safe_vfprintf(fp, ") %c (", c);
    eval_const(cnst2);
    safe_fputc(fp, ')');
 }
@@ -254,7 +254,7 @@ static void gen_act(tree_t *t) {
 
    n = tree_chdat(t, 0);  /* NODEKIND_ROMNUM */
    actnum = ((node_t *) tree_chdat(t, 0))->dat.s.run;
-   ffmtwrt(fp,
+   safe_vfprintf(fp,
       INDENT "\n%s_%s:;\n",
       KEYWRD_ACT,
       n->dat.s.run
@@ -265,7 +265,7 @@ static void gen_scene(tree_t *t) {
    node_t *n;
 
    n = tree_chdat(t, 0);  /* NODEKIND_ROMNUM */
-   ffmtwrt(fp,
+   safe_vfprintf(fp,
       INDENT "\n%s_%s_%s_%s:;\n",
       KEYWRD_ACT,
       actnum,
@@ -280,7 +280,7 @@ static void gen_enter(tree_t *t) {
    clen = tree_clen(t);
    for (int i = 0; i < clen; i++) {
       charidx = TREE_CHDAT(t, i)->dat.n;
-      ffmtwrt(fp, INDENT "stage_enter(stage, %d);\n", charidx);
+      safe_vfprintf(fp, INDENT "stage_enter(stage, %d);\n", charidx);
    }
 }
 
@@ -288,7 +288,7 @@ static void gen_exit(tree_t *t) {
    int charidx;
 
    charidx = TREE_CHDAT(t, 0)->dat.n;
-   ffmtwrt(fp, INDENT "stage_exit(stage, %d);\n", charidx);
+   safe_vfprintf(fp, INDENT "stage_exit(stage, %d);\n", charidx);
 }
 
 static void gen_exeunt(tree_t *t) {
@@ -300,28 +300,28 @@ static void gen_exeunt(tree_t *t) {
    else
       for (int i = 0; i < clen; i++) {
          charidx = TREE_CHDAT(t, i)->dat.n;
-         ffmtwrt(fp, INDENT "stage_exit(stage, %d);\n", charidx);
+         safe_vfprintf(fp, INDENT "stage_exit(stage, %d);\n", charidx);
       }
 }
 
 static void gen_line(tree_t *t) {
    speaker = TREE_CHDAT(t, 0)->dat.n;  /* NODEKIND_CHAR */
-   ffmtwrt(fp,
+   safe_vfprintf(fp,
       INDENT "assert_offstage(stage, %d);\n",
       speaker
    );
 }
 
 static void gen_asgn(tree_t *t) {
-   ffmtwrt(fp, INDENT "assert_onlytwo(stage);\n");
-   ffmtwrt(fp, INDENT "personae[stage_whoareyou(stage, %d)] = ", speaker);
+   safe_vfprintf(fp, INDENT "assert_onlytwo(stage);\n");
+   safe_vfprintf(fp, INDENT "personae[stage_whoareyou(stage, %d)] = ", speaker);
    eval_const(tree_child(t, 0));
    safe_fputs(fp, ";\n");
 }
 
 static void gen_io(const char *kind) {
-   ffmtwrt(fp, INDENT "assert_onlytwo(stage);\n");
-   ffmtwrt(fp,
+   safe_vfprintf(fp, INDENT "assert_onlytwo(stage);\n");
+   safe_vfprintf(fp,
       INDENT "io_%s(personae, stage_whoareyou(stage, %d));\n",
       kind, speaker
    );
@@ -355,12 +355,12 @@ static void gen_goto(tree_t *t) {
    place = tree_chdat(t, 0);
 
    if (type == NODEKIND_ACT)
-      ffmtwrt(fp,
+      safe_vfprintf(fp,
          INDENT "goto %s_%s;\n",
          KEYWRD_ACT, place->dat.s.run
       );
    else
-      ffmtwrt(fp,
+      safe_vfprintf(fp,
          INDENT "goto %s_%s_%s_%s;\n",
          KEYWRD_ACT, actnum,
          KEYWRD_SCENE, place->dat.s.run
@@ -390,7 +390,7 @@ static void gen_cond(tree_t *t) {
    kind = ((node_t *) tree_dat(p))->kind;
 
    if (kind == NODEKIND_P2)
-      ffmtwrt(fp, INDENT "assert_onlytwo(stage);\n");
+      safe_vfprintf(fp, INDENT "assert_onlytwo(stage);\n");
 
    safe_fputs(fp, INDENT "cond = ");
    if (mode->kind == NODEKIND_NEGATE)
@@ -400,10 +400,10 @@ static void gen_cond(tree_t *t) {
    // Left-hand side
    switch (kind) {
       case NODEKIND_P1 :
-         ffmtwrt(fp, "personae[%d]", speaker);
+         safe_vfprintf(fp, "personae[%d]", speaker);
          break;
       case NODEKIND_P2 :
-         ffmtwrt(fp, "personae[stage_whoareyou(stage, %d)]", speaker);
+         safe_vfprintf(fp, "personae[stage_whoareyou(stage, %d)]", speaker);
          break;
       case NODEKIND_P3 :
          eval_const(tree_child(p, 0));
@@ -414,9 +414,9 @@ static void gen_cond(tree_t *t) {
 
    // Operator
    switch (comp->kind) {
-      case NODEKIND_LT : ffmtwrt(fp, " < "); break;
-      case NODEKIND_EQ : ffmtwrt(fp, " == "); break;
-      case NODEKIND_GT : ffmtwrt(fp, " > "); break;
+      case NODEKIND_LT : safe_vfprintf(fp, " < "); break;
+      case NODEKIND_EQ : safe_vfprintf(fp, " == "); break;
+      case NODEKIND_GT : safe_vfprintf(fp, " > "); break;
       /* control never reaches here */
       default : ;
    }
@@ -431,7 +431,7 @@ static void gen_cond(tree_t *t) {
     * for the P2.
     */
    if (you_flag) {
-      ffmtwrt(fp, INDENT "assert_onlytwo(stage);\n");
+      safe_vfprintf(fp, INDENT "assert_onlytwo(stage);\n");
       you_flag = false;
    }
 }
@@ -481,8 +481,8 @@ static void gen_push(tree_t *t) {
 
    cnst = tree_child(t, 0);
 
-   ffmtwrt(fp, INDENT "assert_onlytwo(stage);\n");
-   ffmtwrt(fp,
+   safe_vfprintf(fp, INDENT "assert_onlytwo(stage);\n");
+   safe_vfprintf(fp,
       INDENT "stack_push(memories[stage_whoareyou(stage, %d)], ",
       speaker
    );
@@ -492,8 +492,8 @@ static void gen_push(tree_t *t) {
 
 static void gen_pop(tree_t *_) {
    (void) _;
-   ffmtwrt(fp, INDENT "assert_onlytwo(stage);\n");
-   ffmtwrt(fp,
+   safe_vfprintf(fp, INDENT "assert_onlytwo(stage);\n");
+   safe_vfprintf(fp,
       INDENT "personae[stage_whoareyou(stage, %d)] = "
       "stack_pop(memories[stage_whoareyou(stage, %d)];\n",
       speaker, speaker

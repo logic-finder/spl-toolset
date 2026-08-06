@@ -85,7 +85,7 @@ static void handle_scene(tree_t *t) {
    irnode_t *n = tree_dat(t);
    safe_fputc(fp, '\n');
    if (debug) emit_debug_data(n);
-   ffmtwrt(
+   safe_vfprintf(
       fp,
       "Act_%s_Scene_%s:\n", // fixme: use KEYWRD_ACT _SCENE
       curr_act,
@@ -97,7 +97,7 @@ static void handle_block(tree_t *t) {
    irnode_t *n = tree_dat(t);
    if (!n->dat.i)
       return;
-   ffmtwrt(
+   safe_vfprintf(
       fp,
       "\n.L%d:\n",
       n->dat.i
@@ -120,7 +120,7 @@ static void handle_setlike(tree_t *t) {
    }
 
 person:
-   ffmtwrt(
+   safe_vfprintf(
       fp,
       "%s%s %s dp[%d]\n",
       INDENT,
@@ -131,7 +131,7 @@ person:
    return;
 
 var:
-   ffmtwrt(
+   safe_vfprintf(
       fp,
       "%s%s %s %s\n",
       INDENT,
@@ -142,7 +142,7 @@ var:
    return;
 
 common:
-   ffmtwrt(
+   safe_vfprintf(
       fp,
       "%s%s %s %d\n",
       INDENT,
@@ -159,7 +159,7 @@ static void handle_enterlike(tree_t *t) {
    p1 = tree_chdat(t, 0);
 
    if (debug) emit_debug_data(n);
-   ffmtwrt(
+   safe_vfprintf(
       fp,
       "%s%s %d\n",
       INDENT,
@@ -175,7 +175,7 @@ static void handle_pushlike(tree_t *t) {
    p1 = tree_chdat(t, 0);
 
    if (debug) emit_debug_data(n);
-   ffmtwrt(
+   safe_vfprintf(
       fp,
       "%s%s %s\n",
       INDENT,
@@ -195,7 +195,7 @@ static void handle_goto(tree_t *t) {
    if (debug) emit_debug_data(n);
 
    if (p1->dat.i == NODEKIND_ACT) {
-      ffmtwrt(
+      safe_vfprintf(
          fp,
          "%s%s Act_%s_Scene_I\n",  // fixme: use KEYWRD_ACT _SCENE
          INDENT,
@@ -209,7 +209,7 @@ static void handle_goto(tree_t *t) {
    act = tree_parent(tree_parent(t));
    act_dat = tree_dat(act);
 
-   ffmtwrt(
+   safe_vfprintf(
       fp,
       "%s%s Act_%s_Scene_%s\n",  // fixme: use KEYWRD_ACT _SCENE
       INDENT,
@@ -226,7 +226,7 @@ static void handle_jumplike(tree_t *t) {
    p1 = tree_chdat(t, 0);
 
    if (debug) emit_debug_data(n);
-   ffmtwrt(
+   safe_vfprintf(
       fp,
       "%s%s .L%d\n",
       INDENT,
@@ -244,7 +244,7 @@ static void handle_binary_op(tree_t *t) {
    p3 = tree_chdat(t, 2);
 
    if (debug) emit_debug_data(n);
-   ffmtwrt(
+   safe_vfprintf(
       fp,
       "%s%s %s %s %s\n",
       INDENT,
@@ -263,7 +263,7 @@ static void handle_unary_op(tree_t *t) {
    p2 = tree_chdat(t, 1);
 
    if (debug) emit_debug_data(n);
-   ffmtwrt(
+   safe_vfprintf(
       fp,
       "%s%s %s %s\n",
       INDENT,
@@ -276,7 +276,7 @@ static void handle_unary_op(tree_t *t) {
 static void handle_paramless_opcode(tree_t *t) {
    irnode_t *n = tree_dat(t);
    if (debug) emit_debug_data(n);
-   ffmtwrt(
+   safe_vfprintf(
       fp,
       "%s%s\n",
       INDENT,
@@ -286,7 +286,7 @@ static void handle_paramless_opcode(tree_t *t) {
 
 // fixme: 명령어의 윗줄이 아니라 명령어의 맨 끝에 위치하도록 변경하자
 static inline void emit_debug_data(irnode_t *n) {
-   ffmtwrt(fp, "; %d:%d\n", n->lnum, n->lpos);
+   safe_vfprintf(fp, "; %d:%d\n", n->lnum, n->lpos);
 }
 
 static const char *resolve_opcode(iropcode_t opcode) {

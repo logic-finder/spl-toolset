@@ -19,8 +19,8 @@ extern void transpile2c(void) {
    safe_fputs(fp, "int main(void) {\n");
    codegen_locals(dp, fp, tree_child(pt, 1));
    tree_pre_traverse(nrtv, codegen_route, 0, fp);
-   ffmtwrt(fp, "%scleanup_runtime(rctx);\n", indent);
-   ffmtwrt(fp, "\n%sreturn 0;\n", indent);
+   safe_vfprintf(fp, "%scleanup_runtime(rctx);\n", indent);
+   safe_vfprintf(fp, "\n%sreturn 0;\n", indent);
    safe_fputs(fp, "}\n");
 
    safe_vprintf(" " Cgreen "done!" Creset "\n");
@@ -36,7 +36,7 @@ static void codegen_title(FILE *fp) {
    title = tree_child(pt, 0);
    n = tree_dat(title);
 
-   ffmtwrt(fp, "\n/* %s */\n\n", n->dat.s.run);
+   safe_vfprintf(fp, "\n/* %s */\n\n", n->dat.s.run);
 }
 
 static void codegen_locals(tree_t *irt_dp, FILE *fp, tree_t *pt_dp) {
@@ -49,12 +49,12 @@ static void codegen_locals(tree_t *irt_dp, FILE *fp, tree_t *pt_dp) {
    irnode = tree_chdat(opcode, 1);
    dpsz = tree_clen(pt_dp);
 
-   ffmtwrt(fp, "%srt_ctx_t *rctx = init_runtime(%u);\n",
+   safe_vfprintf(fp, "%srt_ctx_t *rctx = init_runtime(%u);\n",
       indent, irnode->dat.ui);
 
    for (size_t i = 0; i < dpsz; i++) {
       node = tree_chdat(pt_dp, i);
-      ffmtwrt(fp, "%sstage_setname(rctx->st, %u, \"%s\");\n",
+      safe_vfprintf(fp, "%sstage_setname(rctx->st, %u, \"%s\");\n",
          indent, i, node->dat.s.run);
    }
 }
@@ -84,7 +84,7 @@ static void handle_scene(tree_t *t, FILE *fp) {
    scene_dat = tree_dat(t);
 
    // fixme: use KEYWRD_ACT _SCENE
-   ffmtwrt(fp, "\nAct_%s_Scene_%s:\n",
+   safe_vfprintf(fp, "\nAct_%s_Scene_%s:\n",
       act_dat->dat.s.run, scene_dat->dat.s.run);
 }
 
@@ -102,7 +102,7 @@ static void handle_block(tree_t *t, FILE *fp) {
    if (block_dat->dat.ui == 0)
       return;
 
-   ffmtwrt(fp, "\nAct_%s_Scene_%s_L%u:\n",
+   safe_vfprintf(fp, "\nAct_%s_Scene_%s_L%u:\n",
       act_dat->dat.s.run,
       scene_dat->dat.s.run,
       block_dat->dat.ui);
@@ -155,7 +155,7 @@ static void codegen_set(tree_t *t, FILE *fp) {
    /* "SET const X" is possible only */
    p2 = tree_chdat(t, 1);
 
-   ffmtwrt(fp, "%srctx->cnst = %d;\n",
+   safe_vfprintf(fp, "%srctx->cnst = %d;\n",
       indent, p2->dat.i);
 }
 
@@ -168,20 +168,20 @@ static void codegen_asgn(tree_t *t, FILE *fp) {
    switch (p2->kind) {
       case IrnodekindVar:
          if (p2->dat.ui == IrvarHearer) {
-            ffmtwrt(fp, "%sset_hearer(rctx);\n", indent);
-            ffmtwrt(fp,
+            safe_vfprintf(fp, "%sset_hearer(rctx);\n", indent);
+            safe_vfprintf(fp,
                "%srctx->cnst = rctx->dp[rctx->h];\n",
                indent);
          }
          else {  /* IrvarTeller */
-            ffmtwrt(fp,
+            safe_vfprintf(fp,
                "%srctx->cnst = rctx->dp[rctx->t];\n",
                indent);
          }
       break;
 
       case IrnodekindPerson:
-         ffmtwrt(fp, "%srctx->cnst = rctx->dp[%u];\n",
+         safe_vfprintf(fp, "%srctx->cnst = rctx->dp[%u];\n",
             indent, p2->dat.ui - Irvar_Dp_Begin);
       break;
 
@@ -194,25 +194,25 @@ static void codegen_enterlike(tree_t *t, FILE *fp, const char *op) {
 
    p1 = tree_chdat(t, 0);
 
-   ffmtwrt(fp, "%sstage_%s(rctx->st, %u);\n",
+   safe_vfprintf(fp, "%sstage_%s(rctx->st, %u);\n",
       indent, op, p1->dat.ui);
 }
 
 static void codegen_exeunt(FILE *fp) {
-   ffmtwrt(fp, "%sstage_exeunt(rctx->st);\n", indent);
+   safe_vfprintf(fp, "%sstage_exeunt(rctx->st);\n", indent);
 }
 
 static void codegen_speak(tree_t *t, FILE *fp) {
    irnode_t *p1 = tree_chdat(t, 0);
-   ffmtwrt(fp,
+   safe_vfprintf(fp,
       "%sassert_offstage(rctx, %u);\n",
       indent, p1->dat.ui);
-   ffmtwrt(fp, "%srctx->t = %d;\n", indent, p1->dat.ui);
+   safe_vfprintf(fp, "%srctx->t = %d;\n", indent, p1->dat.ui);
 }
 
 static void codegen_push(FILE *fp) {
    /* "PUSH const" is only possible */
-   ffmtwrt(fp, "%sstack_push(rctx->s, rctx->cnst);\n", indent);
+   safe_vfprintf(fp, "%sstack_push(rctx->s, rctx->cnst);\n", indent);
 }
 
 static void codegen_pop(tree_t *t, FILE *fp) {
@@ -223,18 +223,18 @@ static void codegen_pop(tree_t *t, FILE *fp) {
    switch (p1->dat.ui) {
       case IrvarHearer:
          // shutup: /* Note: seems redundant; suffice to set at codegen_asgn */
-         ffmtwrt(fp, "%sset_hearer(rctx);\n", indent);
-         ffmtwrt(fp,
+         safe_vfprintf(fp, "%sset_hearer(rctx);\n", indent);
+         safe_vfprintf(fp,
             "%sstack_pop(rctx->s, &rctx->dp[rctx->h]);\n", indent);
       break;
 
       case IrvarOperandL:
-         ffmtwrt(fp,
+         safe_vfprintf(fp,
             "%sstack_pop(rctx->s, &rctx->ol);\n", indent);
       break;
 
       case IrvarOperandR:
-         ffmtwrt(fp,
+         safe_vfprintf(fp,
             "%sstack_pop(rctx->s, &rctx->or);\n", indent);
       break;
 
@@ -244,17 +244,17 @@ static void codegen_pop(tree_t *t, FILE *fp) {
 
 static void codegen_binary_op(FILE *fp, const char *op) {
    /* "<op> const l r" is only possible */
-   ffmtwrt(fp,
+   safe_vfprintf(fp,
       "%srctx->cnst = op_%s(rctx->ol, rctx->or);\n", indent, op);
 }
 
 static void codegen_unary_op(FILE *fp, const char *op) {
-   ffmtwrt(fp,
+   safe_vfprintf(fp,
       "%srctx->cnst = op_%s(rctx->ol);\n", indent, op);
 }
 
 static void codegen_io(FILE *fp, const char *op) {
-   ffmtwrt(fp, "%sio_%s(rctx);\n", indent, op);
+   safe_vfprintf(fp, "%sio_%s(rctx);\n", indent, op);
 }
 
 static void codegen_goto(tree_t *t, FILE *fp) {
@@ -267,7 +267,7 @@ static void codegen_goto(tree_t *t, FILE *fp) {
    switch (p1->dat.ui) {
       case NODEKIND_ACT:
          // fixme: use KEYWRD_ACT _SCENE
-         ffmtwrt(fp, "%sgoto Act_%s_Scene_I;\n",
+         safe_vfprintf(fp, "%sgoto Act_%s_Scene_I;\n",
             indent, p2->dat.s.run);
       break;
 
@@ -277,7 +277,7 @@ static void codegen_goto(tree_t *t, FILE *fp) {
          act = tree_parent(scene);
          act_dat = tree_dat(act);
          // fixme: use KEYWRD_ACT _SCENE
-         ffmtwrt(fp, "%sgoto Act_%s_Scene_%s;\n",
+         safe_vfprintf(fp, "%sgoto Act_%s_Scene_%s;\n",
             indent, act_dat->dat.s.run, p2->dat.s.run);
       break;
 
@@ -286,19 +286,19 @@ static void codegen_goto(tree_t *t, FILE *fp) {
 }
 
 static void codegen_comp(FILE *fp, const char *op) {
-   ffmtwrt(fp,
+   safe_vfprintf(fp,
       "%srctx->cond = rctx->ol %s rctx->or;\n",
       indent, op);
 }
 
 static void codegen_rememb(tree_t *t, FILE *fp) {
    irnode_t *n = tree_dat(t);
-   ffmtwrt(fp, "%srememb(rctx, %" SPL_INT_FMTSPC ");\n",
+   safe_vfprintf(fp, "%srememb(rctx, %" SPL_INT_FMTSPC ");\n",
       indent, n->dat.i);
 }
 
 static void codegen_recall(FILE *fp) {
-   ffmtwrt(fp, "%srecall(rctx);\n", indent);
+   safe_vfprintf(fp, "%srecall(rctx);\n", indent);
 }
 
 static void codegen_jump(tree_t *t, FILE *fp, bool v) {
@@ -315,7 +315,7 @@ static void codegen_jump(tree_t *t, FILE *fp, bool v) {
    scene_dat = tree_dat(scene);
    op_dat = tree_chdat(t, 0);
 
-   ffmtwrt(fp, "%sif (%srctx->cond) goto Act_%s_Scene_%s_L%u;\n",
+   safe_vfprintf(fp, "%sif (%srctx->cond) goto Act_%s_Scene_%s_L%u;\n",
       indent,
       neg,
       act_dat->dat.s.run,
@@ -325,5 +325,5 @@ static void codegen_jump(tree_t *t, FILE *fp, bool v) {
 }
 
 static void codegen_negate(FILE *fp) {
-   ffmtwrt(fp, "%srctx->cond = !rctx->cond;\n", indent);
+   safe_vfprintf(fp, "%srctx->cond = !rctx->cond;\n", indent);
 }
