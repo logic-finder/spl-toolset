@@ -11,14 +11,14 @@ extern void *safe_malloc(size_t siz) {
 }
 
 // fixme: take *siz
-extern void *srealloc(void *ptr, size_t siz) {
+extern void *safe_realloc2x(void *ptr, size_t siz) {
    ptr = realloc(ptr, siz);
    if (!ptr) fatal("realloc error");
    return ptr;
 }
 
 // fixme: take *siz
-extern void *srealloc_arr(void *arr, int cnt, size_t esiz) {
+extern void *safe_realloc2x_arr(void *arr, int cnt, size_t esiz) {
    arr = realloc(arr, cnt * esiz);
    if (!arr) fatal("realloc error (arr)");
    return arr;

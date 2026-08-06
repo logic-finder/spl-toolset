@@ -124,7 +124,7 @@ extern char **split(
       // store the buffer into the array
       if (siz == max) {
          max *= 2;
-         arr = srealloc(arr, max);
+         arr = safe_realloc2x(arr, max);
       }
       arr[siz++] = buf;
 

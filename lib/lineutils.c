@@ -52,7 +52,7 @@ extern int readln(FILE *fp, char **line, int *len) {
 
       if (pos == bufsiz) {
          bufsiz *= 2;
-         buf = srealloc(buf, bufsiz);
+         buf = safe_realloc2x(buf, bufsiz);
       }
    }
 }

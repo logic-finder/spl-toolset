@@ -37,7 +37,7 @@ extern array_t *loadfile(
    // fixme: readln에서 애초에 모든 줄 끝에 \n을 붙이도록 하고
    // 이부분 삭제
    if (lastch(r) != '\n') {
-      r = last->run = srealloc(r, last->len + 1);
+      r = last->run = safe_realloc2x(r, last->len + 1);
       strcat(r, "\n");  /* \n\0 */
       last->len++;
    }

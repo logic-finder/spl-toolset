@@ -110,7 +110,7 @@ static int process_read(va_list *ap) {
       buf[idx++] = ch;
       if (idx == max) {
          max *= 2;
-         buf = srealloc(buf, max);
+         buf = safe_realloc2x(buf, max);
       }
       q++;
       return 1;

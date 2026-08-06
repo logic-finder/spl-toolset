@@ -12,15 +12,15 @@
 void *safe_malloc(size_t siz);
 
 /**
- * @brief `srealloc` (safe realloc) is a wrapper for `realloc`.
+ * @brief `safe_realloc2x` is a wrapper for `realloc`.
  * @note exits in failure.
  */
-void *srealloc(void *ptr, size_t siz);
+void *safe_realloc2x(void *ptr, size_t siz);
 
 /**
  *
  */
-void *srealloc_arr(void *arr, int cnt, size_t esiz);
+void *safe_realloc2x_arr(void *arr, int cnt, size_t esiz);
 
 /**
  * @brief `safe_calloc` is a wrapper for `calloc`.
