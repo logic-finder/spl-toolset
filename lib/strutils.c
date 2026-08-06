@@ -205,7 +205,9 @@ extern char *make_destname(
    char *temp, *buf;
    size_t tempsiz;
 
-   temp = extfnm(orig, false);
+   temp = stem(orig);
+   if (!temp)
+      fatal("filename is empty");
    tempsiz = strlen(temp);
    buf = safe_malloc(tempsiz + strlen(ext) + 1);
    strcpy(buf, temp);
