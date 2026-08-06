@@ -172,7 +172,7 @@ extern void translate(
    char ch, *pos;
    ptrdiff_t idx;
 
-   for (int i = 0; (ch = src[i]); i++) {
+   for (size_t i = 0; (ch = src[i]); i++) {
       pos = strchr(from, ch);
       if (!pos) continue;
       idx = pos - from;
