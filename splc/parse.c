@@ -308,7 +308,7 @@ static void parse_const(tree_t *stmt) {
     * an article, skip it.
     */
    ret = match_str(tok->run, decos, decos_len);
-   if (ret >= 0)
+   if (ret < decos_len)
       gettok();
 
    // Checkes if this token is an operator
@@ -342,7 +342,7 @@ static void parse_const(tree_t *stmt) {
       if (cond6) goto name;
 
       /* is it a decorator? */
-      if (match_str(tok->run, decos, decos_len) >= 0) {
+      if (match_str(tok->run, decos, decos_len) < decos_len) {
          reason = msgs.err.syn.cnst.deco;
          synerr();
       }
@@ -1009,7 +1009,7 @@ static void parse_goto(void) {
 
 static int seek_cond(void) {
    vtype = match_str(tok->run, cond_verbs, cond_verbs_len);
-   if (vtype < 0)
+   if (vtype == cond_verbs_len)
       return 0;
    else
       return 1;
@@ -1045,7 +1045,7 @@ static void parse_cond(void) {
       case 2 : if (strcmp(tok->run, KEYWRD_THOU_L))
                   goto hell; else break;
       /* i.e. check if "Is (I, you, thou)" */
-      case 3 : if (0 <= match_str(tok->run, cond_subjs, cond_subjs_len))
+      case 3 : if (match_str(tok->run, cond_subjs, cond_subjs_len) < cond_subjs_len)
                   goto hell; else break;
       hell : /* FLAMING HOT */
          reason = msgs.err.syn.cond.not_conj;
@@ -1143,7 +1143,7 @@ static void parse_cond_ineq(tree_t *cond) {
    ret = match_str(tok->run, comps, comps_len);
 
    /* like "more beautiful" or "less interesting" */
-   if (ret >= 0) {
+   if (ret < comps_len) {
       reason = msgs.err.syn.cond.incomp;
       gettok();
       /* Art thou not more [cunning] than the Ghost? */

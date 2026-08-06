@@ -11,15 +11,15 @@ extern bool match(char ch, const char *scanset) {
    return false;
 }
 
-extern int match_str(
-   const char * restrict s,
+extern size_t match_str(
+   const char *  restrict str,
    const char ** restrict arr,
-   int len
+   size_t arrlen
 ) {
-   for (int i = 0; i < len; i++)
-      if (!strcmp(s, arr[i]))
+   for (size_t i = 0; i < arrlen; i++)
+      if (!strcmp(str, arr[i]))
          return i;
-   return -1;
+   return arrlen;
 }
 
 extern char *extfnm(const char *src, bool ext_flag) {

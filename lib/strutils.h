@@ -6,10 +6,11 @@
 
 bool match(char ch, const char *scanset);
 
-int match_str(
-   const char * restrict s,
+/* Returns arrlen when str doesn't exist in arr */
+size_t match_str(
+   const char *  restrict str,
    const char ** restrict arr,
-   int len
+   size_t arrlen
 );
 
 char *extfnm(const char *src, bool ext_flag);
