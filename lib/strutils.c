@@ -115,18 +115,18 @@ extern char **split(
 
       /* No mark found? */
       if (!fin) {
-         /* since there is no more mark, copies the rest of
-            the string into buf */
+         /* since there is no more mark, copies
+            the rest of the string into buf */
          len = strlen(ini);
          buf = safe_malloc(len + 1);
-         strcpy(buf, ini); // fixme: consider memcpy
+         memcpy(buf, ini, len + 1);  /* includes \0 */
          break;
       }
 
       /* Copies the substring into buf */
       diff = fin - ini;  /* equals the token length */
       buf = safe_malloc(diff + 1);  /* +1 for \0 */
-      strncpy(buf, ini, diff);  // fixme: consider memcpy
+      memcpy(buf, ini, diff);
       buf[diff] = '\0';
 
       /* Stores the buffer into the array */
