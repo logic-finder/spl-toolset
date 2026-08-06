@@ -74,7 +74,6 @@ extern void safe_fputs(FILE *stream, const char *line) {
       fatal("fputs error");
 }
 
-// fixme: function name and its description at .h
 extern void safe_vfprintf(FILE *stream, const char *format, ...) {
    va_list ap;
    int ret;
@@ -85,7 +84,6 @@ extern void safe_vfprintf(FILE *stream, const char *format, ...) {
    va_end(ap);
 }
 
-// fixme: this also
 extern void safe_vprintf(const char *format, ...) {
    va_list ap;
    int ret;
