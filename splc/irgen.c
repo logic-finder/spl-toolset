@@ -541,6 +541,12 @@ static void resolve_noun(tree_t *t, irgen_ctx_t *ictx) {
 
    /* SET is to assign a number, while ASGN a variable */
    switch (node->kind) {
+      case NODEKIND_ZERO:
+         val = 0;
+         nodekind = IrnodekindConst;
+         opkind = IropcodeSet;
+      break;
+
       case NODEKIND_PNOUN:
          val = 1;
          nodekind = IrnodekindConst;
@@ -586,6 +592,7 @@ static void resolve_noun(tree_t *t, irgen_ctx_t *ictx) {
    graft_tree_var(opcode, IrvarConst);
 
    switch (node->kind) {
+      case NODEKIND_ZERO : /* fall-through */
       case NODEKIND_PNOUN: /* fall-through */
       case NODEKIND_NNOUN:
          graft_tree_i(opcode, val, nodekind);

@@ -138,6 +138,7 @@ static void resolve_noun(tree_t *noun) {
 
    n = tree_dat(noun);
    switch (n->kind) {
+      case NODEKIND_ZERO  : goto zero;
       case NODEKIND_PNOUN : goto pnoun;
       case NODEKIND_NNOUN : goto nnoun;
       case NODEKIND_P1    : goto p1;
@@ -147,25 +148,29 @@ static void resolve_noun(tree_t *noun) {
       default : ;
    }
 
-   pnoun:
-      safe_fputc(fp, '1');
+zero:
+   safe_fputc(fp, '0');
    return;
 
-   nnoun:
-      safe_fputs(fp, "-1");
+pnoun:
+   safe_fputc(fp, '1');
    return;
 
-   p1:
-      safe_vfprintf(fp, "personae[%d]", speaker);
+nnoun:
+   safe_fputs(fp, "-1");
    return;
 
-   p2:
-      safe_vfprintf(fp, "personae[stage_whoareyou(stage, %d)]", speaker);
-      you_flag = true;
+p1:
+   safe_vfprintf(fp, "personae[%d]", speaker);
    return;
 
-   persona:
-      safe_vfprintf(fp, "personae[%d]", n->dat.n);
+p2:
+   safe_vfprintf(fp, "personae[stage_whoareyou(stage, %d)]", speaker);
+   you_flag = true;
+   return;
+
+persona:
+   safe_vfprintf(fp, "personae[%d]", n->dat.n);
    return;
 }
 
