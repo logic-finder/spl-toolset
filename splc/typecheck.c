@@ -1,6 +1,9 @@
 #include "typecheck.h"
 #include "typecheck.internals.h"
 
+// TODO: typecheck.c의 필요성이 없는 것 같은데 parse.c로 넘어간 기능은 없애고
+// 남은 기능은 ctxcheck.c로 옮기도록 하자
+
 extern void typecheck(optflg_t *of, optval_t *ov) {
    tree_t *dp;
 

@@ -108,6 +108,8 @@ struct msg_err_syn_line {
 struct msg_err_syn_const {
    msgstr_t
       incomp,
+      no_end_symbol,
+      no_noun,
       deco;
 };
 

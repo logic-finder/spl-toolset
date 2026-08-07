@@ -1,6 +1,9 @@
 #include "ctxcheck.h"
 #include "ctxcheck.internals.h"
 
+// TODO: conjugation이 제대로 됐는지같은걸 검사하도록 하자 (이건 warning을 띄워야 할듯)
+// TODO: 미선언이름사용, 이름중복선언, 미사용이름체크, scene/act 중복선언 같은것을 체크
+
 extern void ctxcheck(optflg_t *of, optval_t *ov) {
    (void) of, (void) ov;
    nrtv = tree_child(pt, 2);

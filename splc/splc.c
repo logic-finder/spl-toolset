@@ -171,7 +171,7 @@ static const char *nodekind2str(nodekind_t kind) {
       case NODEKIND_SUBJ   : return "SUBJECT"; // fixme: in use?
       case NODEKIND_CONST  : return "CONST";
       case NODEKIND_ADJ    : return "ADJ";
-      case NODEKIND_NOUN   : return "NOUN";
+      case NODEKIND_ZERO   : return "NOUN_ZERO";
       case NODEKIND_PNOUN  : return "NOUN_POS";
       case NODEKIND_NNOUN  : return "NOUN_NEG";
       case NODEKIND_AFFIRM : return "AFFIRM";

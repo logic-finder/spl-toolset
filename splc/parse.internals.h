@@ -5,6 +5,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <setjmp.h>
+
 #include "msg.h"
 #include "lex.h"
 #include "global.h"
@@ -12,6 +13,7 @@
 #include "strutils.h"
 #include "tree.adt.h"
 #include "colorcode.h"
+#include "dbhandler.h"
 
 /**********
  * MACROS *

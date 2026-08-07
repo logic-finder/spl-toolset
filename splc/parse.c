@@ -1,6 +1,8 @@
 #include "parse.h"
 #include "parse.internals.h"
 
+// fixme: STREQL 매크로 정의해서 쓰기 (!strcmp 대체 프로젝트 전체적으로)
+
 extern tree_t *parse(optflg_t *of, optval_t *ov, array_t *tokens) {
    (void) of, (void) ov;
    // Initialize global variables
@@ -214,22 +216,7 @@ static void parse_exeunt(void) {
    }
 }
 
-// fixme: 명사가 인칭대명사인 경우 형용사나 관사가 있으면 오류처리
-// 근데 이걸 parse_const에서 하기보다는 type-check에서 하는게 맞을듯?
-// fixme: 추가로, typecheck시 소유격이나 관사가 등장한경우 오류 (parse_const시 혹시 맨앞에 있었던경우 이미 걸려졌으니까 없어야 함)
-// query한 이후 사전에 없는경우 검사하는게 효율적일듯
-// <= 이건 이미 이 함수 아랫단에서 검사되고 있는듯?
 static void parse_const(tree_t *stmt) {
-   static const char *decos[] = {
-   /* Possessives */
-      /* 1st */ KEYWRD_MY, KEYWRD_MINE,
-      /* 2nd */ KEYWRD_YOUR, KEYWRD_THY, KEYWRD_THINE,
-      /* 3rd */ KEYWRD_HIS, KEYWRD_HER, KEYWRD_ITS, KEYWRD_THEIR,
-   /* Articles */
-      KEYWRD_A, KEYWRD_AN, KEYWRD_THE
-   };
-   static const int decos_len = ARRLEN(decos);
-
    /* Before going further, let's recall where constants are used.
 
       Note:
@@ -256,9 +243,11 @@ static void parse_const(tree_t *stmt) {
          You be (B|C|D)(.|!)
 
       2. Questions
+         Be (B|C|D) <not> as adj as (B|C|D)?
          Be (B|C|D) <not> (comp|(<more|less> adj)) than (B|C|D)?
 
       3. As Operands Of Operators
+         the factorial of (B|C|D)
          the sum of (B|C|D) and (B|C|D)
 
       4. Remember Statements
@@ -271,9 +260,8 @@ static void parse_const(tree_t *stmt) {
       With that in mind, now let's begin parsing. */
 
    tree_t *cnst;
-   bool opcond, cond1, cond2, cond3, cond4, cond5, cond6;
-   int ret;
    nodekind_t kind;
+   int query_result;
 
    /* Makes a tree that represents a constant node */
    cnst = graft_tree_n(stmt, 0, NODEKIND_CONST);
@@ -283,83 +271,175 @@ static void parse_const(tree_t *stmt) {
 
    /* First of all, we check whether this token is
       a pronoun, a reflexive, a name, or a nil */
-
-   /* If not, this is either TYPE A or TYPE B. Meanwhile,
-      TYPE B = (art|pos) + TYPE A. Let's exploit this structure */
-
-   // if there is, ignore art|pos!
-
-   // 형용사, 명사 체크를 여기서 해버리고 (명사구도 여기서해버리기)
-   // context check에서는 conjugation이 제대로 됐는지같은걸 검사하도록 하자 (이건 warning을 띄워야 할듯)
-   // context check에서는 미선언이름사용, 이름중복선언, 미사용이름체크, scene/act 중복선언 같은것을 체크
-   // typecheck의 필요성이 없는거같은데 삭제 고려
-
-   /*
-    * Since names can begin with 'the', we first check
-    * whether this constant is a name or not.
-    */
-   archive_tokstate();  /* `isname` rewinds tokstate */
-   ret = isname_lower();
-   if (ret)
-      goto name;
-
-   /*
-    * If this constant begins with a possessive or
-    * an article, skip it.
-    */
-   ret = match_str(tok->run, decos, decos_len);
-   if (ret < decos_len)
-      gettok();
-
-   // Checkes if this token is an operator
-   opcond = (kind = seek_op()) != NODEKIND__NAO;
-   if (opcond) {
-      parse_op(constant, kind);
+   if (is_pronoun(tok->run)) {
+      graft_tree_s(cnst, tok->run, tok->len, what_pronoun(tok->run));
+      check_const_end();
+      return;
+   }
+   if (is_reflexive(tok->run)) {
+      graft_tree_s(cnst, tok->run, tok->len, what_reflexive(tok->run));
+      check_const_end();
+      return;
+   }
+   archive_tokstate();  /* isname rewinds tokstate */
+   if (isname_lower()) {
+      graft_tree_n(cnst, charidx, NODEKIND_CHAR);
+      check_const_end();
+      return;
+   }
+   if (is_nil(tok->run)) {
+      graft_tree_s(cnst, tok->run, tok->len, NODEKIND_ZERO);
+      check_const_end();
       return;
    }
 
-   /*
-    * Processes a series of tokens as a constant
-    * and stops if one of the escape conditions
-    * is met.
-    */
-   for (;;) {
-      /* escape conditions */
-      // fixme: ".!?" const static 변수로 빼기 (종결기호들)
-      cond1 = match(tok->run[0], ".!?");
-      if (cond1) goto noun;
-      // fixme: STREQL 매크로 정의해서 쓰기 (!strcmp 대체 프로젝트 전체적으로)
-      cond2 = !strcmp(tok->run, KEYWRD_AND);
-      if (cond2) goto noun;
-      cond3 = !strcmp(tok->run, KEYWRD_AS);
-      if (cond3) goto noun;
-      cond4 = !strcmp(tok->run, KEYWRD_NOT);
-      if (cond4) goto noun;
-      cond5 = !strcmp(tok->run, KEYWRD_THAN);
-      if (cond5) { ungettokn(2); goto noun; }
-      archive_tokstate();  /* `isname` rewinds tokstate */
-      cond6 = isname_lower();
-      if (cond6) goto name;
-
-      /* is it a decorator? */
-      if (match_str(tok->run, decos, decos_len) < decos_len) {
-         reason = msgs.err.syn.cnst.deco;
-         synerr();
-      }
-
-      (void) graft_tree_s(constant, tok->run, tok->len, NODEKIND_ADJ);
-
+   /* If not, this token can be TYPE A, TYPE B, or an operator.
+      Meanwhile, TYPE B = (art|pos) TYPE A. Also, every operator
+      begins with the article "the". Let's exploit these facts */
+   if (is_article(tok->run) || is_possessive(tok->run)) {
       reason = msgs.err.syn.cnst.incomp;
+      gettok();  /* skips the current token */
+      /* if the token had been of TYPE B, now it has become of TYPE A */
+   }
+
+   /* Is this an operator? */
+   if ((kind = seek_op()) != NODEKIND__NAO) {
+      parse_op(cnst, kind);
+      return;
+   }
+
+   /* Since it wasn't an operator, now we can conclude that
+      this token is TYPE A. Therefore, now we need to process
+      <adj|ap> (noun|np) */
+
+   /* Consumes adjectives first */
+   for (;;) {
+      if (!query_adj(tok->run))
+         break;
+      graft_tree_s(cnst, tok->run, tok->len, NODEKIND_ADJ);
       gettok();
    }
 
-noun:
-   TREE_CHDAT(constant, tree_clen(constant) - 1)->kind = NODEKIND_NOUN;
-   return;
+   if (query_noun(tok->run, &query_result)) {
+      kind = query_result ? NODEKIND_PNOUN : NODEKIND_NNOUN;
+      graft_tree_s(cnst, tok->run, tok->len, kind);
+   }
+   else {
+      // TODO: refactor later!!
+      token_t *prev_tok;
+      char *buf;
+      size_t bufsiz;
 
-name:
-   (void) graft_tree_n(constant, charidx, NODEKIND_CHAR);
-   return;
+      prev_tok = tok;
+
+      reason = msgs.err.syn.cnst.incomp;
+      gettok();
+
+      bufsiz = prev_tok->len + tok->len;
+      buf = safe_malloc(bufsiz);
+      memcpy(buf, prev_tok->run, prev_tok->len);
+      buf[prev_tok->len - 1] = ' ';
+      memcpy(buf + prev_tok->len, tok->run, tok->len);
+
+      if(!query_noun(buf, &query_result)) {
+         reason = msgs.err.syn.cnst.no_noun;
+         synerr();
+      }
+
+      kind = query_result ? NODEKIND_PNOUN : NODEKIND_NNOUN;
+      graft_tree_s(cnst, buf, bufsiz, kind);
+   }
+
+   check_const_end();
+}
+
+// TODO: refactor is_xxx: (1) use macro (2) use lowercase
+static bool is_pronoun(const char *str) {
+   static const char *pronouns[] = {
+      "I", "me", "thee", "thou", "you", NULL
+   };
+
+   for (size_t i = 0; pronouns[i]; i++)
+      if (!strcmp(str, pronouns[i]))
+         return true;
+   return false;
+}
+
+static bool is_reflexive(const char *str) {
+   static const char *reflexives[] = {
+      "myself", "thyself", "yourself", NULL
+   };
+
+   for (size_t i = 0; reflexives[i]; i++)
+      if (!strcmp(str, reflexives[i]))
+         return true;
+   return false;
+}
+
+static bool is_nil(const char *str) {
+   static const char *nils[] = {
+      "nothing", "zero", NULL
+   };
+
+   for (size_t i = 0; i < nils[i]; i++)
+      if (!strcmp(str, nils[i]))
+         return true;
+   return false;
+}
+
+static bool is_article(const char *str) {
+   static const char *articles[] = {
+      "a", "an", "the", NULL
+   };
+
+   for (size_t i = 0; articles[i]; i++)
+      if (!strcmp(str, articles[i]))
+         return true;
+   return false;
+}
+
+static bool is_possessive(const char *str) {
+   static const char *possessives[] = {
+      "mine", "my", "thine", "thy", "your", "his", "her", "its", "theirs", NULL
+   };
+
+   for (size_t i = 0; possessives[i]; i++)
+      if (!strcmp(str, possessives[i]))
+         return true;
+   return false;
+}
+
+static nodekind_t what_pronoun(const char *str) {
+   if (!strcmp(str, "I") || !strcmp(str, "me"))
+      return NODEKIND_P1;
+   if (!strcmp(str, "thee")
+      || !strcmp(str, "thou")
+      || !strcmp(str, "you"))
+      return NODEKIND_P2;
+}
+
+static nodekind_t what_reflexive(const char *str) {
+   if (!strcmp(str, "myself"))
+      return NODEKIND_P1;
+   if (!strcmp(str, "thyself") || !strcmp(str, "yourself"))
+      return NODEKIND_P2;
+}
+
+static void check_const_end(void) {
+   reason = msgs.err.syn.cnst.incomp;
+   gettok();
+
+   if (strchr(".!?", tok->run[0])
+      || !strcmp(tok->run, "not")
+      || !strcmp(tok->run, "as")
+      || !strcmp(tok->run, "more")
+      || !strcmp(tok->run, "less")
+      || !strcmp(tok->run, "and")
+      || query_comp(tok->run, NULL))
+      return;
+
+   reason = msgs.err.syn.cnst.no_end_symbol;
+   synerr();
 }
 
 static nodekind_t seek_op(void) {
@@ -556,6 +636,8 @@ static void parse_op_fact(tree_t *op) {
 // ㄴㄴ 토큰스트림 단계에서는 이렇게 하는게 맞을듯 여러 이름이 토큰에 나뉘어져 있으니까
 
 // fixme: title 도 파싱한 다음에 바로 coalesce_title 해버리기 (typecheck.c에서 옮기기)
+// fixme: isname에서 archive_tokstate를 하는게 낫지않을까?
+//    아니면 archive_tokstate를 하지말고 내부에서 저장용 auto 변수를 하나 만들어놓는거임
 static int isname(void) {
    tree_t *dp, *character;
    int i, k, dp_clen, char_clen;

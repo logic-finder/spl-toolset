@@ -133,9 +133,12 @@ extern bool query_noun(const char *key, int *ret) {
       NOUN_DTSIZ,
       compare_rec_B
    );
+
    if (!record)
       return false;
-   *ret = ((char *) record)[0];
+
+   if (ret)
+      *ret = ((char *) record)[0];
    return true;
 }
 
@@ -147,9 +150,12 @@ extern bool query_comp(const char *key, int *ret) {
       COMP_DTSIZ,
       compare_rec_B
    );
+
    if (!record)
       return false;
-   *ret = ((char *) record)[0];
+
+   if (ret)
+      *ret = ((char *) record)[0];
    return true;
 }
 
