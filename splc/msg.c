@@ -51,7 +51,6 @@ extern void init_msg(void) {
    msgs.err.syn.cnst.incomp = "incomplete constant";
    msgs.err.syn.cnst.no_end_symbol = "a constant must be terminated with '.', '!', '?', 'not', 'as', '<comparative>', more, 'less', or 'and'";
    msgs.err.syn.cnst.no_noun = "a constant must have a noun or a noun phrase";
-   msgs.err.syn.cnst.deco = "incorrect use of possessive or article";
 
    msgs.err.syn.op.incomp = "incomplete operator";
    msgs.err.syn.op.no_and = "'and' must be between two constants";
