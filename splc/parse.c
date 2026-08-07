@@ -5,19 +5,18 @@
 
 extern tree_t *parse(optflg_t *of, optval_t *ov, array_t *tokens) {
    (void) of, (void) ov;
-   // Initialize global variables
+   /* Initializes global variables */
    toks = tokens;
    tok = array_peek(toks, 0);
    len = array_size(toks);
    idx = -1;
    pt = plant_tree(NULL, 0, NODEKIND_ROOT, 0, 0);
 
-   /*
-    * Construct the parse tree
-    * pt[0] = title
-    * pt[1] = dp
-    * pt[2] = nrtv
-    */
+   /* Constructs the parse tree
+         pt[0] = title
+         pt[1] = dp
+         pt[2] = nrtv  */
+
    act = scene = line = NULL;
    parse_title();
    parse_dp();
@@ -31,21 +30,21 @@ extern tree_t *parse(optflg_t *of, optval_t *ov, array_t *tokens) {
             case NODEKIND_ACT     : goto EOA;
             case NODEKIND__FINALE : goto EOE;
          }
-         EOS:;
+      EOS:;
       }
-      EOA:;
+   EOA:;
    }
-   EOE:;
+EOE:;
 
-   // Cleanup
-   array_foreach(toks, &cleanup_tokstream);
+   /* Cleanup */
+   array_foreach(toks, cleanup_tokstream);
    array_destroy(toks);
 
    return pt;
 }
 
-static void cleanup_tokstream(void *tok, int _) {
-   (void) _;
+static void cleanup_tokstream(void *tok, int idx) {
+   (void) idx;
    free(((token_t *) tok)->run);
 }
 
@@ -96,7 +95,7 @@ static void parse_act(void) {
    reason = msgs.err.syn.act.nocolon;
    neqtok(':');
    reason = msgs.err.syn.act.desc_incomp;
-   skiptoks('.');
+   skiptoks2(".!?");
    reason = msgs.err.syn.act.noscene;
    gettok();
    if (!seek_scene()) synerr();
@@ -119,7 +118,7 @@ static void parse_scene(void) {
    reason = msgs.err.syn.scene.nocolon;
    neqtok(':');
    reason = msgs.err.syn.scene.desc_incomp;
-   skiptoks('.');
+   skiptoks2(".!?");
 }
 
 static int seek_enterlike(const char *type) {
