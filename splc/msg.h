@@ -132,9 +132,9 @@ struct msg_err_syn_op {
 struct msg_err_syn_asgn {
    msgstr_t
       incomp,
-      not_conj,
-      no_as,
-      no_adj;
+      not_adj,
+      not_as,
+      invalid_end_symbol;
 };
 
 struct msg_err_syn_out {

@@ -67,9 +67,9 @@ extern void init_msg(void) {
    msgs.err.syn.op.rem_quot_2 = "incorrect " Cbyellow "remainder" Creset " operator syntax; '" Cbwhite "quotient" Creset "' required here";
 
    msgs.err.syn.asgn.incomp = "incomplete assignment statement";
-   msgs.err.syn.asgn.not_conj = "incorrect conjugation";
-   msgs.err.syn.asgn.no_as = "\"as\" not present in this assignment";
-   msgs.err.syn.asgn.no_adj = "no adjective following \"as\"";
+   msgs.err.syn.asgn.not_adj = "this token isn't recognized as an adjective";
+   msgs.err.syn.asgn.not_as = "\"as\" expected here";
+   msgs.err.syn.asgn.invalid_end_symbol = "'.' or '!' expected here";
 
    msgs.err.syn.out.incomp = "incomplete output statement";
    msgs.err.syn.out.badsyn = "incorrect output statement syntax";

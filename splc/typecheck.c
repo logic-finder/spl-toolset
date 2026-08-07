@@ -102,7 +102,7 @@ static void typecheck_router(tree_t *t, int lv, void *ctx) {
       { NODEKIND_CHDECL , typecheck_name },
       { NODEKIND_ADJ    , typecheck_adj  },
       { NODEKIND_NOUN   , typecheck_noun },
-      { NODEKIND_ASGN1  , typecheck_adj  },
+      { NODEKIND_ASGN2  , typecheck_adj  },
       { NODEKIND_EQ     , typecheck_adj  },
       { NODEKIND_INEQ   , typecheck_comp },
       { NODEKIND_GT     , typecheck_adj  },

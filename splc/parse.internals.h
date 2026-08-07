@@ -83,8 +83,9 @@ static parser_t parse_exit;
 static parser_t parse_exeunt;
 static parser_t parse_line;
 static parser_t parse_asgn;
-static parser_t parse_asgn_i;
-static parser_t parse_asgn_ii;
+static tree_t *parse_asgn_i(token_t *you);
+static tree_t *parse_asgn_ii(token_t *you);
+static tree_t *parse_asgn_iii(token_t *you);
 static parser_t parse_out;
 static parser_t parse_in;
 static parser_t parse_goto;
@@ -104,6 +105,14 @@ static operator_t parse_op_squr;
 static operator_t parse_op_cube;
 static operator_t parse_op_2x;
 static operator_t parse_op_fact;
+static bool is_pronoun(const char *str);
+static bool is_reflexive(const char *str);
+static bool is_nil(const char *str);
+static bool is_article(const char *str);
+static bool is_possessive(const char *str);
+static nodekind_t what_pronoun(const char *str);
+static nodekind_t what_reflexive(const char *str);
+static void check_const_end(void);
 
 /* Token Handling */
 static void gettok(void);

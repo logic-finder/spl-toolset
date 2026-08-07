@@ -763,80 +763,79 @@ static int seek_asgn(void) {
 }
 
 static void parse_asgn(void) {
-   /* ap: adjective phrase, e.g. "lying stupid fatherless"
-      np: noun phrase, e.g. "summer's day", "stone wall"
-      art: article, e.g. "a", "an", "the"
-      pos: possessive, e.g. "my", "your"
-      ref: reflexive, e.g. "myself", "yourself"
-      pronoun: e.g. "me", "you", "I"
-      name: e.g. "Romeo", "Juliet"
+   /* TYPE 1: You A(.|!)
+      TYPE 2: You be as adj as (B|C|D)(.|!)
+      TYPE 3: You be (B|C|D)(.|!) */
 
-      You <ap> (noun|np)(.|!)
-      You be as adj as (art|pos) <ap> (noun|np)(.|!)
-      You be as adj as (pronoun|ref|name)(.|!)
-      You be (nothing|zero)(.|!)
+   tree_t *asgn;
+   token_t *you;
 
-      Note: a noun phrase is treated as a single noun! */
-
-   int type;
-   bool cond1, cond2;
-
-   if (!strcmp(tok->run, KEYWRD_YOU))
-      type = 1;
-   else  /* Thou */
-      type = 2;
+   /* It's obvious that the current tok->run is either
+      "you" or "thou" because of `seek_asgn()` */
+   you = tok;
 
    reason = msgs.err.syn.asgn.incomp;
    gettok();
 
-   cond1 = !strcmp(tok->run, KEYWRD_ARE);
-   cond2 = !strcmp(tok->run, KEYWRD_ART);
+   if (is_be_conjs(tok->run)) {  /* type 2 or 3 */
+      gettok();
 
-   if ((type == 1 && cond2) || (type == 2 && cond1)) {
-      reason = msgs.err.syn.asgn.not_conj;
-      synerr();
+      if (!strcmp(tok->run, "as"))
+         asgn = parse_asgn_ii(you);  /* type 2 */
+      else
+         asgn = parse_asgn_iii(you);  /* type 3 */
    }
+   else
+      asgn = parse_asgn_i(you);  /* type 1 */
 
-   if (cond1 || cond2)
-      parse_asgn_i();   // You are as ...
-   else {
-      ungettok();
-      parse_asgn_ii();  // You ... sth!
-   }
+   parse_const(asgn);
+
+   if (strchr(".!", tok->run[0]))
+      return;
+   reason = msgs.err.syn.asgn.invalid_end_symbol;
+   synerr();
 }
 
-static void parse_asgn_i(void) {
-   tree_t *asgn_i;
+static bool is_be_conjs(const char *str) {
+   static const char *conjugations[] = {
+      "am", "are", "art", "is", "be", NULL
+   };
+
+   for (size_t i = 0; conjugations[i]; i++)
+      if (!strcmp(str, conjugations[i]))
+         return true;
+   return false;
+}
+
+static tree_t *parse_asgn_i(token_t *you) {
+   /* TYPE 1: You A(.|!) */
+   return graft_tree_s(line, you->run, you->len, NODEKIND_ASGN1);
+}
+
+static tree_t *parse_asgn_ii(token_t *you) {
+   /* TYPE 2: You be as adj as (B|C|D)(.|!) */
+   reason = msgs.err.syn.asgn.incomp;
+   gettok();
+
+   if (!query_adj(tok->run)) {
+      reason = msgs.err.syn.asgn.not_adj;
+      synerr();
+   }
 
    reason = msgs.err.syn.asgn.incomp;
    gettok();
-   if (strcmp(tok->run, KEYWRD_AS)) {
-      reason = msgs.err.syn.asgn.no_as;
+
+   if (strcmp(tok->run, "as")) {
+      reason = msgs.err.syn.asgn.not_as;
       synerr();
    }
 
-   gettok();
-   if (tok->kind == TOKKIND_PNT) {
-      reason = msgs.err.syn.asgn.no_adj;
-      synerr();
-   }
-
-   asgn_i = graft_tree_s(line, tok->run, tok->len, NODEKIND_ASGN1);
-
-   gettok();
-   if (strcmp(tok->run, KEYWRD_AS)) {
-      reason = msgs.err.syn.asgn.no_as;
-      synerr();
-   }
-
-   parse_const(asgn_i);
+   return graft_tree_s(line, you->run, you->len, NODEKIND_ASGN2);
 }
 
-static void parse_asgn_ii(void) {
-   tree_t *asgn_ii;
-
-   asgn_ii = graft_tree_n(line, 0, NODEKIND_ASGN2);
-   parse_const(asgn_ii);
+static tree_t *parse_asgn_iii(token_t *you) {
+   /* TYPE 3: You be (B|C|D)(.|!) */
+   return graft_tree_s(line, you->run, you->len, NODEKIND_ASGN3);
 }
 
 static void seek_stmt(void) {

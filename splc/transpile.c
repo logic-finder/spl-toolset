@@ -71,7 +71,8 @@ static void generate(tree_t *t, int lv, void *ctx) {
       case NODEKIND_EXEUNT : gen_exeunt(t); break;
       case NODEKIND_LINE   : gen_line  (t); break;
       case NODEKIND_ASGN1  : /* fall-through */
-      case NODEKIND_ASGN2  : gen_asgn  (t); break;
+      case NODEKIND_ASGN2  : /* fall-through */
+      case NODEKIND_ASGN3  : gen_asgn  (t); break;
       case NODEKIND_OUT_N  : gen_outn  (t); break;
       case NODEKIND_OUT_C  : gen_outc  (t); break;
       case NODEKIND_IN_N   : gen_inn   (t); break;
@@ -457,7 +458,8 @@ static void gen_if(tree_t *t) {
 
    switch (stmtdat->kind) {
       case NODEKIND_ASGN1  : /* fall-through */
-      case NODEKIND_ASGN2  : gen_asgn(stmt); break;
+      case NODEKIND_ASGN2  : /* fall-through */
+      case NODEKIND_ASGN3  : gen_asgn(stmt); break;
       case NODEKIND_OUT_N  : gen_outn(stmt); break;
       case NODEKIND_OUT_C  : gen_outc(stmt); break;
       case NODEKIND_IN_N   : gen_inn (stmt); break;

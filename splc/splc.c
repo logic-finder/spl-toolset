@@ -199,6 +199,7 @@ static const char *nodekind2str(nodekind_t kind) {
       case NODEKIND_LINE   : return "LINE";
       case NODEKIND_ASGN1  : return "ASSIGN_A";
       case NODEKIND_ASGN2  : return "ASSIGN_B";
+      case NODEKIND_ASGN3  : return "ASSIGN_C";
       case NODEKIND_OUT_N  : return "OUT_N";
       case NODEKIND_OUT_C  : return "OUT_C";
       case NODEKIND_IN_N   : return "IN_N";

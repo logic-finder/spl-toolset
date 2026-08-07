@@ -46,7 +46,8 @@ static void route(tree_t *t, int lv, void *ctx) {
       case NODEKIND_EXEUNT : handle_exeunt(t, ictx); break;
       case NODEKIND_LINE   : handle_line  (t, ictx); break;
       case NODEKIND_ASGN1  : /* fall-through */
-      case NODEKIND_ASGN2  : handle_asgn  (t, ictx); break;
+      case NODEKIND_ASGN2  : /* fall-through */
+      case NODEKIND_ASGN3  : handle_asgn  (t, ictx); break;
       case NODEKIND_OUT_N  : handle_io(t, ictx, IropcodeOutN); break;
       case NODEKIND_OUT_C  : handle_io(t, ictx, IropcodeOutC); break;
       case NODEKIND_IN_N   : handle_io(t, ictx, IropcodeInN ); break;
@@ -355,7 +356,8 @@ static void handle_if(tree_t *t, irgen_ctx_t *ictx) {
    stmtdat = tree_dat(stmt);
    switch (stmtdat->kind) {
       case NODEKIND_ASGN1  : /* fall-through */
-      case NODEKIND_ASGN2  : handle_asgn(stmt, ictx); break;
+      case NODEKIND_ASGN2  : /* fall-through */
+      case NODEKIND_ASGN3  : handle_asgn(stmt, ictx); break;
       case NODEKIND_OUT_N  : handle_io(t, ictx, IropcodeOutN); break;
       case NODEKIND_OUT_C  : handle_io(t, ictx, IropcodeOutC); break;
       case NODEKIND_IN_N   : handle_io(t, ictx, IropcodeInN ); break;
