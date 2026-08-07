@@ -70,7 +70,7 @@ static void parse_dp(void) {
       reason = msgs.err.syn.dp.chardecl_incomp;
       readtoks(',', character);
       reason = msgs.err.syn.dp.desc_incomp;
-      skiptoks('.');
+      skiptoks2(".!?");
       reason = msgs.err.syn.dp.nonext;
       gettok();
       if (seek_act()) break;
