@@ -268,7 +268,13 @@ static void parse_const(tree_t *stmt) {
    reason = msgs.err.syn.cnst.incomp;
    gettok();
 
-   /* First of all, we check whether this token is
+   /* First of all, we check whether this is an operator */
+   if ((kind = seek_op()) != NODEKIND__NAO) {
+      parse_op(cnst, kind);
+      return;
+   }
+
+   /* Checks whether this token is
       a pronoun, a reflexive, a name, or a nil */
    if (is_pronoun(tok->run)) {
       graft_tree_s(cnst, tok->run, tok->len, what_pronoun(tok->run));
@@ -292,24 +298,15 @@ static void parse_const(tree_t *stmt) {
       return;
    }
 
-   /* If not, this token can be TYPE A, TYPE B, or an operator.
-      Meanwhile, TYPE B = (art|pos) TYPE A. Also, every operator
-      begins with the article "the". Let's exploit these facts */
+   /* If not, this token is either TYPE A or TYPE B. Meanwhile,
+      TYPE B = (art|pos) TYPE A. Let's exploit this structure */
    if (is_article(tok->run) || is_possessive(tok->run)) {
       reason = msgs.err.syn.cnst.incomp;
       gettok();  /* skips the current token */
       /* if the token had been of TYPE B, now it has become of TYPE A */
    }
 
-   /* Is this an operator? */
-   if ((kind = seek_op()) != NODEKIND__NAO) {
-      parse_op(cnst, kind);
-      return;
-   }
-
-   /* Since it wasn't an operator, now we can conclude that
-      this token is TYPE A. Therefore, now we need to process
-      <adj|ap> (noun|np) */
+   /* Now we need to process <adj|ap> (noun|np) */
 
    /* Consumes adjectives first */
    for (;;) {
@@ -319,11 +316,12 @@ static void parse_const(tree_t *stmt) {
       gettok();
    }
 
+   /* noun? */
    if (query_noun(tok->run, &query_result)) {
       kind = query_result ? NODEKIND_PNOUN : NODEKIND_NNOUN;
       graft_tree_s(cnst, tok->run, tok->len, kind);
    }
-   else {
+   else {  /* noun phrase */
       // TODO: refactor later!!
       token_t *prev_tok;
       char *buf;
@@ -349,6 +347,7 @@ static void parse_const(tree_t *stmt) {
       graft_tree_s(cnst, buf, bufsiz, kind);
    }
 
+   /* end of const */
    check_const_end();
 }
 
@@ -463,6 +462,12 @@ static nodekind_t seek_op(void) {
    const ophandler_t *op;
    int i;
    nodekind_t k;
+
+   if (strcmp(tok->run, "the"))
+      return NODEKIND__NAO;
+
+   reason = msgs.err.syn.cnst.incomp;
+   gettok();
 
    k = NODEKIND__NAO;
    for (i = 0; i < ops_len; i++) {
