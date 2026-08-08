@@ -457,7 +457,7 @@ static nodekind_t seek_op(void) {
       { KEYWRD_2X   , NODEKIND_2X   },
       { KEYWRD_FACT , NODEKIND_FACT }
    };
-   static const int ops_len = ARRLEN(ops);
+   static const size_t ops_len = ARRLEN(ops);
 
    nodekind_t k;
 
