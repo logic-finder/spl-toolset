@@ -459,8 +459,6 @@ static nodekind_t seek_op(void) {
    };
    static const int ops_len = ARRLEN(ops);
 
-   const ophandler_t *op;
-   int i;
    nodekind_t k;
 
    if (strcmp(tok->run, "the"))
@@ -470,12 +468,11 @@ static nodekind_t seek_op(void) {
    gettok();
 
    k = NODEKIND__NAO;
-   for (i = 0; i < ops_len; i++) {
-      op = ops + i;
-      if (!strcmp(tok->run, op->name)) {
-         k = op->kind; break;
+   for (size_t i = 0; i < ops_len; i++)
+      if (!strcmp(tok->run, ops[i].name)) {
+         k = ops[i].kind;
+         break;
       }
-   }
 
    if (k == NODEKIND__NAO || k != NODEKIND_SQUR)
       return k;
