@@ -162,22 +162,24 @@ extern bool query_comp(const char *key, int *ret) {
 static int compare_rec_A(const void *key, const void *elem) {
    /* elem = a pointer to an array member whose size is 65 bytes */
    const char *e;
-   int len;
+   // int len;
 
    e = elem;  /* treat elem as a (char *) */
-   len = e[0];
+   // len = e[0];
 
-   return strncmp((char *) key, e + 1, len);
+   /* Note: 64 = DT_S */
+   return strncmp((char *) key, e + 1, 64);
 }
 
 static int compare_rec_B(const void *key, const void *elem) {
    const char *e;
-   int len;
+   // int len;
 
    e = elem;
-   len = e[1];  /* e[0] is kind */
+   // len = e[1];  /* e[0] is kind */
 
-   return strncmp((char *) key, e + 2, len);
+   /* Note. 64 = DT_S */
+   return strncmp((char *) key, e + 2, 64);
 }
 
 static inline void dberr(const char *reason) {

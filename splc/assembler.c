@@ -137,10 +137,10 @@ static void write_route(tree_t *t, int lv, void *ctx) {
       case IropcodeOutC   : /* fall-through */
       case IropcodeInN    : /* fall-through */
       case IropcodeInC    : /* fall-through */
-      case IropcodeRememb : /* fall-through */
       case IropcodeRecall : /* fall-through */
       case IropcodeNegate : /* fall-through */
       case IropcodeExeunt : write_paramless_opcode(t); break;
+      case IropcodeRememb : /* fall-through */
       case IropcodePush   : /* fall-through */
       case IropcodePop    : write_pushlike(t); break;
       case IropcodeSum    : /* fall-through */

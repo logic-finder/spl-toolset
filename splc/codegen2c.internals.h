@@ -23,7 +23,7 @@ static void codegen_asgn(tree_t *t, FILE *fp);
 static void codegen_enterlike(tree_t *t, FILE *fp, const char *op);
 static void codegen_exeunt(FILE *fp);
 static void codegen_speak(tree_t *t, FILE *fp);
-static void codegen_push(FILE *fp);
+static void codegen_push(tree_t *t, FILE *fp);
 static void codegen_pop(tree_t *t, FILE *fp);
 static void codegen_binary_op(FILE *fp, const char *op);
 static void codegen_unary_op(FILE *fp, const char *op);

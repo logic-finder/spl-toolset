@@ -105,7 +105,7 @@ extern char **split(
 
    /* Parsing */
    ini = src;
-   for (;;) {
+   do {
       /* Searches the location of the next mark */
       fin = strstr(ini, mark);
 
@@ -116,14 +116,17 @@ extern char **split(
          rest = strlen(ini);
          buf = safe_malloc(rest + 1);
          memcpy(buf, ini, rest + 1);  /* includes \0 */
-         break;
       }
+      else {
+         /* Copies the substring into buf */
+         diff = fin - ini;  /* equals the token length */
+         buf = safe_malloc(diff + 1);  /* +1 for \0 */
+         memcpy(buf, ini, diff);
+         buf[diff] = '\0';
 
-      /* Copies the substring into buf */
-      diff = fin - ini;  /* equals the token length */
-      buf = safe_malloc(diff + 1);  /* +1 for \0 */
-      memcpy(buf, ini, diff);
-      buf[diff] = '\0';
+         /* Updates parsing states */
+         ini = fin + marklen;  /* skips the mark found */
+      }
 
       /* Stores the buffer into the array */
       if (siz == max) {
@@ -131,10 +134,7 @@ extern char **split(
          arr = safe_realloc2x(arr, max);
       }
       arr[siz++] = buf;
-
-      /* Updates parsing states */
-      ini = fin + marklen;  /* skips the mark found */
-   }
+   } while (fin);
 
    *retsiz = siz;
    return arr;

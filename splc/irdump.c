@@ -50,10 +50,10 @@ static void handle_opcode(tree_t *t) {
       case IropcodeOutC   : /* fall-through */
       case IropcodeInN    : /* fall-through */
       case IropcodeInC    : /* fall-through */
-      case IropcodeRememb : /* fall-through */
       case IropcodeRecall : /* fall-through */
       case IropcodeNegate : /* fall-through */
       case IropcodeExeunt : handle_paramless_opcode(t); break;
+      case IropcodeRememb : /* fall-through */
       case IropcodePush   : /* fall-through */
       case IropcodePop    : handle_pushlike(t); break;
       case IropcodeSum    : /* fall-through */
@@ -210,7 +210,7 @@ static void handle_goto(tree_t *t) {
       return;
    }
 
-   /* Handles == NODEKIND_SCENE */
+   /* NODEKIND_SCENE */
    act = tree_parent(tree_parent(t));
    act_dat = tree_dat(act);
 

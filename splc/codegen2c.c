@@ -1,6 +1,8 @@
 #include "codegen2c.h"
 #include "codegen2c.internals.h"
 
+// fixme: use resolve_var
+
 extern void transpile2c(void) {
    char *destname;
    FILE *fp;
@@ -120,7 +122,7 @@ static void handle_opcode(tree_t *t, FILE *fp) {
       case IropcodeExit   : codegen_enterlike(t, fp, "exit"  ); break;
       case IropcodeExeunt : codegen_exeunt(fp); break;
       case IropcodeSpeak  : codegen_speak(t, fp); break;
-      case IropcodePush   : codegen_push  (fp); break;
+      case IropcodePush   : codegen_push (t, fp); break;
       case IropcodePop    : codegen_pop(t, fp); break;
       case IropcodeSum    : codegen_binary_op(fp, "sum" ); break;
       case IropcodeDiff   : codegen_binary_op(fp, "diff"); break;
@@ -210,9 +212,16 @@ static void codegen_speak(tree_t *t, FILE *fp) {
    safe_vfprintf(fp, "%srctx->t = %d;\n", indent, p1->dat.ui);
 }
 
-static void codegen_push(FILE *fp) {
-   /* "PUSH const" is only possible */
-   safe_vfprintf(fp, "%sstack_push(rctx->s, rctx->cnst);\n", indent);
+static void codegen_push(tree_t *t, FILE *fp) {
+   irnode_t *p1;
+
+   p1 = tree_chdat(t, 0);
+
+   /* "PUSH teller|hearer|const" is only possible */
+   safe_vfprintf(fp,
+      "%sstack_push(rctx->s, %s);\n",
+      indent,
+      resolve_var(p1->dat.ui));
 }
 
 static void codegen_pop(tree_t *t, FILE *fp) {
@@ -302,9 +311,14 @@ static void codegen_comp(FILE *fp, const char *op) {
 }
 
 static void codegen_rememb(tree_t *t, FILE *fp) {
-   irnode_t *n = tree_dat(t);
-   safe_vfprintf(fp, "%srememb(rctx, %" SPL_INT_FMTSPC ");\n",
-      indent, n->dat.i);
+   irnode_t *n;
+
+   n = tree_chdat(t, 0);
+
+   /* Note: REMEMB const is only possible */
+   safe_vfprintf(fp,
+      "%srememb(rctx, %s);\n",
+      indent, resolve_var(n->dat.ui));
 }
 
 static void codegen_recall(FILE *fp) {
@@ -340,6 +354,8 @@ static void codegen_negate(FILE *fp) {
 
 static const char *resolve_var(irvar_t var) {
    switch (var) {
+      case IrvarTeller   : return "rctx->dp[rctx->t]";
+      case IrvarHearer   : return "rctx->dp[rctx->h]";
       case IrvarConst    : return "rctx->cnst";
       case IrvarOperandL : return "rctx->ol";
       default: return NULL;

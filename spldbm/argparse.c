@@ -98,7 +98,7 @@ static void handle_makopt(const char *arg) {
    if (clen != 4)
       VERR("--make needs 4 comma-separated filenames;"
            "currently %d given", clen);
-   for (int i = 0; i < clen; i++)
+   for (size_t i = 0; i < clen; i++)
       if (components[i][0] == '\0')
          VERR("field %d of --make is empty", i);
 

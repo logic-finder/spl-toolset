@@ -383,17 +383,16 @@ static void handle_push(tree_t *t, irgen_ctx_t *ictx) {
    tree_t *c;
    node_t *node;
    irnode_t *irnode;
-   size_t len, instidx;
+   size_t last;
 
    c = tree_child(t, 0);
    resolve_const(c, ictx);  /* ... PUSH const */
 
    /* Replaces PUSH with REMEMB */
-   len = tree_clen(ictx->curr_block);
-   instidx = len - 2;
-
    node = tree_dat(t);
-   irnode = tree_chdat(ictx->curr_block, instidx);
+   last = tree_clen(ictx->curr_block) - 1;
+
+   irnode = tree_chdat(ictx->curr_block, last);
    irnode->dat.ui = IropcodeRememb;
    irnode->lnum = node->lnum;
    irnode->lpos = node->lpos;
@@ -441,7 +440,10 @@ static void resolve_const(tree_t *t, irgen_ctx_t *ictx) {
    clen = tree_clen(t);
    noun = tree_child(t, clen - 1);
 
-   /* Generates 'SET const 1|-1|teller|hearer|dp[n]' */
+   /* Generates
+         SET const 1|-1
+      or
+         ASGN const teller|hearer|dp[n]' */
    resolve_noun(noun, ictx);
 
    /* Generates '2x const const' */

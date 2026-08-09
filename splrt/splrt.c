@@ -164,10 +164,23 @@ extern spl_int_t op_fact(spl_int_t l) {
 
 extern void io_inn(rt_ctx_t *rctx) {
    io_in(rctx, "%" SPL_INT_FMTSPC);
+   clearbuf();
 }
 
 extern void io_inc(rt_ctx_t *rctx) {
-   io_in(rctx, "%c");
+   int ret;
+
+   set_hearer(rctx);
+
+   ret = fscanf(stdin, "%c", (char *) &rctx->dp[rctx->h]);
+   if (ret == 0 || ferror(stdin))
+      ERR("failed to read a character from stdin");
+
+   if (feof(stdin)) {
+      rctx->dp[rctx->h] = -1;
+      clearerr(stdin);
+      return;
+   }
 }
 
 extern void io_outn(rt_ctx_t *rctx) {
@@ -225,7 +238,6 @@ static void io_in(
    set_hearer(rctx);
    // fixme: write a function that counts the number of format specifiers in fmt
    safe_fscanf(stdin, fmt, 1, &rctx->dp[rctx->h]);
-   clearbuf();
 }
 
 static void io_out(

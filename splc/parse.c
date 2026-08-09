@@ -357,6 +357,7 @@ static void parse_const(tree_t *stmt) {
       memcpy(buf + prev_tok->len, tok->run, tok->len);
 
       if(!query_noun(buf, &query_result)) {
+         ungettok();
          reason = msgs.err.syn.cnst.no_noun;
          synerr();
       }
@@ -503,13 +504,17 @@ static nodekind_t seek_op(void) {
          break;
       }
 
-   if (k == NODEKIND__NAO || k != NODEKIND_SQUR)
+   if (k == NODEKIND__NAO) {
+      ungettok();
+      return k;
+   }
+
+   if (k != NODEKIND_SQUR)
       return k;
 
    gettok();
-   if (!strcmp(tok->run, KEYWRD_ROOT)) {
+   if (!strcmp(tok->run, KEYWRD_ROOT))
       k = NODEKIND_SQRT;
-   }
    else ungettok();
 
    return k;
@@ -813,8 +818,10 @@ static void parse_asgn(void) {
 
       if (!strcmp(tok->run, "as"))
          asgn = parse_asgn_ii(you);  /* type 2 */
-      else
+      else {
+         ungettok();
          asgn = parse_asgn_iii(you);  /* type 3 */
+      }
    }
    else {  /* type 1 */
       ungettok();
@@ -1393,11 +1400,13 @@ static void gettokn(int n) {
 
 static void ungettok(void) {
    tok = array_peek(toks, --idx);
+   etok = tok;
 }
 
 static void ungettokn(int n) {
    idx -= n;
    tok = array_peek(toks, idx);
+   etok = tok;
 }
 
 static void skiptoks(char sentinel) {
