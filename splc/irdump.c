@@ -36,11 +36,11 @@ static void route(tree_t *t, int lv, void *ctx) {
 }
 
 static void handle_opcode(tree_t *t) {
-   irnode_t *irn;
+   irnode_t *n;
 
-   irn = tree_dat(t);
+   n = tree_dat(t);
 
-   switch (irn->dat.i) {
+   switch (n->dat.ui) {
       case IropcodeSet    : /* fall-through */
       case IropcodeAsgn   : handle_setlike  (t); break;
       case IropcodeEnter  : /* fall-through */
@@ -94,13 +94,17 @@ static void handle_scene(tree_t *t) {
 }
 
 static void handle_block(tree_t *t) {
-   irnode_t *n = tree_dat(t);
-   if (!n->dat.i)
+   irnode_t *n;
+
+   n = tree_dat(t);
+
+   if (!n->dat.ui)
       return;
+
    safe_vfprintf(
       fp,
       "\n.L%d:\n",
-      n->dat.i
+      n->dat.ui
    );
 }
 
@@ -116,7 +120,8 @@ static void handle_setlike(tree_t *t) {
    switch (p2->kind) {
       case IrnodekindPerson : goto person;
       case IrnodekindVar    : goto var;
-      default: goto common;
+      case IrnodekindConst  : goto cnst;
+      default: return;  /* control never reaches default */
    }
 
 person:
@@ -124,9 +129,9 @@ person:
       fp,
       "%s%s %s dp[%d]\n",
       INDENT,
-      resolve_opcode(n->dat.i),
-      resolve_var(p1->dat.i),
-      p2->dat.i - Irvar_Dp_Begin
+      resolve_opcode(n->dat.ui),
+      resolve_var(p1->dat.ui),
+      p2->dat.ui - Irvar_Dp_Begin
    );
    return;
 
@@ -135,19 +140,19 @@ var:
       fp,
       "%s%s %s %s\n",
       INDENT,
-      resolve_opcode(n->dat.i),
-      resolve_var(p1->dat.i),
-      resolve_var(p2->dat.i)
+      resolve_opcode(n->dat.ui),
+      resolve_var(p1->dat.ui),
+      resolve_var(p2->dat.ui)
    );
    return;
 
-common:
+cnst:
    safe_vfprintf(
       fp,
       "%s%s %s %d\n",
       INDENT,
-      resolve_opcode(n->dat.i),
-      resolve_var(p1->dat.i),
+      resolve_opcode(n->dat.ui),
+      resolve_var(p1->dat.ui),
       p2->dat.i
    );
 }
@@ -163,8 +168,8 @@ static void handle_enterlike(tree_t *t) {
       fp,
       "%s%s %d\n",
       INDENT,
-      resolve_opcode(n->dat.i),
-      p1->dat.i
+      resolve_opcode(n->dat.ui),
+      p1->dat.ui
    );
 }
 
@@ -179,8 +184,8 @@ static void handle_pushlike(tree_t *t) {
       fp,
       "%s%s %s\n",
       INDENT,
-      resolve_opcode(n->dat.i),
-      resolve_var(p1->dat.i)
+      resolve_opcode(n->dat.ui),
+      resolve_var(p1->dat.ui)
    );
 }
 
@@ -194,12 +199,12 @@ static void handle_goto(tree_t *t) {
 
    if (debug) emit_debug_data(n);
 
-   if (p1->dat.i == NODEKIND_ACT) {
+   if (p1->dat.ui == NODEKIND_ACT) {
       safe_vfprintf(
          fp,
          "%s%s Act_%s_Scene_I\n",  // fixme: use KEYWRD_ACT _SCENE
          INDENT,
-         resolve_opcode(n->dat.i),
+         resolve_opcode(n->dat.ui),
          p2->dat.s.run
       );
       return;
@@ -213,7 +218,7 @@ static void handle_goto(tree_t *t) {
       fp,
       "%s%s Act_%s_Scene_%s\n",  // fixme: use KEYWRD_ACT _SCENE
       INDENT,
-      resolve_opcode(n->dat.i),
+      resolve_opcode(n->dat.ui),
       act_dat->dat.s.run,
       p2->dat.s.run
    );
@@ -230,8 +235,8 @@ static void handle_jumplike(tree_t *t) {
       fp,
       "%s%s .L%d\n",
       INDENT,
-      resolve_opcode(n->dat.i),
-      p1->dat.i
+      resolve_opcode(n->dat.ui),
+      p1->dat.ui
    );
 }
 
@@ -248,10 +253,10 @@ static void handle_binary_op(tree_t *t) {
       fp,
       "%s%s %s %s %s\n",
       INDENT,
-      resolve_opcode(n->dat.i),
-      resolve_var(p1->dat.i),
-      resolve_var(p2->dat.i),
-      resolve_var(p3->dat.i)
+      resolve_opcode(n->dat.ui),
+      resolve_var(p1->dat.ui),
+      resolve_var(p2->dat.ui),
+      resolve_var(p3->dat.ui)
    );
 }
 
@@ -267,9 +272,9 @@ static void handle_unary_op(tree_t *t) {
       fp,
       "%s%s %s %s\n",
       INDENT,
-      resolve_opcode(n->dat.i),
-      resolve_var(p1->dat.i),
-      resolve_var(p2->dat.i)
+      resolve_opcode(n->dat.ui),
+      resolve_var(p1->dat.ui),
+      resolve_var(p2->dat.ui)
    );
 }
 
@@ -280,7 +285,7 @@ static void handle_paramless_opcode(tree_t *t) {
       fp,
       "%s%s\n",
       INDENT,
-      resolve_opcode(n->dat.i)
+      resolve_opcode(n->dat.ui)
    );
 }
 
@@ -357,11 +362,11 @@ extern void debug_print_irnode(tree_t *t, int lv, void *ctx) {
    printf("[%s] = [", resolve_nodekind(n->kind));
    switch (n->kind) {
       case IrnodekindVar:
-         printf("%s]", resolve_var(n->dat.i));
+         printf("%s]", resolve_var(n->dat.ui));
       break;
 
       case IrnodekindOpcode:
-         printf("%s]", resolve_opcode(n->dat.i));
+         printf("%s]", resolve_opcode(n->dat.ui));
       break;
 
       default:
