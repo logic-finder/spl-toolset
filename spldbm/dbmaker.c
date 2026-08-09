@@ -239,11 +239,12 @@ static void write_sect_type_B(
       *kind;    // elems[1]
    int
       llen,    // length of ln
-      elen,    // length of elems
       slen,    // length of <str>
       klen,    // length of <kind>
       maxlen,  // maximum length of ln = 66 chars long
       residual;
+   size_t elen;    // length of elems
+
    uint32_t ecnt;
    array_t *records;
    record_B_t temp, *r;

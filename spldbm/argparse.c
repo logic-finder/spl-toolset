@@ -91,7 +91,7 @@ static void handle_makopt(const char *arg) {
       ERR("there is no '=' between --make and its value");
 
    char **components;
-   int clen;
+   size_t clen;
 
    arg += makopt_len + 1;
    components = split(arg, ",", &clen);
