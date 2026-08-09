@@ -9,6 +9,7 @@ typedef struct optflg {
       kwi: 1,  // --kawaii
       lng: 1,  // --lang
       ret: 1,  // --ret
+      opt: 1,  // -O
       eoo: 1,  // --
       hlp: 1,  // --help
       vsn: 1;  // --version

@@ -13,6 +13,7 @@ extern void parse_args(const char **argv, optflg_t *of, optval_t *ov) {
     *    -i, --keep-intermediate
     *    -d, --describe
     *    -k, --kawaii
+    *    -O
     *    --lang=(en|ko)
     *    --ret=<name>
     */
@@ -63,6 +64,7 @@ static void parse_shrtop(optflg_t *of, optval_t *ov, const char *arg) {
       { "i" , handle_imdopt },
       { "d" , handle_dscopt },
       { "k" , handle_kwiopt },
+      { "O" , handle_optopt },
       { "h" , handle_hlpopt },
       { "v" , handle_vsnopt }
    };
@@ -189,6 +191,11 @@ static void handle_retopt(optflg_t *of, optval_t *ov, const char *arg) {
       ERR("there is no '=' between --ret and its value");
 
    ov->ret = arg + 4;
+}
+
+static void handle_optopt(optflg_t *of, optval_t *ov, const char *arg) {
+   (void) ov, (void) arg;
+   of->opt = true;
 }
 
 static void handle_hlpopt(optflg_t *of, optval_t *_, const char *__) {
