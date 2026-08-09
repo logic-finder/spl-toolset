@@ -11,6 +11,7 @@ extern bool match(char ch, const char *scanset) {
    return false;
 }
 
+// fixme: NULL로 끝나는 배열을 전달받고 arrlen 삭제하기
 extern size_t match_str(
    const char *  restrict str,
    const char ** restrict arr,
