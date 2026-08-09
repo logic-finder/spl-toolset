@@ -13,6 +13,8 @@ extern rt_ctx_t *init_runtime(size_t dpsz) {
    rctx->st = stage_create(dpsz);
    rctx->s = stack_create();
 
+   setvbuf(stdout, NULL, _IONBF, 0);
+
    return rctx;
 }
 
