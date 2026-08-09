@@ -19,15 +19,15 @@ extern void irgenerate(void) {
 
 static void set_dpsz(irgen_ctx_t *ictx) {
    tree_t *pt_dp, *irt_dp, *opcode;
-   size_t dpsz;
+   int dpsz;
 
    irt_dp = graft_tree_i(ictx->irt, 0, IrnodekindDp);
    pt_dp = tree_child(pt, 1);
-   dpsz = tree_clen(pt_dp);
+   dpsz = tree_clen(pt_dp);  /* cast to int */
 
    opcode = graft_tree_opcode(irt_dp, IropcodeSet, 0, 0);
    graft_tree_ui(opcode, IrvarDpsz, IrnodekindVar);
-   graft_tree_ui(opcode, dpsz, IrnodekindConst);
+   graft_tree_i(opcode, dpsz, IrnodekindConst);
 }
 
 static void route(tree_t *t, int lv, void *ctx) {
