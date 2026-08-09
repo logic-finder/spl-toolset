@@ -397,7 +397,7 @@ static bool is_nil(const char *str) {
       "nothing", "zero", NULL
    };
 
-   for (size_t i = 0; i < nils[i]; i++)
+   for (size_t i = 0; nils[i]; i++)
       if (!strcmp(str, nils[i]))
          return true;
    return false;
