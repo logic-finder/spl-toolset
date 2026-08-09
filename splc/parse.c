@@ -188,6 +188,12 @@ static void parse_namelist(tree_t *t) {
       [Enter A and B]
       [Enter A, B, and C] */
 
+   reason = "incomplete namelist";
+   gettok();
+   if (tok->run[0] == ']')
+         return;
+   ungettok();
+
    do {
       reason = "incomplete namelist";
       gettok();
@@ -197,40 +203,33 @@ static void parse_namelist(tree_t *t) {
          synerr();
       }
       graft_tree_n(t, charidx, NODEKIND_CHAR);
-      gettok();
+      /* isname has advanced tok */
       if (tok->run[0] == ']')
-         goto end;
+         return;
       if (!strcmp(tok->run, "and"))
-         goto last;
+         break;
       if (tok->run[0] != ',') {
          reason = ", expected here";
          synerr();
       }
       gettok();
       if (!strcmp(tok->run, "and"))
-         goto last;
+         break;
       ungettok();
    } while (true);
 
-last:
    gettok();
-
    archive_tokstate();
    if (!isname_lower()) {
       reason = "dp expected here";
       synerr();
    }
    graft_tree_n(t, charidx, NODEKIND_CHAR);
-
-   gettok();
-
+   /* isname has advanced tok */
    if (tok->run[0] != ']') {
       reason = "] expected here";
       synerr();
    }
-
-end:
-   return;
 }
 
 static void parse_const(tree_t *stmt) {
@@ -307,6 +306,7 @@ static void parse_const(tree_t *stmt) {
    archive_tokstate();  /* isname rewinds tokstate */
    if (isname_lower()) {
       graft_tree_n(cnst, charidx, NODEKIND_CHAR);
+      ungettok();
       check_const_end();
       return;
    }
@@ -428,17 +428,25 @@ static bool is_possessive(const char *str) {
 static nodekind_t what_pronoun(const char *str) {
    if (!strcmp(str, "I") || !strcmp(str, "me"))
       return NODEKIND_P1;
+
    if (!strcmp(str, "thee")
       || !strcmp(str, "thou")
       || !strcmp(str, "you"))
       return NODEKIND_P2;
+
+   /* control never reaches here */
+   return NODEKIND__UNKNOWN;
 }
 
 static nodekind_t what_reflexive(const char *str) {
    if (!strcmp(str, "myself"))
       return NODEKIND_P1;
+
    if (!strcmp(str, "thyself") || !strcmp(str, "yourself"))
       return NODEKIND_P2;
+
+   /* control never reaches here */
+   return NODEKIND__UNKNOWN;
 }
 
 static void check_const_end(void) {
@@ -472,12 +480,15 @@ static nodekind_t seek_op(void) {
       { KEYWRD_REM  , NODEKIND_REM  },
       { KEYWRD_SQUR , NODEKIND_SQUR },
       { KEYWRD_CUBE , NODEKIND_CUBE },
-      { KEYWRD_2X   , NODEKIND_2X   },
+      // { KEYWRD_2X   , NODEKIND_2X   },
       { KEYWRD_FACT , NODEKIND_FACT }
    };
    static const size_t ops_len = ARRLEN(ops);
 
    nodekind_t k;
+
+   if (!strcmp(tok->run, "twice"))
+      return NODEKIND_2X;
 
    if (strcmp(tok->run, "the"))
       return NODEKIND__NAO;
@@ -675,6 +686,7 @@ static int isname(void) {
          gettok();
       }
       charidx = i;
+      // fixme: isname에서 ungettok()을 해주는게 편하지 않을지?
       return 1;
    next:;
    }
@@ -804,8 +816,10 @@ static void parse_asgn(void) {
       else
          asgn = parse_asgn_iii(you);  /* type 3 */
    }
-   else
-      asgn = parse_asgn_i(you);  /* type 1 */
+   else {  /* type 1 */
+      ungettok();
+      asgn = parse_asgn_i(you);
+   }
 
    parse_const(asgn);
 

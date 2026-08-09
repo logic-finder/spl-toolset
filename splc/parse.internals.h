@@ -110,6 +110,7 @@ static bool is_reflexive(const char *str);
 static bool is_nil(const char *str);
 static bool is_article(const char *str);
 static bool is_possessive(const char *str);
+static bool is_be_conjs(const char *str);
 static nodekind_t what_pronoun(const char *str);
 static nodekind_t what_reflexive(const char *str);
 static void check_const_end(void);
@@ -212,7 +213,7 @@ static const int cond_verbs_len = ARRLEN(cond_verbs);
 static const char *cond_subjs[] = {
    KEYWRD_I, KEYWRD_YOU_L, KEYWRD_THOU_L
 };
-static const int cond_subjs_len = ARRLEN(cond_subjs);
+static const size_t cond_subjs_len = ARRLEN(cond_subjs);
 static int vtype;
 
 #endif

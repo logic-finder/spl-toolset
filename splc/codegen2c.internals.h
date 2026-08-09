@@ -27,6 +27,7 @@ static void codegen_push(FILE *fp);
 static void codegen_pop(tree_t *t, FILE *fp);
 static void codegen_binary_op(FILE *fp, const char *op);
 static void codegen_unary_op(FILE *fp, const char *op);
+static void codegen_twice(tree_t *t, FILE *fp);
 static void codegen_io(FILE *fp, const char *op);
 static void codegen_goto(tree_t *t, FILE *fp);
 static void codegen_comp(FILE *fp, const char *op);
@@ -34,5 +35,7 @@ static void codegen_rememb(tree_t *t, FILE *fp);
 static void codegen_recall(FILE *fp);
 static void codegen_jump(tree_t *t, FILE *fp, bool v);
 static void codegen_negate(FILE *fp);
+
+static const char *resolve_var(irvar_t var);
 
 #endif

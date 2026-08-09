@@ -19,8 +19,8 @@ extern void transpile2c(void) {
    safe_fputs(fp, "int main(void) {\n");
    codegen_locals(dp, fp, tree_child(pt, 1));
    tree_pre_traverse(nrtv, codegen_route, 0, fp);
-   safe_vfprintf(fp, "%scleanup_runtime(rctx);\n", indent);
-   safe_vfprintf(fp, "\n%sreturn 0;\n", indent);
+   safe_vfprintf(fp, "\n%scleanup_runtime(rctx);\n", indent);
+   safe_vfprintf(fp, "%sreturn 0;\n", indent);
    safe_fputs(fp, "}\n");
 
    safe_vprintf(" " Cgreen "done!" Creset "\n");
@@ -130,7 +130,7 @@ static void handle_opcode(tree_t *t, FILE *fp) {
       case IropcodeSqrt   : codegen_unary_op(fp, "sqrt"); break;
       case IropcodeSqur   : codegen_unary_op(fp, "squr"); break;
       case IropcodeCube   : codegen_unary_op(fp, "cube"); break;
-      case Iropcode2x     : codegen_unary_op(fp, "2x"  ); break;
+      case Iropcode2x     : codegen_twice(t, fp); break;
       case IropcodeFact   : codegen_unary_op(fp, "fact"); break;
       case IropcodeOutN   : codegen_io(fp, "outn"); break;
       case IropcodeOutC   : codegen_io(fp, "outc"); break;
@@ -253,6 +253,16 @@ static void codegen_unary_op(FILE *fp, const char *op) {
       "%srctx->cnst = op_%s(rctx->ol);\n", indent, op);
 }
 
+static void codegen_twice(tree_t *t, FILE *fp) {
+   irnode_t *p2;
+
+   p2 = tree_chdat(t, 1);
+
+   safe_vfprintf(fp,
+      "%srctx->cnst = op_2x(%s);\n",
+      indent, resolve_var(p2->dat.ui));
+}
+
 static void codegen_io(FILE *fp, const char *op) {
    safe_vfprintf(fp, "%sio_%s(rctx);\n", indent, op);
 }
@@ -326,4 +336,12 @@ static void codegen_jump(tree_t *t, FILE *fp, bool v) {
 
 static void codegen_negate(FILE *fp) {
    safe_vfprintf(fp, "%srctx->cond = !rctx->cond;\n", indent);
+}
+
+static const char *resolve_var(irvar_t var) {
+   switch (var) {
+      case IrvarConst    : return "rctx->cnst";
+      case IrvarOperandL : return "rctx->ol";
+      default: return NULL;
+   }
 }

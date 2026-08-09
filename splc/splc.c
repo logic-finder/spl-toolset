@@ -54,7 +54,7 @@ int main(int argc, const char **argv) {
    );
    // tree_pre_traverse(irt, debug_print_irnode, 0, NULL);
 
-   if (1) {
+   if (of.opt) {
       safe_fputs(stdout, ENPREFIX "optimizing IR...");
       iroptimize();
       safe_vprintf(" " Cgreen "done!" Creset
