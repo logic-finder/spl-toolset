@@ -31,8 +31,8 @@ extern char *basename(const char *src) {
          (4) \0   */
 
    size_t len;  /* the length of src */
-   char *dpos,  /* position of '/' */
-        *dest;  /* a buffer to hold the result */
+   const char *dpos;  /* position of '/' */
+   char *dest;  /* a buffer to hold the result */
 
    /* Finds the position of '/' from the end */
    len = strlen(src);
