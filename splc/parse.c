@@ -86,6 +86,7 @@ static void parse_act(void) {
    act = graft_tree_n(nrtv, 0, NODEKIND_ACT);
    reason = msgs.err.syn.act.incomp;
    gettok();
+   // fixme: 실제로 로마 숫자인지 검사할 것
    if (tok->kind == TOKKIND_PNT) {
       reason = msgs.err.syn.act.nornum;
       synerr();
@@ -109,6 +110,7 @@ static void parse_scene(void) {
    scene = graft_tree_n(act, 0, NODEKIND_SCENE);
    reason = msgs.err.syn.scene.incomp;
    gettok();
+   // fixme: 실제로 로마 숫자인지 검사할 것
    if (tok->kind == TOKKIND_PNT) {
       reason = msgs.err.syn.scene.nornum;
       synerr();
@@ -135,42 +137,15 @@ static int seek_enter(void) {
    return seek_enterlike(KEYWRD_ENTER);
 }
 
-static void parse_namelist(tree_t *enterlike, const char *err) {
-   for (;;) {
-      gettok();
-      archive_tokstate();  /* `isname` rewinds tokstate */
-      if (tok->run[0] == ']')
-         break;
-      if (!isname_lower()) {
-         reason = err;
-         synerr();
-      }
-      (void) graft_tree_n(enterlike, charidx, NODEKIND_CHAR);
-      if (tok->run[0] == ']')
-         break;
-      if (!strcmp(tok->run, KEYWRD_AND))
-         continue;
-   }
-}
-
 static void parse_enter(void) {
    tree_t *enter;
 
    enter = graft_tree_n(scene, 0, NODEKIND_ENTER);
-   reason = msgs.err.syn.enter.incomp;
-
-   // fixme: enter can take one or more characters
-   // 꼭 A,B, and C 이럴필요 X 공백은 어디든 있을수있음
-   // 그냥 A B C 만 파싱하면 됨
-   // Enter has 1 or 2 characters
-   parse_namelist(enter, msgs.err.syn.enter.badname);
-
-   switch (tree_clen(enter)) {
-      case 1 : /* fall-through */
-      case 2 : return;
-      case 0  : reason = msgs.err.syn.enter.nochar; break;
-      default : reason = msgs.err.syn.enter.exceed;
-   }
+   parse_namelist(enter);
+   if (tree_clen(enter))
+      return;
+   reason = msgs.err.syn.enter.nochar;
+   synerr();
 }
 
 static int seek_exit(void) {
@@ -181,14 +156,10 @@ static void parse_exit(void) {
    tree_t *exit;
 
    exit = graft_tree_n(scene, 0, NODEKIND_EXIT);
-   reason = msgs.err.syn.exit.incomp;
-
-   // Exit has 1 character
-   parse_namelist(exit, msgs.err.syn.exit.badname);
-
+   parse_namelist(exit);
    switch (tree_clen(exit)) {
-      case 1 : return;
       case 0  : reason = msgs.err.syn.exit.nochar; break;
+      case 1  : return;
       default : reason = msgs.err.syn.exit.exceed;
    }
    synerr();
@@ -202,17 +173,64 @@ static void parse_exeunt(void) {
    tree_t *exeunt;
 
    exeunt = graft_tree_n(scene, 0, NODEKIND_EXEUNT);
-   reason = msgs.err.syn.exeunt.incomp;
-
-   // Exeunt has either 0 or 2 characters
-   parse_namelist(exeunt, msgs.err.syn.exeunt.badname);
-
+   parse_namelist(exeunt);
    switch (tree_clen(exeunt)) {
-      case 0 : /* fall-through  */
-      case 2 : return;
+      case 0  : return;
       case 1  : reason = msgs.err.syn.exeunt.onechar; break;
+      case 2  : return;
       default : reason = msgs.err.syn.exeunt.exceed;
    }
+   synerr();
+}
+
+static void parse_namelist(tree_t *t) {
+   /* [Enter A]
+      [Enter A and B]
+      [Enter A, B, and C] */
+
+   do {
+      reason = "incomplete namelist";
+      gettok();
+      archive_tokstate();
+      if (!isname_lower()) {
+         reason = "dp expected here";
+         synerr();
+      }
+      graft_tree_n(t, charidx, NODEKIND_CHAR);
+      gettok();
+      if (tok->run[0] == ']')
+         goto end;
+      if (!strcmp(tok->run, "and"))
+         goto last;
+      if (tok->run[0] != ',') {
+         reason = ", expected here";
+         synerr();
+      }
+      gettok();
+      if (!strcmp(tok->run, "and"))
+         goto last;
+      ungettok();
+   } while (true);
+
+last:
+   gettok();
+
+   archive_tokstate();
+   if (!isname_lower()) {
+      reason = "dp expected here";
+      synerr();
+   }
+   graft_tree_n(t, charidx, NODEKIND_CHAR);
+
+   gettok();
+
+   if (tok->run[0] != ']') {
+      reason = "] expected here";
+      synerr();
+   }
+
+end:
+   return;
 }
 
 static void parse_const(tree_t *stmt) {
@@ -641,7 +659,7 @@ static void parse_op_fact(tree_t *op) {
 //    아니면 archive_tokstate를 하지말고 내부에서 저장용 auto 변수를 하나 만들어놓는거임
 static int isname(void) {
    tree_t *dp, *character;
-   int i, k, dp_clen, char_clen;
+   size_t i, k, dp_clen, char_clen;
 
    dp = tree_child(pt, 1);
    dp_clen = tree_clen(dp);
@@ -658,7 +676,7 @@ static int isname(void) {
       }
       charidx = i;
       return 1;
-      next:;
+   next:;
    }
    return 0;
 }

@@ -64,7 +64,7 @@ static seeker_t seek_pop;
 
 /* Parsers */
 static int parse_stmt(void);
-static void parse_namelist(tree_t *enterlike, const char *err);
+static void parse_namelist(tree_t *t);
 static int parse_line_as_conseq(void);
 static void parse_const(tree_t *stmt);
 static void parse_cond_eq(tree_t *cond);
