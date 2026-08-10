@@ -32,7 +32,7 @@ typedef struct stmthandler {
    parser_t *parse;
 } stmthandler_t;
 
-typedef void operator_t(tree_t *op);
+typedef inline void operator_t(tree_t *op);
 
 /***********************
  * FUNCTION PROTOTYPES *

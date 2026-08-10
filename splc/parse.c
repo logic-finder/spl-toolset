@@ -612,23 +612,23 @@ static void parse_op_binary(
    parse_const(righthand);
 }
 
-static void parse_op_sum(tree_t *op) {
+static inline void parse_op_sum(tree_t *op) {
    parse_op_binary(op, KEYWRD_OF, msgs.err.syn.op.sum);
 }
 
-static void parse_op_diff(tree_t *op) {
+static inline void parse_op_diff(tree_t *op) {
    parse_op_binary(op, KEYWRD_BTW, msgs.err.syn.op.diff);
 }
 
-static void parse_op_prod(tree_t *op) {
+static inline void parse_op_prod(tree_t *op) {
    parse_op_binary(op, KEYWRD_OF, msgs.err.syn.op.prod);
 }
 
-static void parse_op_quot(tree_t *op) {
+static inline void parse_op_quot(tree_t *op) {
    parse_op_binary(op, KEYWRD_BTW, msgs.err.syn.op.quot);
 }
 
-static void parse_op_rem(tree_t *op) {
+static inline void parse_op_rem(tree_t *op) {
    /* the remainder of
          the quotient between <const> and <const> */
 
@@ -657,32 +657,32 @@ static void parse_op_rem(tree_t *op) {
    parse_op_quot(op);
 }
 
-static void parse_op_sqrt(tree_t *op) {
+static inline void parse_op_sqrt(tree_t *op) {
    /*
     * the square root of <const>
     */
    parse_op_unary(op, msgs.err.syn.op.sqrt);
 }
 
-static void parse_op_squr(tree_t *op) {
+static inline void parse_op_squr(tree_t *op) {
    /*
     * the square of <const>
     */
    parse_op_unary(op, msgs.err.syn.op.squr);
 }
 
-static void parse_op_cube(tree_t *op) {
+static inline void parse_op_cube(tree_t *op) {
    /*
     * the cube of <const>
     */
    parse_op_unary(op, msgs.err.syn.op.cube);
 }
 
-static void parse_op_2x(tree_t *op) {
+static inline void parse_op_2x(tree_t *op) {
    parse_const(op);
 }
 
-static void parse_op_fact(tree_t *op) {
+static inline void parse_op_fact(tree_t *op) {
    /*
     * the factorial of <const>
     */
