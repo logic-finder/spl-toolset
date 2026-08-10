@@ -588,6 +588,13 @@ static void parse_op_binary(
 
    reason = msgs.err.syn.op.incomp;
    gettok();
+
+   /* the sum OF L and R
+      the difference BETWEEN L and R
+      the product OF L and R
+      the quotient BETWEEN L and R
+      the remainder OF the quotient BETWEEN L and R */
+
    if (strcmp(tok->run, type)) {
       reason = err;
       synerr();
@@ -595,10 +602,12 @@ static void parse_op_binary(
 
    lefthand = graft_tree_n(op, 0, NODEKIND_LHS);
    parse_const(lefthand);
+
    if (strcmp(tok->run, KEYWRD_AND)) {
       reason = msgs.err.syn.op.no_and;
       synerr();
    }
+
    righthand = graft_tree_n(op, 0, NODEKIND_RHS);
    parse_const(righthand);
 }
