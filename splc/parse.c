@@ -491,11 +491,19 @@ static nodekind_t seek_op(void) {
    };
    static const size_t ops_len = ARRLEN(ops);
 
+   /* Note:
+      - except the twice operator,
+         every operator begins with "the"
+      - except the square root operator,
+         every operator is one word long */
+
    nodekind_t k;
 
+   /* twice operator? */
    if (!strcmp(tok->run, "twice"))
       return NODEKIND_2X;
 
+   /* not begins with "the"? then it's not an operator */
    if (strcmp(tok->run, "the"))
       return NODEKIND__NAO;
 
@@ -509,14 +517,18 @@ static nodekind_t seek_op(void) {
          break;
       }
 
+   /* no match! turns out it isn't an operator,
+      although it began with "the" */
    if (k == NODEKIND__NAO) {
       ungettok();
       return k;
    }
 
+   /* not a square or a square root operator */
    if (k != NODEKIND_SQUR)
       return k;
 
+   /* to be a square or to be a square root? that's the question */
    gettok();
    if (!strcmp(tok->run, KEYWRD_ROOT))
       k = NODEKIND_SQRT;
