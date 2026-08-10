@@ -558,9 +558,8 @@ static void parse_op(tree_t *stmt, nodekind_t kind) {
 }
 
 static void parse_op_unary(
-   tree_t *op,
-   const char *type,
-   const char *err
+   tree_t * restrict op,
+   const char * restrict err
 ) {
    /* Note. this function is a wrapper for the
       square, square root, cube, and factorial.
@@ -581,9 +580,9 @@ static void parse_op_unary(
 }
 
 static void parse_op_binary(
-   tree_t *op,
-   const char *type,
-   const char *err
+   tree_t * restrict op,
+   const char * restrict type,
+   const char * restrict err
 ) {
    tree_t *lefthand, *righthand;
 

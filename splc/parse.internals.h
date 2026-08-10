@@ -32,11 +32,6 @@ typedef struct stmthandler {
    parser_t *parse;
 } stmthandler_t;
 
-typedef void operator_template_t(
-   tree_t *op,
-   const char * restrict type,
-   const char * restrict err
-);
 typedef void operator_t(tree_t *op);
 
 /***********************
@@ -93,8 +88,15 @@ static parser_t parse_cond;
 static parser_t parse_if;
 static parser_t parse_push;
 static parser_t parse_pop;
-static operator_template_t parse_op_unary;
-static operator_template_t parse_op_binary;
+static void parse_op_unary(
+   tree_t * restrict op,
+   const char * restrict err
+);
+static void parse_op_binary(
+   tree_t * restrict op,
+   const char * restrict type,
+   const char * restrict err
+);
 static operator_t parse_op_sum;
 static operator_t parse_op_diff;
 static operator_t parse_op_prod;
