@@ -571,7 +571,7 @@ static void parse_op_unary(
    reason = msgs.err.syn.op.incomp;
    gettok();
 
-   if (strcmp(tok->run, type)) {
+   if (strcmp(tok->run, "of")) {
       reason = err;
       synerr();
    }
@@ -662,21 +662,21 @@ static void parse_op_sqrt(tree_t *op) {
    /*
     * the square root of <const>
     */
-   parse_op_unary(op, KEYWRD_OF, msgs.err.syn.op.sqrt);
+   parse_op_unary(op, msgs.err.syn.op.sqrt);
 }
 
 static void parse_op_squr(tree_t *op) {
    /*
     * the square of <const>
     */
-   parse_op_unary(op, KEYWRD_OF, msgs.err.syn.op.squr);
+   parse_op_unary(op, msgs.err.syn.op.squr);
 }
 
 static void parse_op_cube(tree_t *op) {
    /*
     * the cube of <const>
     */
-   parse_op_unary(op, KEYWRD_OF, msgs.err.syn.op.cube);
+   parse_op_unary(op, msgs.err.syn.op.cube);
 }
 
 static void parse_op_2x(tree_t *op) {
@@ -687,7 +687,7 @@ static void parse_op_fact(tree_t *op) {
    /*
     * the factorial of <const>
     */
-   parse_op_unary(op, KEYWRD_OF, msgs.err.syn.op.fact);
+   parse_op_unary(op, msgs.err.syn.op.fact);
 }
 
 // fixme: dp를 파싱한 다음에 바로 이름을 합치기
