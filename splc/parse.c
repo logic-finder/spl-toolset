@@ -562,12 +562,21 @@ static void parse_op_unary(
    const char *type,
    const char *err
 ) {
+   /* Note. this function is a wrapper for the
+      square, square root, cube, and factorial.
+
+      Since the twice operator does not have the
+      same structure with other unary operators,
+      it doesn't use this wrapper. */
+
    reason = msgs.err.syn.op.incomp;
    gettok();
+
    if (strcmp(tok->run, type)) {
       reason = err;
       synerr();
    }
+
    parse_const(op);
 }
 
