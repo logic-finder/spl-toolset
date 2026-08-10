@@ -553,8 +553,7 @@ static void parse_op(tree_t *stmt, nodekind_t kind) {
       case NODEKIND_CUBE : parse_op_cube(op); return;
       case NODEKIND_2X   : parse_op_2x  (op); return;
       case NODEKIND_FACT : parse_op_fact(op); return;
-      /* control never reaches here */
-      default : ;
+      default: ;  /* control never reaches default */
    }
 }
 
