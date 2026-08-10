@@ -185,9 +185,10 @@ static void parse_exeunt(void) {
 }
 
 static void parse_namelist(tree_t *t) {
-   /* [Enter A]
-      [Enter A and B]
-      [Enter A, B, and C] */
+   /* Enter, Exit, and Exeunt takes a namelist:
+         (1) [<enterlike> A]
+         (2) [<enterlike> A and B]
+         (3) [<enterlike> A, B, and C] */
 
    reason = "incomplete namelist";
    gettok();
@@ -195,6 +196,9 @@ static void parse_namelist(tree_t *t) {
          return;
    ungettok();
 
+   /* Currently, tok->run points to <enterlike> */
+
+   /* Consumes tokens until "and" */
    do {
       reason = "incomplete namelist";
       gettok();
@@ -219,6 +223,7 @@ static void parse_namelist(tree_t *t) {
       ungettok();
    } while (true);
 
+   /* Skips "and" and consumes the last name */
    gettok();
    archive_tokstate();
    if (!isname_lower()) {
