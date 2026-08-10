@@ -613,52 +613,42 @@ static void parse_op_binary(
 }
 
 static void parse_op_sum(tree_t *op) {
-   /*
-    * the sum of <const> and <const>
-    */
    parse_op_binary(op, KEYWRD_OF, msgs.err.syn.op.sum);
 }
 
 static void parse_op_diff(tree_t *op) {
-   /*
-    * the difference between <const> and <const>
-    */
    parse_op_binary(op, KEYWRD_BTW, msgs.err.syn.op.diff);
 }
 
 static void parse_op_prod(tree_t *op) {
-   /*
-    * the product of <const> and <const>
-    */
    parse_op_binary(op, KEYWRD_OF, msgs.err.syn.op.prod);
 }
 
 static void parse_op_quot(tree_t *op) {
-   /*
-    * the quotient between <const> and <const>
-    */
    parse_op_binary(op, KEYWRD_BTW, msgs.err.syn.op.quot);
 }
 
 static void parse_op_rem(tree_t *op) {
-   /*
-    * the remainder of
-    *    the quotient between <const> and <const>
-    */
+   /* the remainder of
+         the quotient between <const> and <const> */
+
    reason = msgs.err.syn.op.incomp;
    gettok();
+
    if (strcmp(tok->run, KEYWRD_OF)) {
       reason = msgs.err.syn.op.rem;
       synerr();
    }
 
    gettok();
+
    if (strcmp(tok->run, KEYWRD_THE)) {
       reason = msgs.err.syn.op.rem_quot_1;
       synerr();
    }
 
    gettok();
+
    if (strcmp(tok->run, KEYWRD_QUOT)) {
       reason = msgs.err.syn.op.rem_quot_2;
       synerr();
