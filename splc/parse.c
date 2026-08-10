@@ -487,7 +487,6 @@ static nodekind_t seek_op(void) {
       { KEYWRD_REM  , NODEKIND_REM  },
       { KEYWRD_SQUR , NODEKIND_SQUR },
       { KEYWRD_CUBE , NODEKIND_CUBE },
-      // { KEYWRD_2X   , NODEKIND_2X   },
       { KEYWRD_FACT , NODEKIND_FACT }
    };
    static const size_t ops_len = ARRLEN(ops);
