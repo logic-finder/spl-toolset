@@ -5,6 +5,7 @@
 
 extern tree_t *parse(optflg_t *of, optval_t *ov, array_t *tokens) {
    (void) of, (void) ov;
+
    /* Initializes global variables */
    toks = tokens;
    tok = array_peek(toks, 0);
@@ -53,7 +54,7 @@ static void parse_title(void) {
 
    reason = msgs.err.syn.title.incomp;
    title = graft_tree_n(pt, 0, NODEKIND_TITLE);
-   readtoks('.', title);
+   readtoks_until(".!?", title);
 }
 
 static void parse_dp(void) {
@@ -1450,6 +1451,19 @@ static void readtoks(char sentinel, tree_t *base) {
          base, tok->run, tok->len, NODEKIND_DATA);
    }
    etok = tok;
+}
+
+static void readtoks_until(char *scanset, tree_t *t) {
+   size_t len;
+
+   len = strlen(scanset);
+
+   for (;;) {
+      nexttok();
+      if (match_str(tok->run, scanset, len) < len)
+         return;
+      graft_tree_s(t, tok->run, tok->len, NODEKIND_DATA);
+   }
 }
 
 static inline void archive_tokstate(void) {

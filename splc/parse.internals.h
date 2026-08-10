@@ -125,6 +125,7 @@ static void skiptoks2(const char *sentinels);
 static void eqtok(char ch);
 static void neqtok(char ch);
 static void readtoks(char sentinel, tree_t *base);
+static void readtoks_until(char *scanset, tree_t *t);
 static void nexttok(void);
 
 /* Utils */
