@@ -658,23 +658,14 @@ static inline void parse_op_rem(tree_t *op) {
 }
 
 static inline void parse_op_sqrt(tree_t *op) {
-   /*
-    * the square root of <const>
-    */
    parse_op_unary(op, msgs.err.syn.op.sqrt);
 }
 
 static inline void parse_op_squr(tree_t *op) {
-   /*
-    * the square of <const>
-    */
    parse_op_unary(op, msgs.err.syn.op.squr);
 }
 
 static inline void parse_op_cube(tree_t *op) {
-   /*
-    * the cube of <const>
-    */
    parse_op_unary(op, msgs.err.syn.op.cube);
 }
 
@@ -683,9 +674,6 @@ static inline void parse_op_2x(tree_t *op) {
 }
 
 static inline void parse_op_fact(tree_t *op) {
-   /*
-    * the factorial of <const>
-    */
    parse_op_unary(op, msgs.err.syn.op.fact);
 }
 
