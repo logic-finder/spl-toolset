@@ -743,6 +743,8 @@ static int seek_line(void) {
 }
 
 static void parse_line(void) {
+   // fixme: ':' 검사 어디갔지?
+
    // Make nodes (charidx has been updated by isname() in seek_line)
    line = graft_tree_n(scene, 0, NODEKIND_LINE);
    (void) graft_tree_n(line, charidx, NODEKIND_CHAR);
