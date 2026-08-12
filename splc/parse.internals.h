@@ -32,7 +32,7 @@ typedef struct stmthandler {
    parser_t *parse;
 } stmthandler_t;
 
-typedef inline void operator_t(tree_t *op);
+typedef void operator_t(tree_t *op);
 
 /***********************
  * FUNCTION PROTOTYPES *
@@ -97,16 +97,16 @@ static void parse_op_binary(
    const char * restrict type,
    const char * restrict err
 );
-static operator_t parse_op_sum;
-static operator_t parse_op_diff;
-static operator_t parse_op_prod;
-static operator_t parse_op_quot;
-static operator_t parse_op_rem;
-static operator_t parse_op_sqrt;
-static operator_t parse_op_squr;
-static operator_t parse_op_cube;
-static operator_t parse_op_2x;
-static operator_t parse_op_fact;
+static inline operator_t parse_op_sum;
+static inline operator_t parse_op_diff;
+static inline operator_t parse_op_prod;
+static inline operator_t parse_op_quot;
+static inline operator_t parse_op_rem;
+static inline operator_t parse_op_sqrt;
+static inline operator_t parse_op_squr;
+static inline operator_t parse_op_cube;
+static inline operator_t parse_op_2x;
+static inline operator_t parse_op_fact;
 static bool is_pronoun(const char *str);
 static bool is_reflexive(const char *str);
 static bool is_nil(const char *str);
