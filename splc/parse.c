@@ -200,15 +200,14 @@ static void parse_namelist(tree_t *t) {
 
    /* Consumes tokens until "and" */
    do {
-      reason = "incomplete namelist";
+      reason = "incomplete namelist"; // fixme: remove this
       gettok();
-      archive_tokstate();
       if (!isname_lower()) {
          reason = "dp expected here";
          synerr();
       }
       graft_tree_n(t, charidx, NODEKIND_CHAR);
-      /* isname has advanced tok */
+      gettok();
       if (tok->run[0] == ']')
          return;
       if (!strcmp(tok->run, "and"))
@@ -225,13 +224,12 @@ static void parse_namelist(tree_t *t) {
 
    /* Skips "and" and consumes the last name */
    gettok();
-   archive_tokstate();
    if (!isname_lower()) {
       reason = "dp expected here";
       synerr();
    }
    graft_tree_n(t, charidx, NODEKIND_CHAR);
-   /* isname has advanced tok */
+   gettok();
    if (tok->run[0] != ']') {
       reason = "] expected here";
       synerr();
@@ -309,10 +307,8 @@ static void parse_const(tree_t *stmt) {
       check_const_end();
       return;
    }
-   archive_tokstate();  /* isname rewinds tokstate */
    if (isname_lower()) {
       graft_tree_n(cnst, charidx, NODEKIND_CHAR);
-      ungettok();
       check_const_end();
       return;
    }
@@ -677,13 +673,11 @@ static inline void parse_op_fact(tree_t *op) {
    parse_op_unary(op, msgs.err.syn.op.fact);
 }
 
-// fixme: isname에서 archive_tokstate를 하는게 낫지않을까?
-//    아니면 archive_tokstate를 하지말고 내부에서 저장용 auto 변수를 하나 만들어놓는거임
-static int isname(void) {
-   /* DP
-         => CHAR
+static bool isname(void) {
+   /* DP  (siz = 2)
+         => CHAR  (siz = 1)
             => Romeo
-         => CHAR
+         => CHAR  (siz = 2)
             => The
             => Ghost   */
 
@@ -692,33 +686,46 @@ static int isname(void) {
    size_t dpsiz,  /* number of children of dp */
           chsiz;  /* number of children of char */
    node_t *ch_subnode;
+   size_t i, k;
+
+   /* Since backtracking can happen, we need to save the
+      current parsing state */
+   size_t orig_idx;
+
+   /* We assume that all names are unique, i.e. there is
+      no overlap like "the Romeo" and "the Romeo Rome" */
 
    dp = tree_child(pt, 1);
    dpsiz = tree_clen(dp);
 
-   for (size_t i = 0; i < dpsiz; i++) {
+   orig_idx = idx;
+   reason = "incomplete name";
+
+   for (i = 0; i < dpsiz; i++) {
       ch = tree_child(dp, i);
       chsiz = tree_clen(ch);
 
-      for (size_t k = 0; k < chsiz; k++) {
+      for (k = 0; k < chsiz; k++) {
          ch_subnode = tree_chdat(ch, k);
-
          if (strcmp(ch_subnode->dat.s.run, tok->run)) {
-            rewind_tokstate();
-            goto next;
+            idx = orig_idx;
+            tok = array_peek(toks, idx);  /* bracktrack */
+            break;
          }
-
          gettok();
       }
-      charidx = i;
-      // fixme: isname에서 ungettok()을 해주는게 편하지 않을지?
-      return 1;
-   next:;
+
+      if (k == chsiz) {
+         ungettok();
+         charidx = i;
+         return true;
+      }
    }
-   return 0;
+
+   return false;
 }
 
-static int isname_lower(void) {
+static bool isname_lower(void) {
    if (!strcmp(tok->run, "A")
       || !strcmp(tok->run, "An")
       || !strcmp(tok->run, "The")

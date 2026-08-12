@@ -131,8 +131,8 @@ static void readtoks_until(char *scanset, tree_t *t);
 static void nexttok(void);
 
 /* Utils */
-static int isname(void);
-static int isname_lower(void);
+static bool isname(void);
+static bool isname_lower(void);
 static inline void archive_tokstate(void);
 static inline void rewind_tokstate(void);
 
