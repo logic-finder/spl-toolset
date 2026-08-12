@@ -202,7 +202,7 @@ static void parse_namelist(tree_t *t) {
    do {
       reason = "incomplete namelist"; // fixme: remove this
       gettok();
-      if (!isname_lower()) {
+      if (!is_name_lower()) {
          reason = "dp expected here";
          synerr();
       }
@@ -224,7 +224,7 @@ static void parse_namelist(tree_t *t) {
 
    /* Skips "and" and consumes the last name */
    gettok();
-   if (!isname_lower()) {
+   if (!is_name_lower()) {
       reason = "dp expected here";
       synerr();
    }
@@ -307,7 +307,7 @@ static void parse_const(tree_t *stmt) {
       check_const_end();
       return;
    }
-   if (isname_lower()) {
+   if (is_name_lower()) {
       graft_tree_n(cnst, charidx, NODEKIND_CHAR);
       check_const_end();
       return;
@@ -673,7 +673,7 @@ static inline void parse_op_fact(tree_t *op) {
    parse_op_unary(op, msgs.err.syn.op.fact);
 }
 
-static bool isname(void) {
+static bool is_name(void) {
    /* DP  (siz = 2)
          => CHAR  (siz = 1)
             => Romeo
@@ -725,7 +725,7 @@ static bool isname(void) {
    return false;
 }
 
-static bool isname_lower(void) {
+static bool is_name_lower(void) {
    if (!strcmp(tok->run, "A")
       || !strcmp(tok->run, "An")
       || !strcmp(tok->run, "The")
@@ -739,20 +739,20 @@ static bool isname_lower(void) {
       || !strcmp(tok->run, KEYWRD_THE)
    ) tok->run[0] = toupper(tok->run[0]);
 
-   if(isname())
+   if(is_name())
       return 1;
    tok->run[0] = tolower(tok->run[0]);
    return 0;
 }
 
 static int seek_line(void) {
-   return isname();
+   return is_name();
 }
 
 static void parse_line(void) {
    // fixme: ':' 검사 어디갔지?
 
-   // Make nodes (charidx has been updated by isname() in seek_line)
+   // Make nodes (charidx has been updated by is_name() in seek_line)
    line = graft_tree_n(scene, 0, NODEKIND_LINE);
    (void) graft_tree_n(line, charidx, NODEKIND_CHAR);
 

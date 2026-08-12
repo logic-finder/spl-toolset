@@ -131,8 +131,8 @@ static void readtoks_until(char *scanset, tree_t *t);
 static void nexttok(void);
 
 /* Utils */
-static bool isname(void);
-static bool isname_lower(void);
+static bool is_name(void);
+static bool is_name_lower(void);
 static inline void archive_tokstate(void);
 static inline void rewind_tokstate(void);
 
@@ -189,7 +189,7 @@ static tree_t
 
 static const char *reason;   // error message
 static jmp_buf LONGJMP_ENV;  // for setjmp & longjmp
-static int charidx;          // used by `isname` & its caller
+static int charidx;          // used by `is_name` & its caller
 
 /*
  * `seek_if` and `parse_if` being the
