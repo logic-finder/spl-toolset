@@ -677,10 +677,6 @@ static inline void parse_op_fact(tree_t *op) {
    parse_op_unary(op, msgs.err.syn.op.fact);
 }
 
-// fixme: dp를 파싱한 다음에 바로 이름을 합치기
-// 현재 typecheck.c에서 coalesce_name 하니까 isname에서 일일히 트리를 순회해야해서 불편함
-// ㄴㄴ 토큰스트림 단계에서는 이렇게 하는게 맞을듯 여러 이름이 토큰에 나뉘어져 있으니까
-
 // fixme: title 도 파싱한 다음에 바로 coalesce_title 해버리기 (typecheck.c에서 옮기기)
 // fixme: isname에서 archive_tokstate를 하는게 낫지않을까?
 //    아니면 archive_tokstate를 하지말고 내부에서 저장용 auto 변수를 하나 만들어놓는거임
