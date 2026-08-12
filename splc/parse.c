@@ -680,20 +680,34 @@ static inline void parse_op_fact(tree_t *op) {
 // fixme: isname에서 archive_tokstate를 하는게 낫지않을까?
 //    아니면 archive_tokstate를 하지말고 내부에서 저장용 auto 변수를 하나 만들어놓는거임
 static int isname(void) {
-   tree_t *dp, *character;
-   size_t i, k, dp_clen, char_clen;
+   /* DP
+         => CHAR
+            => Romeo
+         => CHAR
+            => The
+            => Ghost   */
+
+   tree_t *dp,  /* character list */
+          *ch;  /* character */
+   size_t dpsiz,  /* number of children of dp */
+          chsiz;  /* number of children of char */
+   node_t *ch_subnode;
 
    dp = tree_child(pt, 1);
-   dp_clen = tree_clen(dp);
+   dpsiz = tree_clen(dp);
 
-   for (i = 0; i < dp_clen; i++) {
-      character = tree_child(dp, i);
-      char_clen = tree_clen(character);
-      for (k = 0; k < char_clen; k++) {
-         if (strcmp(TREE_CHDAT(character, k)->dat.s.run, tok->run)) {
+   for (size_t i = 0; i < dpsiz; i++) {
+      ch = tree_child(dp, i);
+      chsiz = tree_clen(ch);
+
+      for (size_t k = 0; k < chsiz; k++) {
+         ch_subnode = tree_chdat(ch, k);
+
+         if (strcmp(ch_subnode->dat.s.run, tok->run)) {
             rewind_tokstate();
             goto next;
          }
+
          gettok();
       }
       charidx = i;
