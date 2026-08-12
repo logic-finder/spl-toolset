@@ -1488,16 +1488,20 @@ static void readtoks(char sentinel, tree_t *base) {
 }
 
 static void readtoks_until(char *scanset, tree_t *t) {
+   size_t i = 0;
+
    for (;;) {
       nexttok();
 
-      while (*scanset != '\0') {
-         if (tok->run[0] == *scanset++) {
+      while (scanset[i] != '\0') {
+         if (tok->run[0] == scanset[i]) {
             return;
          }
+         i++;
       }
 
       graft_tree_s(t, tok->run, tok->len, NODEKIND_DATA);
+      i = 0;
    }
 }
 
