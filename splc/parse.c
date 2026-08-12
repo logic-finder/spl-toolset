@@ -750,7 +750,13 @@ static int seek_line(void) {
 }
 
 static void parse_line(void) {
-   // fixme: ':' 검사 어디갔지?
+   reason = msgs.err.syn.line.incomp;
+   gettok();
+
+   if (tok->run[0] != ':') {
+      reason = "a colon expected after a character name to construct a line";
+      synerr();
+   }
 
    // Make nodes (charidx has been updated by is_name() in seek_line)
    line = graft_tree_n(scene, 0, NODEKIND_LINE);
