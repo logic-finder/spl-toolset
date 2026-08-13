@@ -794,18 +794,25 @@ static void parse_line(void) {
 }
 
 static int parse_line_as_conseq(void) {
-   /*
-    * Since it is a consequent, I think we should
-    * rule out 'seek_if' and 'parse_if'.
-    */
+   const stmthandler_t *table = stmts;
+   size_t tsiz = stmts_len;
+
+   reason = msgs.err.syn.ifstmt.conseq_incomp;
    gettok();
+
    archive_tokstate();
 
    if (isupper(tok->run[0]))
-      return 2;
+      return 2; // fixme: 여기서 그냥 오류 처리하기
    else
    if (islower(tok->run[0]))
       tok->run[0] = toupper(tok->run[0]);
+
+   /* 'if' statement can't have an 'if' statement as a consequent */
+   if (1) {
+      table = stmts + 1;
+      tsiz = stmts_len - 1;
+   }
 
    return parse_line_router(stmts, stmts_len);
 }
@@ -1368,7 +1375,6 @@ static void parse_if(void) {
    consequent = graft_tree_n(ifstmt, 0, NODEKIND_CONSEQ);
    tline = line;
    line = consequent;
-   reason = msgs.err.syn.ifstmt.conseq_incomp;
    ret = parse_line_as_conseq();
    line = tline;
 
