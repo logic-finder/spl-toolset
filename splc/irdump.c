@@ -118,6 +118,7 @@ static void handle_setlike(tree_t *t) {
    if (debug) emit_debug_data(n);
 
    switch (p2->kind) {
+      // fixme: 별도 함수로 빼고 return하기
       case IrnodekindPerson : goto person;
       case IrnodekindVar    : goto var;
       case IrnodekindConst  : goto cnst;
