@@ -814,7 +814,7 @@ static int parse_line_as_conseq(void) {
       tsiz = stmts_len - 1;
    }
 
-   return parse_line_router(stmts, stmts_len);
+   return parse_line_router(table, tsiz);
 }
 
 static int parse_line_router(
