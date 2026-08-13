@@ -758,30 +758,33 @@ static void parse_line(void) {
       synerr();
    }
 
-   // Make nodes (charidx has been updated by is_name() in seek_line)
+   /* Note. charidx has been updated by is_name() in seek_line() */
    line = graft_tree_n(scene, 0, NODEKIND_LINE);
    (void) graft_tree_n(line, charidx, NODEKIND_CHAR);
 
-   // Handle the first statement
+   /* Handles the first statement */
    reason = msgs.err.syn.line.incomp;
    gettok();
+
    archive_tokstate();
+
    if (parse_line_router(stmts, stmts_len)) {
       reason = msgs.err.syn.line.nostmt;
       synerr();
    }
 
-   // Handle the rest
+   /* Handles the rest */
    for (;;) {
       if (idx == len - 1)
          JUMP(NODEKIND__FINALE);
-      /*
-       * if this token is the beginning of another line,
-       * then longjmp happens inside `seek_stmt_router`.
-       */
+
+      /* if this token is the beginning of another line,
+         then longjmp happens inside `seek_stmt_router` */
       reason = msgs.err.syn.eot;
       gettok();
+
       archive_tokstate();
+
       seek_stmt_router();
       if (parse_line_router(stmts, stmts_len)) {
          reason = msgs.err.syn.line.nostmt;
