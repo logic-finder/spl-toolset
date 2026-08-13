@@ -690,15 +690,13 @@ static bool is_name(void) {
 
    /* Since backtracking can happen, we need to save the
       current parsing state */
-   size_t orig_idx;
+   const size_t orig_idx = idx;
 
    /* We assume that all names are unique, i.e. there is
       no overlap like "the Romeo" and "the Romeo Rome" */
 
    dp = tree_child(pt, 1);
    dpsiz = tree_clen(dp);
-
-   orig_idx = idx;
    reason = "incomplete name";
 
    for (i = 0; i < dpsiz; i++) {
