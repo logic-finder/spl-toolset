@@ -706,8 +706,7 @@ static bool is_name(void) {
       for (k = 0; k < chsiz; k++) {
          ch_subnode = tree_chdat(ch, k);
          if (strcmp(ch_subnode->dat.s.run, tok->run)) {
-            idx = orig_idx;  /* backtrack */
-            tok = array_peek(toks, idx);
+            rewind_tokstate(orig_idx);
             break;
          }
          gettok();
@@ -827,8 +826,7 @@ static bool parse_line_router(const stmthandler_t *table, size_t tsiz) {
          (*handler->parse)();
          break;
       }
-      idx = orig_idx;  /* backtrack */
-      tok = array_peek(toks, idx);
+      rewind_tokstate(orig_idx);
    }
 
    return (i == tsiz) ? 1 : 0;
@@ -961,8 +959,7 @@ static void seek_stmt_router(void) {
       if ((*jp->seek)()) {
          JUMP(jp->retval);
       }
-      idx = orig_idx;  /* backtrack */
-      tok = array_peek(toks, idx);
+      rewind_tokstate(orig_idx);
    }
 }
 
@@ -1519,8 +1516,8 @@ static inline void archive_tokstate(void) {
 }
 
 // fixme: 제거?
-static inline void rewind_tokstate(void) {
-   idx = tidx;
+static inline void rewind_tokstate(size_t orig_idx) {
+   idx = orig_idx;
    tok = array_peek(toks, idx);
 }
 
