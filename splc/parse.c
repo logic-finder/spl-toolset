@@ -885,9 +885,12 @@ static bool is_be_conjs(const char *str) {
       "am", "are", "art", "is", "be", NULL
    };
 
-   for (size_t i = 0; conjugations[i]; i++)
-      if (!strcmp(str, conjugations[i]))
+   for (size_t i = 0; conjugations[i]; i++) {
+      if (!strcmp(str, conjugations[i])) {
          return true;
+      }
+   }
+
    return false;
 }
 
