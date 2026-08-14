@@ -880,13 +880,13 @@ static void parse_asgn(void) {
    synerr();
 }
 
-static bool is_be_conjs(const char *str) {
-   static const char *conjugations[] = {
+static bool is_be_conjs(const char *str) {  /* conjs = conjugations */
+   static const char *conjs[] = {
       "am", "are", "art", "is", "be", NULL
    };
 
-   for (size_t i = 0; conjugations[i]; i++) {
-      if (!strcmp(str, conjugations[i])) {
+   for (size_t i = 0; conjs[i]; i++) {
+      if (!strcmp(str, conjs[i])) {
          return true;
       }
    }
