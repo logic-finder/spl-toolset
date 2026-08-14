@@ -130,7 +130,6 @@ static void nexttok(void);
 /* Utils */
 static bool is_name(void);
 static bool is_name_lower(void);
-static inline void archive_tokstate(void);
 static inline void rewind_tokstate(size_t orig_idx);
 
 /* Error Handling */

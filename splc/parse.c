@@ -1510,12 +1510,6 @@ static void readtoks_until(char *scanset, tree_t *t) {
    }
 }
 
-// fixme: 제거?
-static inline void archive_tokstate(void) {
-   tidx = idx;
-}
-
-// fixme: 제거?
 static inline void rewind_tokstate(size_t orig_idx) {
    idx = orig_idx;
    tok = array_peek(toks, idx);
