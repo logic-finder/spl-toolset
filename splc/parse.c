@@ -764,8 +764,6 @@ static void parse_line(void) {
    reason = msgs.err.syn.line.incomp;
    gettok();
 
-   archive_tokstate();
-
    if (parse_line_router(stmts, stmts_len)) {
       reason = msgs.err.syn.line.nostmt;
       synerr();
@@ -780,8 +778,6 @@ static void parse_line(void) {
          then longjmp happens inside `seek_stmt_router` */
       reason = msgs.err.syn.eot;
       gettok();
-
-      archive_tokstate();
 
       seek_stmt_router();
       if (parse_line_router(stmts, stmts_len)) {
@@ -798,8 +794,6 @@ static int parse_line_as_conseq(void) {
    reason = msgs.err.syn.ifstmt.conseq_incomp;
    gettok();
 
-   archive_tokstate();
-
    if (isupper(tok->run[0]))
       return 2; // fixme: 여기서 그냥 오류 처리하기
    else
@@ -815,12 +809,14 @@ static int parse_line_as_conseq(void) {
    return parse_line_router(table, tsiz);
 }
 
-static int parse_line_router(
-   const stmthandler_t stmts[8],
-   int stmts_len
-) {
+// fixme: 반환형 bool로
+static int parse_line_router(const stmthandler_t *table, size_t tsiz) {
    const stmthandler_t *stmt;
    int i;
+
+   /* Since backtracking can happen, we need to save the
+      current parsing state */
+   const size_t orig_idx = idx;
 
    for (i = 0; i < stmts_len; i++) {
       stmt = stmts + i;
@@ -828,7 +824,8 @@ static int parse_line_router(
          (*stmt->parse)();
          break;
       }
-      rewind_tokstate();
+      idx = orig_idx;
+      tok = array_peek(toks, idx);  /* backtrack */
    }
 
    return i == stmts_len ? 1 : 0;

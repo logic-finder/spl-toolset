@@ -65,10 +65,7 @@ static void parse_const(tree_t *stmt);
 static void parse_cond_eq(tree_t *cond);
 static void parse_cond_ineq(tree_t *cond);
 static void parse_op(tree_t *stmt, nodekind_t kind);
-static int parse_line_router(
-   const stmthandler_t stmts[8],
-   int stmts_len
-);
+static int parse_line_router(const stmthandler_t *table, size_t tsiz);
 static parser_t parse_title;
 static parser_t parse_dp;
 static parser_t parse_act;
@@ -203,7 +200,7 @@ static const stmthandler_t stmts[] = {
    { seek_push , parse_push },
    { seek_pop  , parse_pop  }
 };
-static const int stmts_len = ARRLEN(stmts);
+static const size_t stmts_len = ARRLEN(stmts);
 
 /* These are used in `seek_cond` and `parse_cond` only. */
 static const char *cond_verbs[] = {
