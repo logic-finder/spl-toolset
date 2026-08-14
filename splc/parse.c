@@ -706,8 +706,8 @@ static bool is_name(void) {
       for (k = 0; k < chsiz; k++) {
          ch_subnode = tree_chdat(ch, k);
          if (strcmp(ch_subnode->dat.s.run, tok->run)) {
-            idx = orig_idx;
-            tok = array_peek(toks, idx);  /* bracktrack */
+            idx = orig_idx;  /* backtrack */
+            tok = array_peek(toks, idx);
             break;
          }
          gettok();
