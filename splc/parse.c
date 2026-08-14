@@ -996,23 +996,22 @@ static int parse_stmt(void) {
 }
 
 static int seek_out(void) {
-   /*
-    * Need to check the third token so as to
-    * differentiate it from the input statement
-    * "Open your mind".
-    */
+   /* Open your heart! */
    if (!strcmp(tok->run, KEYWRD_OPEN)) {
       gettokn(2);
-      if (strcmp(tok->run, KEYWRD_HEART))
+      if (strcmp(tok->run, KEYWRD_HEART)) {
          return 0;
+      }
       ungettokn(2);
       return 1;
    }
-   else
-   if (!strcmp(tok->run, KEYWRD_SPEAK))
+
+   /* Speak your mind! */
+   if (!strcmp(tok->run, KEYWRD_SPEAK)) {
       return 1;
-   else
-      return 0;
+   }
+
+   return 0;
 }
 
 static void parse_out(void) {
