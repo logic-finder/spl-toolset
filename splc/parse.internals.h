@@ -166,8 +166,7 @@ static token_t
    *etok;   // used in `tell()` for printing an error
 static int
    len,     // toks.length
-   idx,     // current index in toks
-   tidx;    // temp. var. for idx
+   idx;     // current index in toks
 
 /* Parse Tree */
 extern tree_t
