@@ -186,12 +186,10 @@ static const char *reason;   // error message
 static jmp_buf LONGJMP_ENV;  // for setjmp & longjmp
 static int charidx;          // used by `is_name` & its caller
 
-/* { seek_if, parse_if } being the first element
-   is intentional; refer to `parse_line_as_conseq()` */
 static const stmthandler_t stmt_hdlrs[] = {
-   { seek_if   , parse_if   },
+   { seek_if   , parse_if   },  /* MUST be 1st! see `parse_line_as_conseq` */
    { seek_asgn , parse_asgn },
-   { seek_out  , parse_out  },
+   { seek_out  , parse_out  },  /* MUST be prior to {in}! see `seek_in` */
    { seek_in   , parse_in   },
    { seek_goto , parse_goto },
    { seek_cond , parse_cond },
