@@ -65,11 +65,12 @@ static void parse_dp(void) {
       reason = msgs.err.syn.dp.incomp;
       gettok();
       reason = msgs.err.syn.dp.noname;
-      eqtok(',');
+      eqtok(',');  // fixme: 삭제하고 char의 clen이 0인지 검사
       character = graft_tree_n(dp, 0, NODEKIND_CHDECL);
       ungettok();
       reason = msgs.err.syn.dp.chardecl_incomp;
       readtoks(',', character);
+      // fixme: 셰익스피어 이름인지 검사 if (1)
       reason = msgs.err.syn.dp.desc_incomp;
       skiptoks2(".!?");
       reason = msgs.err.syn.dp.nonext;
@@ -972,18 +973,24 @@ static void seek_stmt_router(void) {
 static int parse_stmt(void) {
    int ret;
 
+   /* seek_stmt proceeds to either
+         - seek_stmt_router => longjmp
+         - longjmp with NODEKIND__FINALE
+
+      parse_line => seek_stmt_router => longjmp */
+
    ret = setjmp(LONGJMP_ENV);
    switch (ret) {
       case NODEKIND_ENTER  : parse_enter (); break;
       case NODEKIND_EXIT   : parse_exit  (); break;
       case NODEKIND_EXEUNT : parse_exeunt(); break;
-      case NODEKIND_LINE   : parse_line  (); break; /* seek_stmt */
+      case NODEKIND_LINE   : parse_line  (); break;
       case NODEKIND_SCENE   : /* fall-through */
       case NODEKIND_ACT     : /* fall-through */
       case NODEKIND__FINALE : return ret;
       case NODEKIND__SETJMP : ; /* first setjmp call */
    }
-   seek_stmt(); /* longjmp */
+   seek_stmt();
 
    return 0;  /* control never reaches here */
 }
