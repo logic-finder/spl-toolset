@@ -780,6 +780,7 @@ static void parse_line(void) {
       gettok();
 
       seek_stmt_router();
+
       if (parse_line_router(stmts, stmts_len)) {
          reason = msgs.err.syn.line.nostmt;
          synerr();
@@ -921,13 +922,15 @@ static tree_t *parse_asgn_iii(token_t *you) {
 }
 
 static void seek_stmt(void) {
-   if (idx == len - 1)
+   if (idx == len - 1) {
       JUMP(NODEKIND__FINALE);
+   }
 
    reason = msgs.err.syn.eot;
    gettok();
-   archive_tokstate();
+
    seek_stmt_router();
+
    reason = msgs.err.syn.incomprehensible;
    synerr();
 }
@@ -946,14 +949,20 @@ static void seek_stmt_router(void) {
       { seek_act    , NODEKIND_ACT    },
       { seek_exeunt , NODEKIND_EXEUNT }
    };
-   static const int jps_len = ARRLEN(jps);
+   static const size_t jps_len = ARRLEN(jps);
    const jumper_t *jp;
 
-   for (int i = 0; i < jps_len; i++) {
-      jp = jps + i;
-      if ((*jp->seek)())
+   /* Since backtracking can happen, we need to save the
+      current parsing state */
+   const size_t orig_idx = idx;
+
+   for (size_t i = 0; i < jps_len; i++) {
+      jp = &jps[i];
+      if ((*jp->seek)()) {
          JUMP(jp->retval);
-      rewind_tokstate();
+      }
+      idx = orig_idx;  /* backtrack */
+      tok = array_peek(toks, idx);
    }
 }
 
@@ -1504,10 +1513,12 @@ static void readtoks_until(char *scanset, tree_t *t) {
    }
 }
 
+// fixme: 제거?
 static inline void archive_tokstate(void) {
    tidx = idx;
 }
 
+// fixme: 제거?
 static inline void rewind_tokstate(void) {
    idx = tidx;
    tok = array_peek(toks, idx);
