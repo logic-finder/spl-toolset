@@ -763,7 +763,7 @@ static void parse_line(void) {
    reason = msgs.err.syn.line.incomp;
    gettok();
 
-   if (parse_line_router(stmts, stmts_len)) {
+   if (parse_line_router(stmt_hdlrs, ARRLEN(stmt_hdlrs))) {
       reason = msgs.err.syn.line.nostmt;
       synerr();
    }
@@ -780,7 +780,7 @@ static void parse_line(void) {
 
       seek_stmt_router();
 
-      if (parse_line_router(stmts, stmts_len)) {
+      if (parse_line_router(stmt_hdlrs, ARRLEN(stmt_hdlrs))) {
          reason = msgs.err.syn.line.nostmt;
          synerr();
       }
@@ -788,8 +788,8 @@ static void parse_line(void) {
 }
 
 static bool parse_line_as_conseq(void) {
-   const stmthandler_t *table = stmts;
-   size_t tsiz = stmts_len;
+   const stmthandler_t *table = stmt_hdlrs;
+   size_t tsiz = ARRLEN(stmt_hdlrs);
 
    reason = msgs.err.syn.ifstmt.conseq_incomp;
    gettok();
@@ -805,8 +805,8 @@ static bool parse_line_as_conseq(void) {
 
    /* 'if' statement can't have an 'if' statement as a consequent */
    if (1) {
-      table = stmts + 1;
-      tsiz = stmts_len - 1;
+      table = &stmt_hdlrs[1];
+      tsiz--;
    }
 
    return parse_line_router(table, tsiz);
@@ -1046,7 +1046,7 @@ static int seek_in(void) {
    /*
     * This function utilizes the fact that `seek_out`
     * is executed first. Refer to `seek_stmt` and
-    * stmts[]. That is, it doesn't check the third
+    * stmt_hdlrs[]. That is, it doesn't check the third
     * token as in `seek_out`.
     */
    if (strcmp(tok->run, KEYWRD_LISTEN) && strcmp(tok->run, KEYWRD_OPEN))

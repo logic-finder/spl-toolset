@@ -186,9 +186,9 @@ static const char *reason;   // error message
 static jmp_buf LONGJMP_ENV;  // for setjmp & longjmp
 static int charidx;          // used by `is_name` & its caller
 
-/* `seek_if()` and `parse_if()` being the first element
+/* { seek_if, parse_if } being the first element
    is intentional; refer to `parse_line_as_conseq()` */
-static const stmthandler_t stmts[] = { // fixme: 이름변경
+static const stmthandler_t stmt_hdlrs[] = {
    { seek_if   , parse_if   },
    { seek_asgn , parse_asgn },
    { seek_out  , parse_out  },
@@ -198,7 +198,6 @@ static const stmthandler_t stmts[] = { // fixme: 이름변경
    { seek_push , parse_push },
    { seek_pop  , parse_pop  }
 };
-static const size_t stmts_len = ARRLEN(stmts);
 
 /* These are used in `seek_cond` and `parse_cond` only. */
 static const char *cond_verbs[] = {
