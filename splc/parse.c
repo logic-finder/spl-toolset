@@ -833,9 +833,9 @@ static bool parse_line_router(const stmthandler_t *table, size_t tsiz) {
 }
 
 static int seek_asgn(void) {
-   if (strcmp(tok->run, KEYWRD_YOU)
-      && strcmp(tok->run, KEYWRD_THOU)
-   ) return 0;
+   if (strcmp(tok->run, KEYWRD_YOU) && strcmp(tok->run, KEYWRD_THOU)) {
+      return 0;
+   }
    return 1;
 }
 
