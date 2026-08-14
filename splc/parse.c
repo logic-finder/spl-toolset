@@ -857,8 +857,9 @@ static void parse_asgn(void) {
    if (is_be_conjs(tok->run)) {  /* type 2 or 3 */
       gettok();
 
-      if (!strcmp(tok->run, "as"))
+      if (!strcmp(tok->run, "as")) {
          asgn = parse_asgn_ii(you);  /* type 2 */
+      }
       else {
          ungettok();
          asgn = parse_asgn_iii(you);  /* type 3 */
@@ -871,8 +872,10 @@ static void parse_asgn(void) {
 
    parse_const(asgn);
 
-   if (strchr(".!", tok->run[0]))
+   if (strchr(".!", tok->run[0])) {
       return;
+   }
+
    reason = msgs.err.syn.asgn.invalid_end_symbol;
    synerr();
 }
