@@ -60,12 +60,12 @@ static seeker_t seek_pop;
 /* Parsers */
 static int parse_stmt(void);
 static void parse_namelist(tree_t *t);
-static int parse_line_as_conseq(void);
+static bool parse_line_as_conseq(void);
 static void parse_const(tree_t *stmt);
 static void parse_cond_eq(tree_t *cond);
 static void parse_cond_ineq(tree_t *cond);
 static void parse_op(tree_t *stmt, nodekind_t kind);
-static int parse_line_router(const stmthandler_t *table, size_t tsiz);
+static bool parse_line_router(const stmthandler_t *table, size_t tsiz);
 static parser_t parse_title;
 static parser_t parse_dp;
 static parser_t parse_act;
@@ -190,7 +190,7 @@ static int charidx;          // used by `is_name` & its caller
 
 /* `seek_if()` and `parse_if()` being the first element
    is intentional; refer to `parse_line_as_conseq()` */
-static const stmthandler_t stmts[] = {
+static const stmthandler_t stmts[] = { // fixme: 이름변경
    { seek_if   , parse_if   },
    { seek_asgn , parse_asgn },
    { seek_out  , parse_out  },

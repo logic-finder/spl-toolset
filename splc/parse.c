@@ -787,18 +787,21 @@ static void parse_line(void) {
    }
 }
 
-static int parse_line_as_conseq(void) {
+static bool parse_line_as_conseq(void) {
    const stmthandler_t *table = stmts;
    size_t tsiz = stmts_len;
 
    reason = msgs.err.syn.ifstmt.conseq_incomp;
    gettok();
 
-   if (isupper(tok->run[0]))
-      return 2; // fixme: 여기서 그냥 오류 처리하기
+   if (isupper(tok->run[0])) {
+      reason = msgs.err.syn.ifstmt.conseq_cap;
+      synerr();
+   }
    else
-   if (islower(tok->run[0]))
+   if (islower(tok->run[0])) {
       tok->run[0] = toupper(tok->run[0]);
+   }
 
    /* 'if' statement can't have an 'if' statement as a consequent */
    if (1) {
@@ -809,26 +812,25 @@ static int parse_line_as_conseq(void) {
    return parse_line_router(table, tsiz);
 }
 
-// fixme: 반환형 bool로
-static int parse_line_router(const stmthandler_t *table, size_t tsiz) {
-   const stmthandler_t *stmt;
-   int i;
+static bool parse_line_router(const stmthandler_t *table, size_t tsiz) {
+   const stmthandler_t *handler;
+   size_t i;
 
    /* Since backtracking can happen, we need to save the
       current parsing state */
    const size_t orig_idx = idx;
 
-   for (i = 0; i < stmts_len; i++) {
-      stmt = stmts + i;
-      if ((*stmt->seek)()) {
-         (*stmt->parse)();
+   for (i = 0; i < tsiz; i++) {
+      handler = &table[i];
+      if ((*handler->seek)()) {
+         (*handler->parse)();
          break;
       }
-      idx = orig_idx;
-      tok = array_peek(toks, idx);  /* backtrack */
+      idx = orig_idx;  /* backtrack */
+      tok = array_peek(toks, idx);
    }
 
-   return i == stmts_len ? 1 : 0;
+   return (i == tsiz) ? 1 : 0;
 }
 
 static int seek_asgn(void) {
@@ -1344,7 +1346,6 @@ static int seek_if(void) {
 
 static void parse_if(void) {
    tree_t *ifstmt, *consequent, *tline;
-   int ret;
 
    ifstmt = graft_tree_n(line, 0, NODEKIND_IF);
 
@@ -1370,19 +1371,13 @@ static void parse_if(void) {
    consequent = graft_tree_n(ifstmt, 0, NODEKIND_CONSEQ);
    tline = line;
    line = consequent;
-   ret = parse_line_as_conseq();
-   line = tline;
 
-   switch (ret) {
-      case 0 : return;
-      case 1 :
-         reason = msgs.err.syn.ifstmt.bad_conseq;
-         goto error;
-      case 2 :
-         reason = msgs.err.syn.ifstmt.conseq_cap;
-         goto error;
-      error : synerr();
+   if (parse_line_as_conseq()) {
+      reason = msgs.err.syn.ifstmt.bad_conseq;
+      synerr();
    }
+
+   line = tline;
 }
 
 static int seek_push(void) {
