@@ -1041,8 +1041,8 @@ static void parse_out(void) {
 
    gettok();
 
-   test2 = (kind == NODEKIND_OUT_N) && (!strcmp(tok->run, KEYWRD_HEART));
-   test3 = (kind == NODEKIND_OUT_C) && (!strcmp(tok->run, KEYWRD_MIND));
+   test2 = (kind == NODEKIND_OUT_N) && (!strcmp(tok->run, KEYWRD_MIND));
+   test3 = (kind == NODEKIND_OUT_C) && (!strcmp(tok->run, KEYWRD_HEART));
 
    if (test2 || test3) {
       reason = msgs.err.syn.out.unmatched;
