@@ -1058,16 +1058,13 @@ static void parse_out(void) {
 }
 
 static int seek_in(void) {
-   /*
-    * This function utilizes the fact that `seek_out`
-    * is executed first. Refer to `seek_stmt` and
-    * stmt_hdlrs[]. That is, it doesn't check the third
-    * token as in `seek_out`.
-    */
-   if (strcmp(tok->run, KEYWRD_LISTEN) && strcmp(tok->run, KEYWRD_OPEN))
+   /* Utilizes the fact that seek_out() is checked first in stmt_hdlrs[] */
+   if (strcmp(tok->run, KEYWRD_LISTEN) && strcmp(tok->run, KEYWRD_OPEN)) {
       return 0;
-   else
+   }
+   else {
       return 1;
+   }
 }
 
 static void parse_in(void) {
