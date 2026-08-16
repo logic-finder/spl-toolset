@@ -1130,8 +1130,9 @@ static void parse_in(void) {
 }
 
 static int seek_goto(void) {
-   if (strcmp(tok->run, KEYWRD_LET) && strcmp(tok->run, KEYWRD_WE))
+   if (strcmp(tok->run, KEYWRD_LET) && strcmp(tok->run, KEYWRD_WE)) {
       return 0;
+   }
    return 1;
 }
 
