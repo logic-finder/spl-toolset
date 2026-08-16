@@ -1032,6 +1032,7 @@ static void parse_out(void) {
 
    test1 = !strcmp(tok->run, KEYWRD_YOUR)
       || !strcmp(tok->run, KEYWRD_YOUR_U)
+      || !strcmp(tok->run, "thine")
       || !strcmp(tok->run, KEYWRD_THY);
 
    if (!test1) {
@@ -1101,7 +1102,9 @@ static void parse_in(void) {
    gettok();
 
    test1 = !strcmp(tok->run, KEYWRD_YOUR)
-      || !strcmp(tok->run, KEYWRD_YOUR_U);
+      || !strcmp(tok->run, KEYWRD_YOUR_U)
+      || !strcmp(tok->run, "thine")
+      || !strcmp(tok->run, "thy");
 
    if (!test1) {
       reason = msgs.err.syn.in.badsyn;
