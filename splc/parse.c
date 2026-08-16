@@ -1137,59 +1137,73 @@ static int seek_goto(void) {
 }
 
 static void parse_goto(void) {
+   enum { GototypeLet, GototypeWe } type;
+   nodekind_t dest;
+   bool test1, test2, test3, test4;
    tree_t *gt;
-   int type, mark;
-   bool cond1, cond2;
 
-   if (!strcmp(tok->run, KEYWRD_LET))
-      type = 1;
-   else  /* we */
-      type = 2;
+   if (!strcmp(tok->run, KEYWRD_LET)) {
+      type = GototypeLet;
+   }
+   else {  /* we */
+      type = GototypeWe;
+   }
 
    reason = msgs.err.syn.gt.incomp;
    gettok();
-   cond1 = !strcmp(tok->run, KEYWRD_US);
-   cond2 = !strcmp(tok->run, KEYWRD_SHALL)
+
+   test1 = !strcmp(tok->run, KEYWRD_US);
+   test2 = !strcmp(tok->run, KEYWRD_SHALL)
            || !strcmp(tok->run, KEYWRD_MUST);
 
-   if (!cond1 && !cond2) {
+   if (!test1 && !test2) {
       reason = msgs.err.syn.gt.badsyn;
       synerr();
    }
-   if ((type == 1 && cond2) || (type == 2 && cond1)) {
+
+   test1 = (type == GototypeWe) && test1;
+   test2 = (type == GototypeLet) && test2;
+
+   if (test1 || test2) {
       reason = msgs.err.syn.gt.unmatched;
       synerr();
    }
 
    gettok();
-   cond1 = strcmp(tok->run, KEYWRD_RETURN);
-   cond2 = strcmp(tok->run, KEYWRD_PROCED);
 
-   if (cond1 && cond2) {
+   test3 = strcmp(tok->run, KEYWRD_RETURN);
+   test4 = strcmp(tok->run, KEYWRD_PROCED);
+
+   if (test3 && test4) {
       reason = msgs.err.syn.gt.badsyn;
       synerr();
    }
 
    gettok();
+
    if (strcmp(tok->run, KEYWRD_TO)) {
       reason = msgs.err.syn.gt.badsyn;
       synerr();
    }
 
    gettok();
-   if (!strcmp(tok->run, KEYWRD_ACT_L))
-      mark = NODEKIND_ACT;
+
+   if (!strcmp(tok->run, KEYWRD_ACT_L)) {
+      dest = NODEKIND_ACT;
+   }
    else
-   if (!strcmp(tok->run, KEYWRD_SCENE_L))
-      mark = NODEKIND_SCENE;
+   if (!strcmp(tok->run, KEYWRD_SCENE_L)) {
+      dest = NODEKIND_SCENE;
+   }
    else {
       reason = msgs.err.syn.gt.badsyn;
       synerr();
    }
 
-   gt = graft_tree_n(line, mark, NODEKIND_GOTO);
+   gt = graft_tree_n(line, dest, NODEKIND_GOTO);
 
    gettok();
+
    if (tok->kind == TOKKIND_PNT) {
       reason = msgs.err.syn.gt.badsyn;
       synerr();
@@ -1199,6 +1213,7 @@ static void parse_goto(void) {
    (void) graft_tree_s(gt, tok->run, tok->len, NODEKIND_ROMNUM);
 
    gettok();
+
    if (!match(tok->run[0], ".!")) {
       reason = msgs.err.syn.gt.badsyn;
       synerr();
