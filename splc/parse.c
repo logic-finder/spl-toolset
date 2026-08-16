@@ -1058,13 +1058,22 @@ static void parse_out(void) {
 }
 
 static int seek_in(void) {
-   /* Utilizes the fact that seek_out() is checked first in stmt_hdlrs[] */
-   if (strcmp(tok->run, KEYWRD_LISTEN) && strcmp(tok->run, KEYWRD_OPEN)) {
-      return 0;
-   }
-   else {
+   /* Listen to your heart! */
+   if (!strcmp(tok->run, "Listen")) {
       return 1;
    }
+
+   /* Open your mind! */
+   if (!strcmp(tok->run, "Open")) {
+      gettokn(2);  /* skips "your" */
+      if (strcmp(tok->run, "mind")) {
+         return 0;
+      }
+      ungettokn(2);
+      return 1;
+   }
+
+   return 0;
 }
 
 static void parse_in(void) {

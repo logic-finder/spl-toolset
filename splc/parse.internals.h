@@ -189,7 +189,7 @@ static int charidx;          // used by `is_name` & its caller
 static const stmthandler_t stmt_hdlrs[] = {
    { seek_if   , parse_if   },  /* MUST be 1st! see `parse_line_as_conseq` */
    { seek_asgn , parse_asgn },
-   { seek_out  , parse_out  },  /* MUST be prior to {in}! see `seek_in` */
+   { seek_out  , parse_out  },
    { seek_in   , parse_in   },
    { seek_goto , parse_goto },
    { seek_cond , parse_cond },
