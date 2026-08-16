@@ -1194,6 +1194,7 @@ static void parse_goto(void) {
       synerr();
    }
 
+   // fixme: 로마숫자인지 검사
    (void) graft_tree_s(gt, tok->run, tok->len, NODEKIND_ROMNUM);
 
    gettok();
