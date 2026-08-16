@@ -1077,20 +1077,20 @@ static int seek_in(void) {
 }
 
 static void parse_in(void) {
-   token_t *prev;
    nodekind_t kind;
-   bool mcond, lcond1, lcond2;
-   int type;
+   bool test1, test2, test3;
 
-   if (!strcmp(tok->run, KEYWRD_LISTEN))
-      type = 1, kind = NODEKIND_IN_N;
-   else  /* Open */
-      type = 2, kind = NODEKIND_IN_C;
+   if (!strcmp(tok->run, KEYWRD_LISTEN)) {
+      kind = NODEKIND_IN_N;
+   }
+   else  { /* Open */
+      kind = NODEKIND_IN_C;
+   }
 
-   reason = msgs.err.syn.in.incomp;
    (void) graft_tree_n(line, 0, kind);
+   reason = msgs.err.syn.in.incomp;
 
-   if (type == 1) {
+   if (kind == NODEKIND_IN_N) {
       gettok();
       if (strcmp(tok->run, KEYWRD_TO)) {
          reason = msgs.err.syn.in.badsyn;
@@ -1099,24 +1099,27 @@ static void parse_in(void) {
    }
 
    gettok();
-   prev = tok;
-   gettok();
 
-   mcond = !strcmp(prev->run, KEYWRD_YOUR)
-           || !strcmp(prev->run, KEYWRD_YOUR_U);
-   lcond1 = !strcmp(tok->run, KEYWRD_HEART);
-   lcond2 = !strcmp(tok->run, KEYWRD_MIND);
+   test1 = !strcmp(tok->run, KEYWRD_YOUR)
+      || !strcmp(tok->run, KEYWRD_YOUR_U);
 
-   if (!mcond) {
+   if (!test1) {
       reason = msgs.err.syn.in.badsyn;
       synerr();
    }
-   if ((type == 1 && lcond2) || (type == 2 && lcond1)) {
+
+   gettok();
+
+   test2 = (kind == NODEKIND_OUT_N) && (!strcmp(tok->run, KEYWRD_MIND));
+   test3 = (kind == NODEKIND_OUT_C) && (!strcmp(tok->run, KEYWRD_HEART));
+
+   if (test2 || test3) {
       reason = msgs.err.syn.in.unmatched;
       synerr();
    }
 
    gettok();
+
    if (!match(tok->run[0], ".!")) {
       reason = msgs.err.syn.in.badsyn;
       synerr();
