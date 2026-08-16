@@ -996,6 +996,11 @@ static int parse_stmt(void) {
 }
 
 static int seek_out(void) {
+   /* Speak your mind! */
+   if (!strcmp(tok->run, KEYWRD_SPEAK)) {
+      return 1;
+   }
+
    /* Open your heart! */
    if (!strcmp(tok->run, KEYWRD_OPEN)) {
       gettokn(2);
@@ -1003,11 +1008,6 @@ static int seek_out(void) {
          return 0;
       }
       ungettokn(2);
-      return 1;
-   }
-
-   /* Speak your mind! */
-   if (!strcmp(tok->run, KEYWRD_SPEAK)) {
       return 1;
    }
 
