@@ -1003,7 +1003,7 @@ static int seek_out(void) {
 
    /* Open your heart! */
    if (!strcmp(tok->run, KEYWRD_OPEN)) {
-      gettokn(2);
+      gettokn(2);  /* skips "your" */
       if (strcmp(tok->run, KEYWRD_HEART)) {
          return 0;
       }
