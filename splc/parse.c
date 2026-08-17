@@ -1222,10 +1222,12 @@ static void parse_goto(void) {
 
 static int seek_cond(void) {
    vtype = match_str(tok->run, cond_verbs, cond_verbs_len);
-   if (vtype == cond_verbs_len)
+
+   if (vtype == cond_verbs_len) {
       return 0;
-   else
-      return 1;
+   }
+
+   return 1;
 }
 
 static void parse_cond(void) {
