@@ -1447,10 +1447,12 @@ static void parse_push(void) {
 
    reason = msgs.err.syn.push.incomp;
    gettok();
+
    if (tok->kind == TOKKIND_PNT) {
       reason = msgs.err.syn.push.badsyn;
       synerr();
    }
+
    ungettok();
 
    parse_const(push);
