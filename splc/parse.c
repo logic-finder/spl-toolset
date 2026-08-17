@@ -1403,23 +1403,27 @@ static void parse_if(void) {
 
    reason = msgs.err.syn.ifstmt.incomp;
    gettok();
-   if (!strcmp(tok->run, KEYWRD_SO))
+
+   if (!strcmp(tok->run, KEYWRD_SO)) {
       (void) graft_tree_n(ifstmt, 0, NODEKIND_AFFIRM);
+   }
    else
-   if (!strcmp(tok->run, KEYWRD_NOT))
+   if (!strcmp(tok->run, KEYWRD_NOT)) {
       (void) graft_tree_n(ifstmt, 0, NODEKIND_NEGATE);
+   }
    else {
       reason = msgs.err.syn.ifstmt.badsyn;
       synerr();
    }
 
    gettok();
+
    if (tok->run[0] != ',') {
       reason = msgs.err.syn.ifstmt.badsyn;
       synerr();
    }
 
-   // Parse the consequent
+   /* Parses the consequent */
    consequent = graft_tree_n(ifstmt, 0, NODEKIND_CONSEQ);
    tline = line;
    line = consequent;
