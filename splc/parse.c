@@ -883,7 +883,7 @@ static void parse_asgn(void) {
 
 static bool is_be_conjs(const char *str) {  /* conjs = conjugations */
    static const char *conjs[] = {
-      "am", "are", "art", "is", "be", NULL
+      "am", "are", "art", "is", "be"
    };
    static const size_t conjs_len = ARRLEN(conjs);
 
