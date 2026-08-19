@@ -198,7 +198,6 @@ static const stmthandler_t stmt_hdlrs[] = {
    { seek_pop  , parse_pop  }
 };
 
-/* These are used in `seek_cond` and `parse_cond` only. */
-static int vtype;
+static size_t vtype;  /* be verb conjugation type */
 
 #endif
