@@ -885,10 +885,11 @@ static bool is_be_conjs(const char *str) {  /* conjs = conjugations */
    static const char *conjs[] = {
       "am", "are", "art", "is", "be", NULL
    };
+   static const size_t conjs_len = ARRLEN(conjs);
 
-   vtype = match_str(str, conjs, 5);
+   vtype = match_str(str, conjs, conjs_len);
 
-   return (vtype < 5) ? true : false;
+   return (vtype < conjs_len) ? true : false;
 }
 
 static tree_t *parse_asgn_i(token_t *you) {
