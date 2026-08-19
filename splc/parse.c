@@ -1243,7 +1243,7 @@ static void parse_cond(void) {
       Is [a] tree not as good as a shiny tree? */
 
    if (0) {  // TODO: --pedantic
-      check_be_conj();
+      check_predicate();
    }
 
    if (vtype == 3) {
@@ -1302,7 +1302,7 @@ static void parse_cond(void) {
       Is a tree not as good as a shiny tree[?] */
 }
 
-static void check_be_conj(void) {
+static void check_predicate(void) {
    switch (vtype) {
       case 0 : if (strcmp(tok->run, KEYWRD_I))
                   goto hell; else break;

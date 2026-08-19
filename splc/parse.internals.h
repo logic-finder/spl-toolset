@@ -113,7 +113,7 @@ static bool is_be_conjs(const char *str);
 static nodekind_t what_pronoun(const char *str);
 static nodekind_t what_reflexive(const char *str);
 static void check_const_end(void);
-static void check_be_conj(void);
+static void check_predicate(void);
 
 /* Token Handling */
 static void gettok(void);
