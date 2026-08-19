@@ -1252,19 +1252,8 @@ static void parse_cond(void) {
       Art [thou] not more cunning than the Ghost?
       Is [a] tree not as good as a shiny tree? */
 
-   switch (vtype) {
-      case 0 : if (strcmp(tok->run, KEYWRD_I))
-                  goto hell; else break;
-      case 1 : if (strcmp(tok->run, KEYWRD_YOU_L))
-                  goto hell; else break;
-      case 2 : if (strcmp(tok->run, KEYWRD_THOU_L))
-                  goto hell; else break;
-      /* i.e. check if "Is (I, you, thou)" */
-      case 3 : if (match_str(tok->run, cond_subjs, cond_subjs_len) < cond_subjs_len)
-                  goto hell; else break;
-      hell : /* FLAMING HOT */
-         reason = msgs.err.syn.cond.not_conj;
-         synerr();
+   if (0) {  // TODO: --pedantic
+      check_be_conj();
    }
 
    if (vtype == 3) {
@@ -1321,6 +1310,23 @@ static void parse_cond(void) {
    /* Am I not better than yourself[?]
       Art thou not more cunning than the Ghost[?]
       Is a tree not as good as a shiny tree[?] */
+}
+
+static void check_be_conj(void) {
+   switch (vtype) {
+      case 0 : if (strcmp(tok->run, KEYWRD_I))
+                  goto hell; else break;
+      case 1 : if (strcmp(tok->run, KEYWRD_YOU_L))
+                  goto hell; else break;
+      case 2 : if (strcmp(tok->run, KEYWRD_THOU_L))
+                  goto hell; else break;
+      /* i.e. check if "Is (I, you, thou)" */
+      case 3 : if (match_str(tok->run, cond_subjs, cond_subjs_len) < cond_subjs_len)
+                  goto hell; else break;
+      hell : /* FLAMING HOT */
+         reason = msgs.err.syn.cond.not_conj;
+         synerr();
+   }
 }
 
 static void parse_cond_eq(tree_t *cond) {
