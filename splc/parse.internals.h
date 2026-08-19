@@ -104,16 +104,6 @@ static inline operator_t parse_op_squr;
 static inline operator_t parse_op_cube;
 static inline operator_t parse_op_2x;
 static inline operator_t parse_op_fact;
-static bool is_pronoun(const char *str);
-static bool is_reflexive(const char *str);
-static bool is_nil(const char *str);
-static bool is_article(const char *str);
-static bool is_possessive(const char *str);
-static bool is_be_conjs(const char *str);
-static nodekind_t what_pronoun(const char *str);
-static nodekind_t what_reflexive(const char *str);
-static void check_const_end(void);
-static void check_predicate(void);
 
 /* Token Handling */
 static void gettok(void);
@@ -132,6 +122,16 @@ static void nexttok(void);
 static bool is_name(void);
 static bool is_name_lower(void);
 static inline void rewind_tokstate(size_t orig_idx);
+static bool is_pronoun(const char *str);
+static bool is_reflexive(const char *str);
+static bool is_nil(const char *str);
+static bool is_article(const char *str);
+static bool is_possessive(const char *str);
+static bool is_be_conjs(const char *str);
+static nodekind_t what_pronoun(const char *str);
+static nodekind_t what_reflexive(const char *str);
+static void check_const_end(void);
+static void check_predicate(void);
 
 /* Error Handling */
 static inline void synerr(void);

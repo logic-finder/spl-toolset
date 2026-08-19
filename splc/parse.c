@@ -125,804 +125,6 @@ static void parse_scene(void) {
    skiptoks2(".!?");
 }
 
-static int seek_enterlike(const char *type) {
-   if (tok->run[0] != '[')
-      return 0;
-   gettok();
-   if (strcmp(tok->run, type))
-      return 0;
-   else
-      return 1;
-}
-
-static int seek_enter(void) {
-   return seek_enterlike(KEYWRD_ENTER);
-}
-
-static void parse_enter(void) {
-   tree_t *enter;
-
-   enter = graft_tree_n(scene, 0, NODEKIND_ENTER);
-   parse_namelist(enter);
-   if (tree_clen(enter))
-      return;
-   reason = msgs.err.syn.enter.nochar;
-   synerr();
-}
-
-static int seek_exit(void) {
-   return seek_enterlike(KEYWRD_EXIT);
-}
-
-static void parse_exit(void) {
-   tree_t *exit;
-
-   exit = graft_tree_n(scene, 0, NODEKIND_EXIT);
-   parse_namelist(exit);
-   switch (tree_clen(exit)) {
-      case 0  : reason = msgs.err.syn.exit.nochar; break;
-      case 1  : return;
-      default : reason = msgs.err.syn.exit.exceed;
-   }
-   synerr();
-}
-
-static int seek_exeunt(void) {
-   return seek_enterlike(KEYWRD_EXEUNT);
-}
-
-static void parse_exeunt(void) {
-   tree_t *exeunt;
-
-   exeunt = graft_tree_n(scene, 0, NODEKIND_EXEUNT);
-   parse_namelist(exeunt);
-   switch (tree_clen(exeunt)) {
-      case 0  : return;
-      case 1  : reason = msgs.err.syn.exeunt.onechar; break;
-      case 2  : return;
-      default : reason = msgs.err.syn.exeunt.exceed;
-   }
-   synerr();
-}
-
-static void parse_namelist(tree_t *t) {
-   /* Enter, Exit, and Exeunt takes a namelist:
-         (1) [<enterlike> A]
-         (2) [<enterlike> A and B]
-         (3) [<enterlike> A, B, and C] */
-
-   reason = "incomplete namelist";
-   gettok();
-   if (tok->run[0] == ']')
-         return;
-   ungettok();
-
-   /* Currently, tok->run points to <enterlike> */
-
-   /* Consumes tokens until "and" */
-   do {
-      reason = "incomplete namelist"; // fixme: remove this
-      gettok();
-      if (!is_name_lower()) {
-         reason = "dp expected here";
-         synerr();
-      }
-      graft_tree_n(t, charidx, NODEKIND_CHAR);
-      gettok();
-      if (tok->run[0] == ']')
-         return;
-      if (!strcmp(tok->run, "and"))
-         break;
-      if (tok->run[0] != ',') {
-         reason = ", expected here";
-         synerr();
-      }
-      gettok();
-      if (!strcmp(tok->run, "and"))
-         break;
-      ungettok();
-   } while (true);
-
-   /* Skips "and" and consumes the last name */
-   gettok();
-   if (!is_name_lower()) {
-      reason = "dp expected here";
-      synerr();
-   }
-   graft_tree_n(t, charidx, NODEKIND_CHAR);
-   gettok();
-   if (tok->run[0] != ']') {
-      reason = "] expected here";
-      synerr();
-   }
-}
-
-static void parse_const(tree_t *stmt) {
-   /* Before going further, let's recall where constants are used.
-
-      Note:
-         - <x> means x is optional.
-         - (x|y) means x or y must be present.
-         - "ap" means adjective phrase: "happy delightful nice".
-         - "np" means noun phrase: "summer's day", "stone wall".
-            - incidentally, a noun phrase is treated as a single noun!
-         - "art" means articles: "a", "an", or "the".
-         - "pos" means possessives: "my", "your", etc.
-         - "pronoun": "me", "you", etc.
-         - "ref" means reflexives: "myself", "yourself", etc.
-         - "comp" means comparatives: "better", "worse", etc
-
-      Constants can have one of the following forms:
-         TYPE A: <adj|ap> (noun|np)
-         TYPE B: (art|pos) <adj|ap> (noun|np)  // i.e. (art|pos) A
-         TYPE C: (pronoun|ref|name)
-         TYPE D: (nothing|zero)
-
-      1. Assignment Statements
-         You A(.|!)
-         You be as adj as (B|C|D)(.|!)
-         You be (B|C|D)(.|!)
-
-      2. Questions
-         Be (B|C|D) <not> as adj as (B|C|D)?
-         Be (B|C|D) <not> (comp|(<more|less> adj)) than (B|C|D)?
-
-      3. As Operands Of Operators
-         the factorial of (B|C|D)
-         the sum of (B|C|D) and (B|C|D)
-
-      4. Remember Statements
-         Remember (B|C|D)(.|!)
-
-      This remind shows us that TYPE A is only used in the
-      "YOU A" assignment statement. Also, the combination of
-      B, C, and D is widely used.
-
-      With that in mind, now let's begin parsing. */
-
-   tree_t *cnst;
-   nodekind_t kind;
-   int query_result;
-
-   /* Makes a tree that represents a constant node */
-   cnst = graft_tree_n(stmt, 0, NODEKIND_CONST);
-
-   reason = msgs.err.syn.cnst.incomp;
-   gettok();
-
-   /* First of all, we check whether this is an operator */
-   if ((kind = seek_op()) != NODEKIND__NAO) {
-      parse_op(cnst, kind);
-      return;
-   }
-
-   /* Checks whether this token is
-      a pronoun, a reflexive, a name, or a nil */
-   if (is_pronoun(tok->run)) {
-      graft_tree_s(cnst, tok->run, tok->len, what_pronoun(tok->run));
-      check_const_end();
-      return;
-   }
-   if (is_reflexive(tok->run)) {
-      graft_tree_s(cnst, tok->run, tok->len, what_reflexive(tok->run));
-      check_const_end();
-      return;
-   }
-   if (is_name_lower()) {
-      graft_tree_n(cnst, charidx, NODEKIND_CHAR);
-      check_const_end();
-      return;
-   }
-   if (is_nil(tok->run)) {
-      graft_tree_s(cnst, tok->run, tok->len, NODEKIND_ZERO);
-      check_const_end();
-      return;
-   }
-
-   /* If not, this token is either TYPE A or TYPE B. Meanwhile,
-      TYPE B = (art|pos) TYPE A. Let's exploit this structure */
-   if (is_article(tok->run) || is_possessive(tok->run)) {
-      reason = msgs.err.syn.cnst.incomp;
-      gettok();  /* skips the current token */
-      /* if the token had been of TYPE B, now it has become of TYPE A */
-   }
-
-   /* Now we need to process <adj|ap> (noun|np) */
-
-   /* Consumes adjectives first */
-   for (;;) {
-      if (!query_adj(tok->run))
-         break;
-      graft_tree_s(cnst, tok->run, tok->len, NODEKIND_ADJ);
-      gettok();
-   }
-
-   /* noun? */
-   if (query_noun(tok->run, &query_result)) {
-      kind = query_result ? NODEKIND_PNOUN : NODEKIND_NNOUN;
-      graft_tree_s(cnst, tok->run, tok->len, kind);
-   }
-   else {  /* noun phrase */
-      // TODO: refactor later!!
-      token_t *prev_tok;
-      char *buf;
-      size_t bufsiz;
-
-      prev_tok = tok;
-
-      reason = msgs.err.syn.cnst.incomp;
-      gettok();
-
-      bufsiz = prev_tok->len + tok->len;
-      buf = safe_malloc(bufsiz);
-      memcpy(buf, prev_tok->run, prev_tok->len);
-      buf[prev_tok->len - 1] = ' ';
-      memcpy(buf + prev_tok->len, tok->run, tok->len);
-
-      if(!query_noun(buf, &query_result)) {
-         ungettok();
-         reason = msgs.err.syn.cnst.no_noun;
-         synerr();
-      }
-
-      kind = query_result ? NODEKIND_PNOUN : NODEKIND_NNOUN;
-      graft_tree_s(cnst, buf, bufsiz, kind);
-   }
-
-   /* end of const */
-   check_const_end();
-}
-
-// TODO: refactor is_xxx: (1) use macro (2) use lowercase
-static bool is_pronoun(const char *str) {
-   static const char *pronouns[] = {
-      "I", "me", "thee", "thou", "you", NULL
-   };
-
-   for (size_t i = 0; pronouns[i]; i++)
-      if (!strcmp(str, pronouns[i]))
-         return true;
-   return false;
-}
-
-static bool is_reflexive(const char *str) {
-   static const char *reflexives[] = {
-      "myself", "thyself", "yourself", NULL
-   };
-
-   for (size_t i = 0; reflexives[i]; i++)
-      if (!strcmp(str, reflexives[i]))
-         return true;
-   return false;
-}
-
-static bool is_nil(const char *str) {
-   static const char *nils[] = {
-      "nothing", "zero", NULL
-   };
-
-   for (size_t i = 0; nils[i]; i++)
-      if (!strcmp(str, nils[i]))
-         return true;
-   return false;
-}
-
-static bool is_article(const char *str) {
-   static const char *articles[] = {
-      "a", "an", "the", NULL
-   };
-
-   for (size_t i = 0; articles[i]; i++)
-      if (!strcmp(str, articles[i]))
-         return true;
-   return false;
-}
-
-static bool is_possessive(const char *str) {
-   static const char *possessives[] = {
-      "mine", "my", "thine", "thy", "your", "his", "her", "its", "theirs", NULL
-   };
-
-   for (size_t i = 0; possessives[i]; i++)
-      if (!strcmp(str, possessives[i]))
-         return true;
-   return false;
-}
-
-static nodekind_t what_pronoun(const char *str) {
-   if (!strcmp(str, "I") || !strcmp(str, "me"))
-      return NODEKIND_P1;
-
-   if (!strcmp(str, "thee")
-      || !strcmp(str, "thou")
-      || !strcmp(str, "you"))
-      return NODEKIND_P2;
-
-   /* control never reaches here */
-   return NODEKIND__UNKNOWN;
-}
-
-static nodekind_t what_reflexive(const char *str) {
-   if (!strcmp(str, "myself"))
-      return NODEKIND_P1;
-
-   if (!strcmp(str, "thyself") || !strcmp(str, "yourself"))
-      return NODEKIND_P2;
-
-   /* control never reaches here */
-   return NODEKIND__UNKNOWN;
-}
-
-static void check_const_end(void) {
-   reason = msgs.err.syn.cnst.incomp;
-   gettok();
-
-   if (strchr(".!?", tok->run[0])
-      || !strcmp(tok->run, "not")
-      || !strcmp(tok->run, "as")
-      || !strcmp(tok->run, "more")
-      || !strcmp(tok->run, "less")
-      || !strcmp(tok->run, "and")
-      || query_comp(tok->run, NULL))
-      return;
-
-   reason = msgs.err.syn.cnst.no_end_symbol;
-   synerr();
-}
-
-static nodekind_t seek_op(void) {
-   typedef struct ophandler {
-      const char *name;
-      nodekind_t kind;
-   } ophandler_t;
-
-   static ophandler_t ops[] = {
-      { KEYWRD_SUM  , NODEKIND_SUM  },
-      { KEYWRD_DIFF , NODEKIND_DIFF },
-      { KEYWRD_PROD , NODEKIND_PROD },
-      { KEYWRD_QUOT , NODEKIND_QUOT },
-      { KEYWRD_REM  , NODEKIND_REM  },
-      { KEYWRD_SQUR , NODEKIND_SQUR },
-      { KEYWRD_CUBE , NODEKIND_CUBE },
-      { KEYWRD_FACT , NODEKIND_FACT }
-   };
-   static const size_t ops_len = ARRLEN(ops);
-
-   /* Note:
-      - except the twice operator,
-         every operator begins with "the"
-      - except the square root operator,
-         every operator is one word long */
-
-   nodekind_t k;
-
-   /* twice operator? */
-   if (!strcmp(tok->run, "twice"))
-      return NODEKIND_2X;
-
-   /* not begins with "the"? then it's not an operator */
-   if (strcmp(tok->run, "the"))
-      return NODEKIND__NAO;
-
-   reason = msgs.err.syn.cnst.incomp;
-   gettok();
-
-   k = NODEKIND__NAO;
-   for (size_t i = 0; i < ops_len; i++)
-      if (!strcmp(tok->run, ops[i].name)) {
-         k = ops[i].kind;
-         break;
-      }
-
-   /* no match! turns out it isn't an operator,
-      although it began with "the" */
-   if (k == NODEKIND__NAO) {
-      ungettok();
-      return k;
-   }
-
-   /* not a square or a square root operator */
-   if (k != NODEKIND_SQUR)
-      return k;
-
-   /* to be a square or to be a square root? that's the question */
-   gettok();
-   if (!strcmp(tok->run, KEYWRD_ROOT))
-      k = NODEKIND_SQRT;
-   else ungettok();
-
-   return k;
-}
-
-static void parse_op(tree_t *stmt, nodekind_t kind) {
-   tree_t *op;
-
-   op = graft_tree_n(stmt, 0, kind);
-   reason = msgs.err.syn.op.incomp;
-   switch (kind) {
-      case NODEKIND_SUM  : parse_op_sum (op); return;
-      case NODEKIND_DIFF : parse_op_diff(op); return;
-      case NODEKIND_PROD : parse_op_prod(op); return;
-      case NODEKIND_QUOT : parse_op_quot(op); return;
-      case NODEKIND_REM  : parse_op_rem (op); return;
-      case NODEKIND_SQRT : parse_op_sqrt(op); return;
-      case NODEKIND_SQUR : parse_op_squr(op); return;
-      case NODEKIND_CUBE : parse_op_cube(op); return;
-      case NODEKIND_2X   : parse_op_2x  (op); return;
-      case NODEKIND_FACT : parse_op_fact(op); return;
-      default: ;  /* control never reaches default */
-   }
-}
-
-static void parse_op_unary(
-   tree_t * restrict op,
-   const char * restrict err
-) {
-   /* Note. this function is a wrapper for the
-      square, square root, cube, and factorial.
-
-      Since the twice operator does not have the
-      same structure with other unary operators,
-      it doesn't use this wrapper. */
-
-   reason = msgs.err.syn.op.incomp;
-   gettok();
-
-   if (strcmp(tok->run, "of")) {
-      reason = err;
-      synerr();
-   }
-
-   parse_const(op);
-}
-
-static void parse_op_binary(
-   tree_t * restrict op,
-   const char * restrict type,
-   const char * restrict err
-) {
-   tree_t *lefthand, *righthand;
-
-   reason = msgs.err.syn.op.incomp;
-   gettok();
-
-   /* the sum OF L and R
-      the difference BETWEEN L and R
-      the product OF L and R
-      the quotient BETWEEN L and R
-      the remainder OF the quotient BETWEEN L and R */
-
-   if (strcmp(tok->run, type)) {
-      reason = err;
-      synerr();
-   }
-
-   lefthand = graft_tree_n(op, 0, NODEKIND_LHS);
-   parse_const(lefthand);
-
-   if (strcmp(tok->run, KEYWRD_AND)) {
-      reason = msgs.err.syn.op.no_and;
-      synerr();
-   }
-
-   righthand = graft_tree_n(op, 0, NODEKIND_RHS);
-   parse_const(righthand);
-}
-
-static inline void parse_op_sum(tree_t *op) {
-   parse_op_binary(op, KEYWRD_OF, msgs.err.syn.op.sum);
-}
-
-static inline void parse_op_diff(tree_t *op) {
-   parse_op_binary(op, KEYWRD_BTW, msgs.err.syn.op.diff);
-}
-
-static inline void parse_op_prod(tree_t *op) {
-   parse_op_binary(op, KEYWRD_OF, msgs.err.syn.op.prod);
-}
-
-static inline void parse_op_quot(tree_t *op) {
-   parse_op_binary(op, KEYWRD_BTW, msgs.err.syn.op.quot);
-}
-
-static inline void parse_op_rem(tree_t *op) {
-   /* the remainder of
-         the quotient between <const> and <const> */
-
-   reason = msgs.err.syn.op.incomp;
-   gettok();
-
-   if (strcmp(tok->run, KEYWRD_OF)) {
-      reason = msgs.err.syn.op.rem;
-      synerr();
-   }
-
-   gettok();
-
-   if (strcmp(tok->run, KEYWRD_THE)) {
-      reason = msgs.err.syn.op.rem_quot_1;
-      synerr();
-   }
-
-   gettok();
-
-   if (strcmp(tok->run, KEYWRD_QUOT)) {
-      reason = msgs.err.syn.op.rem_quot_2;
-      synerr();
-   }
-
-   parse_op_quot(op);
-}
-
-static inline void parse_op_sqrt(tree_t *op) {
-   parse_op_unary(op, msgs.err.syn.op.sqrt);
-}
-
-static inline void parse_op_squr(tree_t *op) {
-   parse_op_unary(op, msgs.err.syn.op.squr);
-}
-
-static inline void parse_op_cube(tree_t *op) {
-   parse_op_unary(op, msgs.err.syn.op.cube);
-}
-
-static inline void parse_op_2x(tree_t *op) {
-   parse_const(op);
-}
-
-static inline void parse_op_fact(tree_t *op) {
-   parse_op_unary(op, msgs.err.syn.op.fact);
-}
-
-static bool is_name(void) {
-   /* DP  (siz = 2)
-         => CHAR  (siz = 1)
-            => Romeo
-         => CHAR  (siz = 2)
-            => The
-            => Ghost   */
-
-   tree_t *dp,  /* character list */
-          *ch;  /* character */
-   size_t dpsiz,  /* number of children of dp */
-          chsiz;  /* number of children of char */
-   node_t *ch_subnode;
-   size_t i, k;
-
-   /* Since backtracking can happen, we need to save the
-      current parsing state */
-   const size_t orig_idx = idx;
-
-   /* We assume that all names are unique, i.e. there is
-      no overlap like "the Romeo" and "the Romeo Rome" */
-
-   dp = tree_child(pt, 1);
-   dpsiz = tree_clen(dp);
-   reason = "incomplete name";
-
-   for (i = 0; i < dpsiz; i++) {
-      ch = tree_child(dp, i);
-      chsiz = tree_clen(ch);
-
-      for (k = 0; k < chsiz; k++) {
-         ch_subnode = tree_chdat(ch, k);
-         if (strcmp(ch_subnode->dat.s.run, tok->run)) {
-            rewind_tokstate(orig_idx);
-            break;
-         }
-         gettok();
-      }
-
-      if (k == chsiz) {
-         ungettok();
-         charidx = i;
-         return true;
-      }
-   }
-
-   return false;
-}
-
-static bool is_name_lower(void) {
-   if (!strcmp(tok->run, "A")
-      || !strcmp(tok->run, "An")
-      || !strcmp(tok->run, "The")
-   ) {
-      reason = msgs.err.syn.name_not_lowcase;
-      synerr();
-   }
-
-   if (!strcmp(tok->run, KEYWRD_A)
-      || !strcmp(tok->run, KEYWRD_AN)
-      || !strcmp(tok->run, KEYWRD_THE)
-   ) tok->run[0] = toupper(tok->run[0]);
-
-   if(is_name())
-      return 1;
-   tok->run[0] = tolower(tok->run[0]);
-   return 0;
-}
-
-static int seek_line(void) {
-   return is_name();
-}
-
-static void parse_line(void) {
-   reason = msgs.err.syn.line.incomp;
-   gettok();
-
-   if (tok->run[0] != ':') {
-      reason = "a colon expected after a character name to construct a line";
-      synerr();
-   }
-
-   /* Note. charidx has been updated by is_name() in seek_line() */
-   line = graft_tree_n(scene, 0, NODEKIND_LINE);
-   (void) graft_tree_n(line, charidx, NODEKIND_CHAR);
-
-   /* Handles the first statement */
-   reason = msgs.err.syn.line.incomp;
-   gettok();
-
-   if (parse_line_router(stmt_hdlrs, ARRLEN(stmt_hdlrs))) {
-      reason = msgs.err.syn.line.nostmt;
-      synerr();
-   }
-
-   /* Handles the rest */
-   for (;;) {
-      if (idx == len - 1)
-         JUMP(NODEKIND__FINALE);
-
-      /* if this token is the beginning of another line,
-         then longjmp happens inside `seek_stmt_router` */
-      reason = msgs.err.syn.eot;
-      gettok();
-
-      seek_stmt_router();
-
-      if (parse_line_router(stmt_hdlrs, ARRLEN(stmt_hdlrs))) {
-         reason = msgs.err.syn.line.nostmt;
-         synerr();
-      }
-   }
-}
-
-static bool parse_line_as_conseq(void) {
-   const stmthandler_t *table = stmt_hdlrs;
-   size_t tsiz = ARRLEN(stmt_hdlrs);
-
-   reason = msgs.err.syn.ifstmt.conseq_incomp;
-   gettok();
-
-   if (isupper(tok->run[0])) {
-      reason = msgs.err.syn.ifstmt.conseq_cap;
-      synerr();
-   }
-   else
-   if (islower(tok->run[0])) {
-      tok->run[0] = toupper(tok->run[0]);
-   }
-
-   /* 'if' statement can't have an 'if' statement as a consequent */
-   if (1) {
-      table = &stmt_hdlrs[1];
-      tsiz--;
-   }
-
-   return parse_line_router(table, tsiz);
-}
-
-static bool parse_line_router(const stmthandler_t *table, size_t tsiz) {
-   const stmthandler_t *handler;
-   size_t i;
-
-   /* Since backtracking can happen, we need to save the
-      current parsing state */
-   const size_t orig_idx = idx;
-
-   for (i = 0; i < tsiz; i++) {
-      handler = &table[i];
-      if ((*handler->seek)()) {
-         (*handler->parse)();
-         break;
-      }
-      rewind_tokstate(orig_idx);
-   }
-
-   return (i == tsiz) ? 1 : 0;
-}
-
-static int seek_asgn(void) {
-   if (strcmp(tok->run, KEYWRD_YOU) && strcmp(tok->run, KEYWRD_THOU)) {
-      return 0;
-   }
-   return 1;
-}
-
-static void parse_asgn(void) {
-   /* TYPE 1: You A(.|!)
-      TYPE 2: You be as adj as (B|C|D)(.|!)
-      TYPE 3: You be (B|C|D)(.|!) */
-
-   tree_t *asgn;
-   token_t *you;
-
-   /* It's obvious that the current tok->run is either
-      "you" or "thou" because of `seek_asgn()` */
-   you = tok;
-
-   reason = msgs.err.syn.asgn.incomp;
-   gettok();
-
-   if (is_be_conjs(tok->run)) {  /* type 2 or 3 */
-      gettok();
-
-      if (!strcmp(tok->run, "as")) {
-         asgn = parse_asgn_ii(you);  /* type 2 */
-      }
-      else {
-         ungettok();
-         asgn = parse_asgn_iii(you);  /* type 3 */
-      }
-   }
-   else {  /* type 1 */
-      ungettok();
-      asgn = parse_asgn_i(you);
-   }
-
-   parse_const(asgn);
-
-   if (strchr(".!", tok->run[0])) {
-      return;
-   }
-
-   reason = msgs.err.syn.asgn.invalid_end_symbol;
-   synerr();
-}
-
-static bool is_be_conjs(const char *str) {  /* conjs = conjugations */
-   static const char *conjs[] = {
-      "am", "are", "art", "is", "be"
-   };
-   static const size_t conjs_len = ARRLEN(conjs);
-
-   be_kind = match_str(str, conjs, conjs_len);
-
-   return (be_kind < conjs_len) ? true : false;
-}
-
-static tree_t *parse_asgn_i(token_t *you) {
-   /* TYPE 1: You A(.|!) */
-   return graft_tree_s(line, you->run, you->len, NODEKIND_ASGN1);
-}
-
-static tree_t *parse_asgn_ii(token_t *you) {
-   /* TYPE 2: You be as adj as (B|C|D)(.|!) */
-   reason = msgs.err.syn.asgn.incomp;
-   gettok();
-
-   if (!query_adj(tok->run)) {
-      reason = msgs.err.syn.asgn.not_adj;
-      synerr();
-   }
-
-   reason = msgs.err.syn.asgn.incomp;
-   gettok();
-
-   if (strcmp(tok->run, "as")) {
-      reason = msgs.err.syn.asgn.not_as;
-      synerr();
-   }
-
-   return graft_tree_s(line, you->run, you->len, NODEKIND_ASGN2);
-}
-
-static tree_t *parse_asgn_iii(token_t *you) {
-   /* TYPE 3: You be (B|C|D)(.|!) */
-   return graft_tree_s(line, you->run, you->len, NODEKIND_ASGN3);
-}
-
 static void seek_stmt(void) {
    if (idx == len - 1) {
       JUMP(NODEKIND__FINALE);
@@ -992,6 +194,207 @@ static int parse_stmt(void) {
    return 0;  /* control never reaches here */
 }
 
+static int seek_enterlike(const char *type) {
+   if (tok->run[0] != '[')
+      return 0;
+   gettok();
+   if (strcmp(tok->run, type))
+      return 0;
+   else
+      return 1;
+}
+
+static int seek_enter(void) {
+   return seek_enterlike(KEYWRD_ENTER);
+}
+
+static void parse_enter(void) {
+   tree_t *enter;
+
+   enter = graft_tree_n(scene, 0, NODEKIND_ENTER);
+   parse_namelist(enter);
+   if (tree_clen(enter))
+      return;
+   reason = msgs.err.syn.enter.nochar;
+   synerr();
+}
+
+static int seek_exit(void) {
+   return seek_enterlike(KEYWRD_EXIT);
+}
+
+static void parse_exit(void) {
+   tree_t *exit;
+
+   exit = graft_tree_n(scene, 0, NODEKIND_EXIT);
+   parse_namelist(exit);
+   switch (tree_clen(exit)) {
+      case 0  : reason = msgs.err.syn.exit.nochar; break;
+      case 1  : return;
+      default : reason = msgs.err.syn.exit.exceed;
+   }
+   synerr();
+}
+
+static int seek_exeunt(void) {
+   return seek_enterlike(KEYWRD_EXEUNT);
+}
+
+static void parse_exeunt(void) {
+   tree_t *exeunt;
+
+   exeunt = graft_tree_n(scene, 0, NODEKIND_EXEUNT);
+   parse_namelist(exeunt);
+   switch (tree_clen(exeunt)) {
+      case 0  : return;
+      case 1  : reason = msgs.err.syn.exeunt.onechar; break;
+      case 2  : return;
+      default : reason = msgs.err.syn.exeunt.exceed;
+   }
+   synerr();
+}
+
+static int seek_line(void) {
+   return is_name();
+}
+
+static void parse_line(void) {
+   reason = msgs.err.syn.line.incomp;
+   gettok();
+
+   if (tok->run[0] != ':') {
+      reason = "a colon expected after a character name to construct a line";
+      synerr();
+   }
+
+   /* Note. charidx has been updated by is_name() in seek_line() */
+   line = graft_tree_n(scene, 0, NODEKIND_LINE);
+   (void) graft_tree_n(line, charidx, NODEKIND_CHAR);
+
+   /* Handles the first statement */
+   reason = msgs.err.syn.line.incomp;
+   gettok();
+
+   if (parse_line_router(stmt_hdlrs, ARRLEN(stmt_hdlrs))) {
+      reason = msgs.err.syn.line.nostmt;
+      synerr();
+   }
+
+   /* Handles the rest */
+   for (;;) {
+      if (idx == len - 1)
+         JUMP(NODEKIND__FINALE);
+
+      /* if this token is the beginning of another line,
+         then longjmp happens inside `seek_stmt_router` */
+      reason = msgs.err.syn.eot;
+      gettok();
+
+      seek_stmt_router();
+
+      if (parse_line_router(stmt_hdlrs, ARRLEN(stmt_hdlrs))) {
+         reason = msgs.err.syn.line.nostmt;
+         synerr();
+      }
+   }
+}
+
+static bool parse_line_router(const stmthandler_t *table, size_t tsiz) {
+   const stmthandler_t *handler;
+   size_t i;
+
+   /* Since backtracking can happen, we need to save the
+      current parsing state */
+   const size_t orig_idx = idx;
+
+   for (i = 0; i < tsiz; i++) {
+      handler = &table[i];
+      if ((*handler->seek)()) {
+         (*handler->parse)();
+         break;
+      }
+      rewind_tokstate(orig_idx);
+   }
+
+   return (i == tsiz) ? 1 : 0;
+}
+
+static bool parse_line_as_conseq(void) {
+   const stmthandler_t *table = stmt_hdlrs;
+   size_t tsiz = ARRLEN(stmt_hdlrs);
+
+   reason = msgs.err.syn.ifstmt.conseq_incomp;
+   gettok();
+
+   if (isupper(tok->run[0])) {
+      reason = msgs.err.syn.ifstmt.conseq_cap;
+      synerr();
+   }
+   else
+   if (islower(tok->run[0])) {
+      tok->run[0] = toupper(tok->run[0]);
+   }
+
+   /* 'if' statement can't have an 'if' statement as a consequent */
+   if (1) {
+      table = &stmt_hdlrs[1];
+      tsiz--;
+   }
+
+   return parse_line_router(table, tsiz);
+}
+
+static int seek_if(void) {
+   return strcmp(tok->run, KEYWRD_IF) ? 0 : 1;
+}
+
+static void parse_if(void) {
+   tree_t *ifstmt, *consequent, *tline;
+
+   ifstmt = graft_tree_n(line, 0, NODEKIND_IF);
+
+   reason = msgs.err.syn.ifstmt.incomp;
+   gettok();
+
+   if (!strcmp(tok->run, KEYWRD_SO)) {
+      (void) graft_tree_n(ifstmt, 0, NODEKIND_AFFIRM);
+   }
+   else
+   if (!strcmp(tok->run, KEYWRD_NOT)) {
+      (void) graft_tree_n(ifstmt, 0, NODEKIND_NEGATE);
+   }
+   else {
+      reason = msgs.err.syn.ifstmt.badsyn;
+      synerr();
+   }
+
+   gettok();
+
+   if (tok->run[0] != ',') {
+      reason = msgs.err.syn.ifstmt.badsyn;
+      synerr();
+   }
+
+   /* Parses the consequent */
+   consequent = graft_tree_n(ifstmt, 0, NODEKIND_CONSEQ);
+   tline = line;
+   line = consequent;
+
+   if (parse_line_as_conseq()) {
+      reason = msgs.err.syn.ifstmt.bad_conseq;
+      synerr();
+   }
+
+   line = tline;
+}
+
+static int seek_asgn(void) {
+   if (strcmp(tok->run, KEYWRD_YOU) && strcmp(tok->run, KEYWRD_THOU)) {
+      return 0;
+   }
+   return 1;
+}
+
 static int seek_out(void) {
    /* Speak your mind! */
    if (!strcmp(tok->run, KEYWRD_SPEAK)) {
@@ -1009,6 +412,78 @@ static int seek_out(void) {
    }
 
    return 0;
+}
+
+static void parse_asgn(void) {
+   /* TYPE 1: You A(.|!)
+      TYPE 2: You be as adj as (B|C|D)(.|!)
+      TYPE 3: You be (B|C|D)(.|!) */
+
+   tree_t *asgn;
+   token_t *you;
+
+   /* It's obvious that the current tok->run is either
+      "you" or "thou" because of `seek_asgn()` */
+   you = tok;
+
+   reason = msgs.err.syn.asgn.incomp;
+   gettok();
+
+   if (is_be_conjs(tok->run)) {  /* type 2 or 3 */
+      gettok();
+
+      if (!strcmp(tok->run, "as")) {
+         asgn = parse_asgn_ii(you);  /* type 2 */
+      }
+      else {
+         ungettok();
+         asgn = parse_asgn_iii(you);  /* type 3 */
+      }
+   }
+   else {  /* type 1 */
+      ungettok();
+      asgn = parse_asgn_i(you);
+   }
+
+   parse_const(asgn);
+
+   if (strchr(".!", tok->run[0])) {
+      return;
+   }
+
+   reason = msgs.err.syn.asgn.invalid_end_symbol;
+   synerr();
+}
+
+static tree_t *parse_asgn_i(token_t *you) {
+   /* TYPE 1: You A(.|!) */
+   return graft_tree_s(line, you->run, you->len, NODEKIND_ASGN1);
+}
+
+static tree_t *parse_asgn_ii(token_t *you) {
+   /* TYPE 2: You be as adj as (B|C|D)(.|!) */
+   reason = msgs.err.syn.asgn.incomp;
+   gettok();
+
+   if (!query_adj(tok->run)) {
+      reason = msgs.err.syn.asgn.not_adj;
+      synerr();
+   }
+
+   reason = msgs.err.syn.asgn.incomp;
+   gettok();
+
+   if (strcmp(tok->run, "as")) {
+      reason = msgs.err.syn.asgn.not_as;
+      synerr();
+   }
+
+   return graft_tree_s(line, you->run, you->len, NODEKIND_ASGN2);
+}
+
+static tree_t *parse_asgn_iii(token_t *you) {
+   /* TYPE 3: You be (B|C|D)(.|!) */
+   return graft_tree_s(line, you->run, you->len, NODEKIND_ASGN3);
 }
 
 static void parse_out(void) {
@@ -1303,28 +778,6 @@ static void parse_cond(void) {
       Is a tree not as good as a shiny tree[?] */
 }
 
-static void check_predicate(void) {
-   static const char *cond_subjs[] = {
-      KEYWRD_I, KEYWRD_YOU_L, KEYWRD_THOU_L
-   };
-   static const size_t cond_subjs_len = ARRLEN(cond_subjs);
-
-   switch (be_kind) {
-      case 0 : if (strcmp(tok->run, KEYWRD_I))
-                  goto hell; else break;
-      case 1 : if (strcmp(tok->run, KEYWRD_YOU_L))
-                  goto hell; else break;
-      case 2 : if (strcmp(tok->run, KEYWRD_THOU_L))
-                  goto hell; else break;
-      /* i.e. check if "Is (I, you, thou)" */
-      case 3 : if (match_str(tok->run, cond_subjs, cond_subjs_len) < cond_subjs_len)
-                  goto hell; else break;
-      hell : /* FLAMING HOT */
-         reason = msgs.err.syn.cond.not_conj;
-         synerr();
-   }
-}
-
 static void parse_cond_eq(tree_t *cond) {
    /* Is a tree not [as] good as a shiny tree? */
    gettok();
@@ -1394,50 +847,6 @@ static void parse_cond_ineq(tree_t *cond) {
    }
 }
 
-static int seek_if(void) {
-   return strcmp(tok->run, KEYWRD_IF) ? 0 : 1;
-}
-
-static void parse_if(void) {
-   tree_t *ifstmt, *consequent, *tline;
-
-   ifstmt = graft_tree_n(line, 0, NODEKIND_IF);
-
-   reason = msgs.err.syn.ifstmt.incomp;
-   gettok();
-
-   if (!strcmp(tok->run, KEYWRD_SO)) {
-      (void) graft_tree_n(ifstmt, 0, NODEKIND_AFFIRM);
-   }
-   else
-   if (!strcmp(tok->run, KEYWRD_NOT)) {
-      (void) graft_tree_n(ifstmt, 0, NODEKIND_NEGATE);
-   }
-   else {
-      reason = msgs.err.syn.ifstmt.badsyn;
-      synerr();
-   }
-
-   gettok();
-
-   if (tok->run[0] != ',') {
-      reason = msgs.err.syn.ifstmt.badsyn;
-      synerr();
-   }
-
-   /* Parses the consequent */
-   consequent = graft_tree_n(ifstmt, 0, NODEKIND_CONSEQ);
-   tline = line;
-   line = consequent;
-
-   if (parse_line_as_conseq()) {
-      reason = msgs.err.syn.ifstmt.bad_conseq;
-      synerr();
-   }
-
-   line = tline;
-}
-
 static int seek_push(void) {
    return strcmp(tok->run, KEYWRD_REMEMB) ? 0 : 1;
 }
@@ -1473,6 +882,597 @@ static void parse_pop(void) {
    (void) graft_tree_n(line, 0, NODEKIND_POP);
    reason = msgs.err.syn.pop.incomp;
    skiptoks2(".!?");
+}
+
+static void parse_namelist(tree_t *t) {
+   /* Enter, Exit, and Exeunt takes a namelist:
+         (1) [<enterlike> A]
+         (2) [<enterlike> A and B]
+         (3) [<enterlike> A, B, and C] */
+
+   reason = "incomplete namelist";
+   gettok();
+   if (tok->run[0] == ']')
+         return;
+   ungettok();
+
+   /* Currently, tok->run points to <enterlike> */
+
+   /* Consumes tokens until "and" */
+   do {
+      reason = "incomplete namelist"; // fixme: remove this
+      gettok();
+      if (!is_name_lower()) {
+         reason = "dp expected here";
+         synerr();
+      }
+      graft_tree_n(t, charidx, NODEKIND_CHAR);
+      gettok();
+      if (tok->run[0] == ']')
+         return;
+      if (!strcmp(tok->run, "and"))
+         break;
+      if (tok->run[0] != ',') {
+         reason = ", expected here";
+         synerr();
+      }
+      gettok();
+      if (!strcmp(tok->run, "and"))
+         break;
+      ungettok();
+   } while (true);
+
+   /* Skips "and" and consumes the last name */
+   gettok();
+   if (!is_name_lower()) {
+      reason = "dp expected here";
+      synerr();
+   }
+   graft_tree_n(t, charidx, NODEKIND_CHAR);
+   gettok();
+   if (tok->run[0] != ']') {
+      reason = "] expected here";
+      synerr();
+   }
+}
+
+static void parse_const(tree_t *stmt) {
+   /* Before going further, let's recall where constants are used.
+
+      Note:
+         - <x> means x is optional.
+         - (x|y) means x or y must be present.
+         - "ap" means adjective phrase: "happy delightful nice".
+         - "np" means noun phrase: "summer's day", "stone wall".
+            - incidentally, a noun phrase is treated as a single noun!
+         - "art" means articles: "a", "an", or "the".
+         - "pos" means possessives: "my", "your", etc.
+         - "pronoun": "me", "you", etc.
+         - "ref" means reflexives: "myself", "yourself", etc.
+         - "comp" means comparatives: "better", "worse", etc
+
+      Constants can have one of the following forms:
+         TYPE A: <adj|ap> (noun|np)
+         TYPE B: (art|pos) <adj|ap> (noun|np)  // i.e. (art|pos) A
+         TYPE C: (pronoun|ref|name)
+         TYPE D: (nothing|zero)
+
+      1. Assignment Statements
+         You A(.|!)
+         You be as adj as (B|C|D)(.|!)
+         You be (B|C|D)(.|!)
+
+      2. Questions
+         Be (B|C|D) <not> as adj as (B|C|D)?
+         Be (B|C|D) <not> (comp|(<more|less> adj)) than (B|C|D)?
+
+      3. As Operands Of Operators
+         the factorial of (B|C|D)
+         the sum of (B|C|D) and (B|C|D)
+
+      4. Remember Statements
+         Remember (B|C|D)(.|!)
+
+      This remind shows us that TYPE A is only used in the
+      "YOU A" assignment statement. Also, the combination of
+      B, C, and D is widely used.
+
+      With that in mind, now let's begin parsing. */
+
+   tree_t *cnst;
+   nodekind_t kind;
+   int query_result;
+
+   /* Makes a tree that represents a constant node */
+   cnst = graft_tree_n(stmt, 0, NODEKIND_CONST);
+
+   reason = msgs.err.syn.cnst.incomp;
+   gettok();
+
+   /* First of all, we check whether this is an operator */
+   if ((kind = seek_op()) != NODEKIND__NAO) {
+      parse_op(cnst, kind);
+      return;
+   }
+
+   /* Checks whether this token is
+      a pronoun, a reflexive, a name, or a nil */
+   if (is_pronoun(tok->run)) {
+      graft_tree_s(cnst, tok->run, tok->len, what_pronoun(tok->run));
+      check_const_end();
+      return;
+   }
+   if (is_reflexive(tok->run)) {
+      graft_tree_s(cnst, tok->run, tok->len, what_reflexive(tok->run));
+      check_const_end();
+      return;
+   }
+   if (is_name_lower()) {
+      graft_tree_n(cnst, charidx, NODEKIND_CHAR);
+      check_const_end();
+      return;
+   }
+   if (is_nil(tok->run)) {
+      graft_tree_s(cnst, tok->run, tok->len, NODEKIND_ZERO);
+      check_const_end();
+      return;
+   }
+
+   /* If not, this token is either TYPE A or TYPE B. Meanwhile,
+      TYPE B = (art|pos) TYPE A. Let's exploit this structure */
+   if (is_article(tok->run) || is_possessive(tok->run)) {
+      reason = msgs.err.syn.cnst.incomp;
+      gettok();  /* skips the current token */
+      /* if the token had been of TYPE B, now it has become of TYPE A */
+   }
+
+   /* Now we need to process <adj|ap> (noun|np) */
+
+   /* Consumes adjectives first */
+   for (;;) {
+      if (!query_adj(tok->run))
+         break;
+      graft_tree_s(cnst, tok->run, tok->len, NODEKIND_ADJ);
+      gettok();
+   }
+
+   /* noun? */
+   if (query_noun(tok->run, &query_result)) {
+      kind = query_result ? NODEKIND_PNOUN : NODEKIND_NNOUN;
+      graft_tree_s(cnst, tok->run, tok->len, kind);
+   }
+   else {  /* noun phrase */
+      // TODO: refactor later!!
+      token_t *prev_tok;
+      char *buf;
+      size_t bufsiz;
+
+      prev_tok = tok;
+
+      reason = msgs.err.syn.cnst.incomp;
+      gettok();
+
+      bufsiz = prev_tok->len + tok->len;
+      buf = safe_malloc(bufsiz);
+      memcpy(buf, prev_tok->run, prev_tok->len);
+      buf[prev_tok->len - 1] = ' ';
+      memcpy(buf + prev_tok->len, tok->run, tok->len);
+
+      if(!query_noun(buf, &query_result)) {
+         ungettok();
+         reason = msgs.err.syn.cnst.no_noun;
+         synerr();
+      }
+
+      kind = query_result ? NODEKIND_PNOUN : NODEKIND_NNOUN;
+      graft_tree_s(cnst, buf, bufsiz, kind);
+   }
+
+   /* end of const */
+   check_const_end();
+}
+
+static nodekind_t seek_op(void) {
+   typedef struct ophandler {
+      const char *name;
+      nodekind_t kind;
+   } ophandler_t;
+
+   static ophandler_t ops[] = {
+      { KEYWRD_SUM  , NODEKIND_SUM  },
+      { KEYWRD_DIFF , NODEKIND_DIFF },
+      { KEYWRD_PROD , NODEKIND_PROD },
+      { KEYWRD_QUOT , NODEKIND_QUOT },
+      { KEYWRD_REM  , NODEKIND_REM  },
+      { KEYWRD_SQUR , NODEKIND_SQUR },
+      { KEYWRD_CUBE , NODEKIND_CUBE },
+      { KEYWRD_FACT , NODEKIND_FACT }
+   };
+   static const size_t ops_len = ARRLEN(ops);
+
+   /* Note:
+      - except the twice operator,
+         every operator begins with "the"
+      - except the square root operator,
+         every operator is one word long */
+
+   nodekind_t k;
+
+   /* twice operator? */
+   if (!strcmp(tok->run, "twice"))
+      return NODEKIND_2X;
+
+   /* not begins with "the"? then it's not an operator */
+   if (strcmp(tok->run, "the"))
+      return NODEKIND__NAO;
+
+   reason = msgs.err.syn.cnst.incomp;
+   gettok();
+
+   k = NODEKIND__NAO;
+   for (size_t i = 0; i < ops_len; i++)
+      if (!strcmp(tok->run, ops[i].name)) {
+         k = ops[i].kind;
+         break;
+      }
+
+   /* no match! turns out it isn't an operator,
+      although it began with "the" */
+   if (k == NODEKIND__NAO) {
+      ungettok();
+      return k;
+   }
+
+   /* not a square or a square root operator */
+   if (k != NODEKIND_SQUR)
+      return k;
+
+   /* to be a square or to be a square root? that's the question */
+   gettok();
+   if (!strcmp(tok->run, KEYWRD_ROOT))
+      k = NODEKIND_SQRT;
+   else ungettok();
+
+   return k;
+}
+
+static void parse_op(tree_t *stmt, nodekind_t kind) {
+   tree_t *op;
+
+   op = graft_tree_n(stmt, 0, kind);
+   reason = msgs.err.syn.op.incomp;
+   switch (kind) {
+      case NODEKIND_SUM  : parse_op_sum (op); return;
+      case NODEKIND_DIFF : parse_op_diff(op); return;
+      case NODEKIND_PROD : parse_op_prod(op); return;
+      case NODEKIND_QUOT : parse_op_quot(op); return;
+      case NODEKIND_REM  : parse_op_rem (op); return;
+      case NODEKIND_SQRT : parse_op_sqrt(op); return;
+      case NODEKIND_SQUR : parse_op_squr(op); return;
+      case NODEKIND_CUBE : parse_op_cube(op); return;
+      case NODEKIND_2X   : parse_op_2x  (op); return;
+      case NODEKIND_FACT : parse_op_fact(op); return;
+      default: ;  /* control never reaches default */
+   }
+}
+
+static void parse_op_unary(
+   tree_t * restrict op,
+   const char * restrict err
+) {
+   /* Note. this function is a wrapper for the
+      square, square root, cube, and factorial.
+
+      Since the twice operator does not have the
+      same structure with other unary operators,
+      it doesn't use this wrapper. */
+
+   reason = msgs.err.syn.op.incomp;
+   gettok();
+
+   if (strcmp(tok->run, "of")) {
+      reason = err;
+      synerr();
+   }
+
+   parse_const(op);
+}
+
+static void parse_op_binary(
+   tree_t * restrict op,
+   const char * restrict type,
+   const char * restrict err
+) {
+   tree_t *lefthand, *righthand;
+
+   reason = msgs.err.syn.op.incomp;
+   gettok();
+
+   /* the sum OF L and R
+      the difference BETWEEN L and R
+      the product OF L and R
+      the quotient BETWEEN L and R
+      the remainder OF the quotient BETWEEN L and R */
+
+   if (strcmp(tok->run, type)) {
+      reason = err;
+      synerr();
+   }
+
+   lefthand = graft_tree_n(op, 0, NODEKIND_LHS);
+   parse_const(lefthand);
+
+   if (strcmp(tok->run, KEYWRD_AND)) {
+      reason = msgs.err.syn.op.no_and;
+      synerr();
+   }
+
+   righthand = graft_tree_n(op, 0, NODEKIND_RHS);
+   parse_const(righthand);
+}
+
+static inline void parse_op_sum(tree_t *op) {
+   parse_op_binary(op, KEYWRD_OF, msgs.err.syn.op.sum);
+}
+
+static inline void parse_op_diff(tree_t *op) {
+   parse_op_binary(op, KEYWRD_BTW, msgs.err.syn.op.diff);
+}
+
+static inline void parse_op_prod(tree_t *op) {
+   parse_op_binary(op, KEYWRD_OF, msgs.err.syn.op.prod);
+}
+
+static inline void parse_op_quot(tree_t *op) {
+   parse_op_binary(op, KEYWRD_BTW, msgs.err.syn.op.quot);
+}
+
+static inline void parse_op_rem(tree_t *op) {
+   /* the remainder of
+         the quotient between <const> and <const> */
+
+   reason = msgs.err.syn.op.incomp;
+   gettok();
+
+   if (strcmp(tok->run, KEYWRD_OF)) {
+      reason = msgs.err.syn.op.rem;
+      synerr();
+   }
+
+   gettok();
+
+   if (strcmp(tok->run, KEYWRD_THE)) {
+      reason = msgs.err.syn.op.rem_quot_1;
+      synerr();
+   }
+
+   gettok();
+
+   if (strcmp(tok->run, KEYWRD_QUOT)) {
+      reason = msgs.err.syn.op.rem_quot_2;
+      synerr();
+   }
+
+   parse_op_quot(op);
+}
+
+static inline void parse_op_sqrt(tree_t *op) {
+   parse_op_unary(op, msgs.err.syn.op.sqrt);
+}
+
+static inline void parse_op_squr(tree_t *op) {
+   parse_op_unary(op, msgs.err.syn.op.squr);
+}
+
+static inline void parse_op_cube(tree_t *op) {
+   parse_op_unary(op, msgs.err.syn.op.cube);
+}
+
+static inline void parse_op_2x(tree_t *op) {
+   parse_const(op);
+}
+
+static inline void parse_op_fact(tree_t *op) {
+   parse_op_unary(op, msgs.err.syn.op.fact);
+}
+
+// TODO: refactor is_xxx: (1) use macro (2) use lowercase
+static bool is_pronoun(const char *str) {
+   static const char *pronouns[] = {
+      "I", "me", "thee", "thou", "you", NULL
+   };
+
+   for (size_t i = 0; pronouns[i]; i++)
+      if (!strcmp(str, pronouns[i]))
+         return true;
+   return false;
+}
+
+static bool is_reflexive(const char *str) {
+   static const char *reflexives[] = {
+      "myself", "thyself", "yourself", NULL
+   };
+
+   for (size_t i = 0; reflexives[i]; i++)
+      if (!strcmp(str, reflexives[i]))
+         return true;
+   return false;
+}
+
+static bool is_nil(const char *str) {
+   static const char *nils[] = {
+      "nothing", "zero", NULL
+   };
+
+   for (size_t i = 0; nils[i]; i++)
+      if (!strcmp(str, nils[i]))
+         return true;
+   return false;
+}
+
+static bool is_article(const char *str) {
+   static const char *articles[] = {
+      "a", "an", "the", NULL
+   };
+
+   for (size_t i = 0; articles[i]; i++)
+      if (!strcmp(str, articles[i]))
+         return true;
+   return false;
+}
+
+static bool is_possessive(const char *str) {
+   static const char *possessives[] = {
+      "mine", "my", "thine", "thy", "your", "his", "her", "its", "theirs", NULL
+   };
+
+   for (size_t i = 0; possessives[i]; i++)
+      if (!strcmp(str, possessives[i]))
+         return true;
+   return false;
+}
+
+static nodekind_t what_pronoun(const char *str) {
+   if (!strcmp(str, "I") || !strcmp(str, "me"))
+      return NODEKIND_P1;
+
+   if (!strcmp(str, "thee")
+      || !strcmp(str, "thou")
+      || !strcmp(str, "you"))
+      return NODEKIND_P2;
+
+   /* control never reaches here */
+   return NODEKIND__UNKNOWN;
+}
+
+static nodekind_t what_reflexive(const char *str) {
+   if (!strcmp(str, "myself"))
+      return NODEKIND_P1;
+
+   if (!strcmp(str, "thyself") || !strcmp(str, "yourself"))
+      return NODEKIND_P2;
+
+   /* control never reaches here */
+   return NODEKIND__UNKNOWN;
+}
+
+static void check_const_end(void) {
+   reason = msgs.err.syn.cnst.incomp;
+   gettok();
+
+   if (strchr(".!?", tok->run[0])
+      || !strcmp(tok->run, "not")
+      || !strcmp(tok->run, "as")
+      || !strcmp(tok->run, "more")
+      || !strcmp(tok->run, "less")
+      || !strcmp(tok->run, "and")
+      || query_comp(tok->run, NULL))
+      return;
+
+   reason = msgs.err.syn.cnst.no_end_symbol;
+   synerr();
+}
+
+static bool is_name(void) {
+   /* DP  (siz = 2)
+         => CHAR  (siz = 1)
+            => Romeo
+         => CHAR  (siz = 2)
+            => The
+            => Ghost   */
+
+   tree_t *dp,  /* character list */
+          *ch;  /* character */
+   size_t dpsiz,  /* number of children of dp */
+          chsiz;  /* number of children of char */
+   node_t *ch_subnode;
+   size_t i, k;
+
+   /* Since backtracking can happen, we need to save the
+      current parsing state */
+   const size_t orig_idx = idx;
+
+   /* We assume that all names are unique, i.e. there is
+      no overlap like "the Romeo" and "the Romeo Rome" */
+
+   dp = tree_child(pt, 1);
+   dpsiz = tree_clen(dp);
+   reason = "incomplete name";
+
+   for (i = 0; i < dpsiz; i++) {
+      ch = tree_child(dp, i);
+      chsiz = tree_clen(ch);
+
+      for (k = 0; k < chsiz; k++) {
+         ch_subnode = tree_chdat(ch, k);
+         if (strcmp(ch_subnode->dat.s.run, tok->run)) {
+            rewind_tokstate(orig_idx);
+            break;
+         }
+         gettok();
+      }
+
+      if (k == chsiz) {
+         ungettok();
+         charidx = i;
+         return true;
+      }
+   }
+
+   return false;
+}
+
+static bool is_name_lower(void) {
+   if (!strcmp(tok->run, "A")
+      || !strcmp(tok->run, "An")
+      || !strcmp(tok->run, "The")
+   ) {
+      reason = msgs.err.syn.name_not_lowcase;
+      synerr();
+   }
+
+   if (!strcmp(tok->run, KEYWRD_A)
+      || !strcmp(tok->run, KEYWRD_AN)
+      || !strcmp(tok->run, KEYWRD_THE)
+   ) tok->run[0] = toupper(tok->run[0]);
+
+   if(is_name())
+      return 1;
+   tok->run[0] = tolower(tok->run[0]);
+   return 0;
+}
+
+static bool is_be_conjs(const char *str) {  /* conjs = conjugations */
+   static const char *conjs[] = {
+      "am", "are", "art", "is", "be"
+   };
+   static const size_t conjs_len = ARRLEN(conjs);
+
+   be_kind = match_str(str, conjs, conjs_len);
+
+   return (be_kind < conjs_len) ? true : false;
+}
+
+static void check_predicate(void) {
+   static const char *cond_subjs[] = {
+      KEYWRD_I, KEYWRD_YOU_L, KEYWRD_THOU_L
+   };
+   static const size_t cond_subjs_len = ARRLEN(cond_subjs);
+
+   switch (be_kind) {
+      case 0 : if (strcmp(tok->run, KEYWRD_I))
+                  goto hell; else break;
+      case 1 : if (strcmp(tok->run, KEYWRD_YOU_L))
+                  goto hell; else break;
+      case 2 : if (strcmp(tok->run, KEYWRD_THOU_L))
+                  goto hell; else break;
+      /* i.e. check if "Is (I, you, thou)" */
+      case 3 : if (match_str(tok->run, cond_subjs, cond_subjs_len) < cond_subjs_len)
+                  goto hell; else break;
+      hell : /* FLAMING HOT */
+         reason = msgs.err.syn.cond.not_conj;
+         synerr();
+   }
 }
 
 static void nexttok(void) {
