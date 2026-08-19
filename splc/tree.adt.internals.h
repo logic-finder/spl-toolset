@@ -12,7 +12,7 @@
 struct tree {
    tree_t *parent;
    tree_t **children;
-   int cmax;
+   size_t cmax;
    int clen;
    void *dat;
    size_t siz;
