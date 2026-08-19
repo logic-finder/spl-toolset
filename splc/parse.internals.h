@@ -199,10 +199,6 @@ static const stmthandler_t stmt_hdlrs[] = {
 };
 
 /* These are used in `seek_cond` and `parse_cond` only. */
-static const char *cond_verbs[] = {
-   KEYWRD_AM, KEYWRD_ARE_C, KEYWRD_ART_C, KEYWRD_IS
-};
-static const int cond_verbs_len = ARRLEN(cond_verbs);
 static const char *cond_subjs[] = {
    KEYWRD_I, KEYWRD_YOU_L, KEYWRD_THOU_L
 };
