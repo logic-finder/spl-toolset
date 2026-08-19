@@ -1303,6 +1303,11 @@ static void parse_cond(void) {
 }
 
 static void check_predicate(void) {
+   static const char *cond_subjs[] = {
+      KEYWRD_I, KEYWRD_YOU_L, KEYWRD_THOU_L
+   };
+   static const size_t cond_subjs_len = ARRLEN(cond_subjs);
+
    switch (vtype) {
       case 0 : if (strcmp(tok->run, KEYWRD_I))
                   goto hell; else break;

@@ -199,10 +199,6 @@ static const stmthandler_t stmt_hdlrs[] = {
 };
 
 /* These are used in `seek_cond` and `parse_cond` only. */
-static const char *cond_subjs[] = {
-   KEYWRD_I, KEYWRD_YOU_L, KEYWRD_THOU_L
-};
-static const size_t cond_subjs_len = ARRLEN(cond_subjs);
 static int vtype;
 
 #endif
