@@ -887,9 +887,9 @@ static bool is_be_conjs(const char *str) {  /* conjs = conjugations */
    };
    static const size_t conjs_len = ARRLEN(conjs);
 
-   vtype = match_str(str, conjs, conjs_len);
+   be_kind = match_str(str, conjs, conjs_len);
 
-   return (vtype < conjs_len) ? true : false;
+   return (be_kind < conjs_len) ? true : false;
 }
 
 static tree_t *parse_asgn_i(token_t *you) {
@@ -1247,13 +1247,13 @@ static void parse_cond(void) {
       check_predicate();
    }
 
-   if (vtype == 3) {
+   if (be_kind == 3) {
       /* need to ungettok before parse_const() */
       ungettok();
       /* [Is] a tree not as good as a shiny tree? */
    }
 
-   switch (vtype) {
+   switch (be_kind) {
       case 0  : kind = NODEKIND_P1; break;
       case 1  : /* fall-through */
       case 2  : kind = NODEKIND_P2; break;
@@ -1263,7 +1263,7 @@ static void parse_cond(void) {
    }
    p = graft_tree_n(lefthand, 0, kind);
 
-   if (vtype == 3) {
+   if (be_kind == 3) {
       /* parse_const() has consumed "a tree" */
       parse_const(p);
       /* Is a tree [not] as good as a shiny tree? */
@@ -1309,7 +1309,7 @@ static void check_predicate(void) {
    };
    static const size_t cond_subjs_len = ARRLEN(cond_subjs);
 
-   switch (vtype) {
+   switch (be_kind) {
       case 0 : if (strcmp(tok->run, KEYWRD_I))
                   goto hell; else break;
       case 1 : if (strcmp(tok->run, KEYWRD_YOU_L))

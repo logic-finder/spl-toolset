@@ -198,6 +198,6 @@ static const stmthandler_t stmt_hdlrs[] = {
    { seek_pop  , parse_pop  }
 };
 
-static size_t vtype;  /* be verb conjugation type */
+static size_t be_kind;  /* be verb conjugation kind */
 
 #endif
