@@ -109,7 +109,6 @@ tree_t *parse(
    array_t *tokens
 );
 
-void setndn(node_t *n, int v);
 void setnds(node_t *n, char *s, int l);
 
 #endif

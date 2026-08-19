@@ -1648,11 +1648,6 @@ static tree_t *graft_tree_n(
    return tree_graft(base, sub);
 }
 
-extern void setndn(node_t *n, int v) {
-   n->datkind = DATKIND_INT;
-   n->dat.n = v;
-}
-
 extern void setnds(node_t *n, char *s, int l) {
    n->datkind = DATKIND_STR;
    n->dat.s.run = s;
