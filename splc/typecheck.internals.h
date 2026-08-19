@@ -25,6 +25,8 @@ static typechecker_t typecheck_rnum;
 static int is_pronoun(const char *s);
 static bool is_rnum(const char *rnum);
 
+static void setnds(node_t *n, char *s, int l);
+
 static inline void print_errheader(void);
 static void semerr_badword(node_t *n);
 static void semerr_dupname(

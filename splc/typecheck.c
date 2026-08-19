@@ -260,6 +260,12 @@ static void typecheck_rnum(node_t *n) {
    semerr_badword(n);
 }
 
+static void setnds(node_t *n, char *s, int l) {
+   n->datkind = DATKIND_STR;
+   n->dat.s.run = s;
+   n->dat.s.len = l;
+}
+
 static inline void print_errheader(void) {
    safe_fputs(stdout, Cbred "\n<semantic error> " Creset);
 }
