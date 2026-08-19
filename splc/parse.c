@@ -1503,15 +1503,6 @@ static void ungettokn(int n) {
    etok = tok;
 }
 
-static void skiptoks(char sentinel) {
-   for (;;) {
-      nexttok();
-      if (tok->run[0] == sentinel)
-         break;
-   }
-   etok = tok;
-}
-
 static void skiptoks2(const char *sentinels) {
    for (;;) {
       nexttok();

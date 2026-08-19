@@ -110,7 +110,6 @@ static void gettok(void);
 static void gettokn(int n);
 static void ungettok(void);
 static void ungettokn(int n);
-static void skiptoks(char sentinel);
 static void skiptoks2(const char *sentinels);
 static void eqtok(char ch);
 static void neqtok(char ch);
