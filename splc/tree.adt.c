@@ -55,7 +55,7 @@ extern void tree_prune(tree_t *t) {
       return;
    }
 
-   for (int i = 0; i < t->clen; i++)
+   for (size_t i = 0; i < t->clen; i++)
       tree_prune(t->children[i]);
 
    prune_callback(t);
@@ -76,7 +76,7 @@ extern void tree_destroy_shallow(tree_t *t) {
 extern void tree_pre_traverse(tree_t *t, tree_callback_t *cb, int lv, void *ctx) {
    (*cb)(t, lv, ctx);
    if (!t->clen) return;
-   for (int i = 0; i < t->clen; i++)
+   for (size_t i = 0; i < t->clen; i++)
       tree_pre_traverse(t->children[i], cb, lv + 1, ctx);
 }
 
@@ -85,12 +85,12 @@ extern void tree_post_traverse(tree_t *t, tree_callback_t *cb, int lv, void *ctx
       (*cb)(t, lv, ctx);
       return;
    }
-   for (int i = 0; i < t->clen; i++)
+   for (size_t i = 0; i < t->clen; i++)
       tree_post_traverse(t->children[i], cb, lv + 1, ctx);
    (*cb)(t, lv, ctx);
 }
 
-extern int tree_clen(const tree_t *t) {
+extern size_t tree_clen(const tree_t *t) {
    return t->clen;
 }
 

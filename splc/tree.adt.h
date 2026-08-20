@@ -23,7 +23,7 @@ void tree_prune(tree_t *t);
 void tree_destroy_shallow(tree_t *t);
 tree_walker_t tree_post_traverse;
 tree_walker_t tree_pre_traverse;
-int tree_clen(const tree_t *t);
+size_t tree_clen(const tree_t *t);
 void *tree_dat(const tree_t *t);
 tree_t *tree_child(const tree_t *t, int idx);
 void *tree_chdat(const tree_t *t, int idx);

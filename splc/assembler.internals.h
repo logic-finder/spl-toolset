@@ -36,7 +36,7 @@ static writer_t write_unary_op;
 static writer_t write_goto;
 static writer_t write_jumplike;
 
-static tree_t *find_nearest_opcode(tree_t *root, int a, int s, int b);
+static tree_t *find_nearest_opcode(tree_t *root, size_t a, size_t s, size_t b);
 
 static void write_debug_info(asm_ctx_t *actx);
 static void write_srcfile(asm_ctx_t *actx);

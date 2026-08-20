@@ -36,7 +36,7 @@ static void ctxcheck_goto(tree_t *t) {
    const tree_t *root, *root_child;
    const char *romnum, *against;
    node_t *node;
-   int i, root_len;
+   size_t i, root_len;
    nodekind_t mark;
 
    node = tree_dat(t);

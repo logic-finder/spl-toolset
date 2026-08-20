@@ -23,7 +23,7 @@ static void set_dpsz(irgen_ctx_t *ictx) {
 
    irt_dp = graft_tree_i(ictx->irt, 0, IrnodekindDp);
    pt_dp = tree_child(pt, 1);
-   dpsz = tree_clen(pt_dp);  /* cast to int */
+   dpsz = (int) tree_clen(pt_dp);
 
    opcode = graft_tree_opcode(irt_dp, IropcodeSet, 0, 0);
    graft_tree_ui(opcode, IrvarDpsz, IrnodekindVar);

@@ -23,7 +23,7 @@ static void coalesce_title(void) {
    const tree_t *title;
    node_t *n;
    char *buf;
-   int i, clen, rlen;
+   size_t i, clen, rlen;
 
    // Get the title node
    title = tree_child(pt, 0);
@@ -50,22 +50,23 @@ static void coalesce_title(void) {
 static void coalesce_name(tree_t *dp) {
    tree_t *chardecl;
    char *buf;
-   int dp_len, chardecl_len, total_len;
+   size_t dp_len, chardecl_len, total_len;
 
    dp_len = tree_clen(dp);
-   for (int i = 0; i < dp_len; i++) {
+   for (size_t i = 0; i < dp_len; i++) {
       chardecl = tree_child(dp, i);
       chardecl_len = tree_clen(chardecl);
       total_len = 0;
 
-      for (int k = 0; k < chardecl_len; k++)
-         // note that s.len == strlen(s.run) + 1
+      for (size_t k = 0; k < chardecl_len; k++) {
+         /* Note that s.len == strlen(s.run) + 1 */
          total_len += TREE_CHDAT(chardecl, k)->dat.s.len;
+      }
 
       // fixme: no need to +1?
       buf = safe_malloc(total_len + 1);  /* a room for ' ' */
       buf[0] = '\0';
-      for (int k = 0; k < chardecl_len; k++) {
+      for (size_t k = 0; k < chardecl_len; k++) {
          strcat(buf, TREE_CHDAT(chardecl, k)->dat.s.run);
          strcat(buf, " ");
       }
@@ -77,13 +78,13 @@ static void coalesce_name(tree_t *dp) {
 static void check_namecol(tree_t *dp) {
    const char *curr, *prev;
    node_t *cn, *pn;
-   int clen;
+   size_t clen;
 
    clen = tree_clen(dp);
-   for (int i = 1; i < clen; i++) {
+   for (size_t i = 1; i < clen; i++) {
       cn = tree_chdat(dp, i);
       curr = cn->dat.s.run;
-      for (int k = 0; k < i; k++) {
+      for (size_t k = 0; k < i; k++) {
          pn = tree_chdat(dp, k);
          prev = pn->dat.s.run;
          if (!strcmp(curr, prev))

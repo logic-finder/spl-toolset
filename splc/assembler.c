@@ -262,7 +262,7 @@ static void write_jumplike(tree_t *t) {
    tree_t *root, *act, *scene, *block, *op;
    irnode_t *n, *p1;
    irnode_t *act_dat, *scene_dat, *block_dat, *op_dat;
-   int scene_siz, a, s, b;
+   size_t scene_siz, a, s, b;
 
    n = tree_dat(t);
    p1 = tree_chdat(t, 0);
@@ -274,11 +274,12 @@ static void write_jumplike(tree_t *t) {
 
    /* Searches the matching block in reverse order */
    scene_siz = tree_clen(scene);
-   for (b = scene_siz - 1; b >= 0; b--) {
-      block = tree_child(scene, b);
+   for (b = scene_siz; b > 1; b--) {
+      block = tree_child(scene, b - 1);
       block_dat = tree_dat(block);
-      if (block_dat->dat.i == p1->dat.i)
+      if (block_dat->dat.i == p1->dat.i) {
          break;  /* must exist */
+      }
    }
 
    act = tree_parent(scene);
@@ -299,9 +300,9 @@ static void write_jumplike(tree_t *t) {
    safe_fwrite(&op_dat->offset, SPL_ADDR_SIZ, 1, fp);
 }
 
-static tree_t *find_nearest_opcode(tree_t *root, int a, int s, int b) {
+static tree_t *find_nearest_opcode(tree_t *root, size_t a, size_t s, size_t b) {
    tree_t *act, *scene, *block, *op;
-   int nrtv_siz, act_siz, scene_siz;
+   size_t nrtv_siz, act_siz, scene_siz;
 
    nrtv_siz = tree_clen(root);
    for ( ; a < nrtv_siz; a++) {

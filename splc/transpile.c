@@ -33,7 +33,7 @@ static void gen_title(tree_t *title) {
 
 static void gen_locals(tree_t *dp) {
    node_t *character;
-   int clen;
+   size_t clen;
 
    clen = tree_clen(dp);
 
@@ -43,7 +43,7 @@ static void gen_locals(tree_t *dp) {
    safe_fputs(fp, INDENT "int *personae = init_dp(dpsz);\n");
    safe_fputs(fp, INDENT "stack_t **memories = init_stacks(dpsz);\n\n");
 
-   for (int idx = 0; idx < clen; idx++) {
+   for (size_t idx = 0; idx < clen; idx++) {
       character = tree_chdat(dp, idx);
       safe_vfprintf(fp,
          INDENT "stage_setname(stage, %d, \"%s\");\n",
@@ -96,7 +96,8 @@ static void eval_const(tree_t *cnst) {
     */
    tree_t *sub, *op, *noun;
    node_t *n;
-   int clen, v;
+   size_t clen;
+   int v;
 
    sub = op = tree_child(cnst, 0);
    n = tree_dat(sub);
@@ -117,17 +118,18 @@ static void eval_const(tree_t *cnst) {
 
    clen = tree_clen(cnst);
    noun = tree_child(cnst, clen - 1);
+
    // fixme: here
    if (1) {
       safe_fputc(fp, '(');
-      for (int i = 0; i < clen - 1; i++)
+      for (size_t i = 0; i < clen - 1; i++)
          safe_fputs(fp, "2 * ");
       resolve_noun(noun);
       safe_fputc(fp, ')');
    }
    else {
       v = 1;
-      for (int i = 0; i < clen - 1; i++)
+      for (size_t i = 0; i < clen - 1; i++)
          v *= 2;
       safe_vfprintf(fp, "%d * ", v);
       resolve_noun(noun);
@@ -281,10 +283,10 @@ static void gen_scene(tree_t *t) {
 }
 
 static void gen_enter(tree_t *t) {
-   int clen, charidx;
+   size_t clen, charidx;
 
    clen = tree_clen(t);
-   for (int i = 0; i < clen; i++) {
+   for (size_t i = 0; i < clen; i++) {
       charidx = TREE_CHDAT(t, i)->dat.n;
       safe_vfprintf(fp, INDENT "stage_enter(stage, %d);\n", charidx);
    }
@@ -298,13 +300,13 @@ static void gen_exit(tree_t *t) {
 }
 
 static void gen_exeunt(tree_t *t) {
-   int clen, charidx;
+   size_t clen, charidx;
 
    clen = tree_clen(t);
    if (!clen)
       safe_fputs(fp, INDENT "stage_exeunt(stage);\n");
    else
-      for (int i = 0; i < clen; i++) {
+      for (size_t i = 0; i < clen; i++) {
          charidx = TREE_CHDAT(t, i)->dat.n;
          safe_vfprintf(fp, INDENT "stage_exit(stage, %d);\n", charidx);
       }

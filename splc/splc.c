@@ -129,7 +129,7 @@ static void print_node(tree_t *t, int lv, void *ctx) {
 }
 
 static int count_tree_node(tree_t *root) {
-   int cnt, clen;
+   size_t cnt, clen;
 
    cnt = 0;
    clen = tree_clen(root);
@@ -137,23 +137,21 @@ static int count_tree_node(tree_t *root) {
    if (clen == 0)
       return 1;
 
-   for (int i = 0; i < clen; i++)
+   for (size_t i = 0; i < clen; i++)
       cnt += count_tree_node(tree_child(root, i));
 
    return cnt + 1;
 }
 
 static size_t count_opcodes(tree_t *irt) {
-   // fixme: meaningless?
-   // int counter = 1;  /* +1 for SET dpsz n */
-   int counter = 0;
+   size_t counter = 0;
    tree_pre_traverse(irt, opcode_counter, 0, &counter);
    return counter;
 }
 
 static void opcode_counter(tree_t *t, int lv, void *ctx) {
    irnode_t *n;
-   int *counter;
+   size_t *counter;
 
    (void) lv;
    n = tree_dat(t);
