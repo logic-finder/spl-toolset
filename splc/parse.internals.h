@@ -120,17 +120,21 @@ static void nexttok(void);
 /* Utils */
 static bool is_name(void);
 static bool is_name_lower(void);
-static inline void rewind_tokstate(size_t orig_idx);
 static bool is_pronoun(const char *str);
 static bool is_reflexive(const char *str);
 static bool is_nil(const char *str);
 static bool is_article(const char *str);
 static bool is_possessive(const char *str);
 static bool is_be_conjs(const char *str);
+
 static nodekind_t what_pronoun(const char *str);
 static nodekind_t what_reflexive(const char *str);
+
 static void check_const_end(void);
 static void check_predicate(void);
+
+static inline void rewind_tokstate(size_t orig_idx);
+static inline void check_eoe(void);
 
 /* Error Handling */
 static inline void synerr(void);
@@ -164,7 +168,7 @@ static array_t *toks;
 static token_t
    *tok,    // toks[idx]
    *etok;   // used in `tell()` for printing an error
-static int
+static size_t
    len,     // toks.length
    idx;     // current index in toks
 

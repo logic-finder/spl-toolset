@@ -6,7 +6,7 @@ int main(int argc, const char **argv) {
    array_t *toks;
    int lc, wc;
 
-   /* Initialize */
+   /* Initialization */
    init_msg();
    parse_args(argv, &of, &ov);
    process_opts(argc, &of, &ov);
@@ -19,11 +19,11 @@ int main(int argc, const char **argv) {
 
    dbload();
 
-   /* Main Logic */
+   /* MAIN LOGIC */
    safe_fputs(stdout, ENPREFIX "scanning...");
    toks = lex(&of, &ov, lc);
    safe_vprintf(" " Cgreen "done!" Creset
-      "\t(total " Cbwhite "%d" Creset " tokens)\n",
+      "\t(total " Cbwhite "%zu" Creset " tokens)\n",
       array_size(toks)
    );
    // array_foreach(toks, print_token);
@@ -31,7 +31,7 @@ int main(int argc, const char **argv) {
    safe_fputs(stdout, ENPREFIX "parsing...");
    pt = parse(&of, &ov, toks);
    safe_vprintf(" " Cgreen "done!" Creset
-      "\t(total " Cbwhite "%d" Creset " nodes)\n",
+      "\t(total " Cbwhite "%zu" Creset " nodes)\n",
       count_tree_node(pt)
    );
    // tree_pre_traverse(pt, print_node, 0, NULL);
@@ -128,7 +128,7 @@ static void print_node(tree_t *t, int lv, void *ctx) {
    }
 }
 
-static int count_tree_node(tree_t *root) {
+static size_t count_tree_node(tree_t *root) {
    size_t cnt, clen;
 
    cnt = 0;

@@ -10,7 +10,7 @@ extern tree_t *parse(optflg_t *of, optval_t *ov, array_t *tokens) {
    toks = tokens;
    tok = array_peek(toks, 0);
    len = array_size(toks);
-   idx = -1;
+   idx = 0;
    pt = plant_tree(NULL, 0, NODEKIND_ROOT, 0, 0);
 
    /* Constructs the parse tree
@@ -126,9 +126,7 @@ static void parse_scene(void) {
 }
 
 static void seek_stmt(void) {
-   if (idx == len - 1) {
-      JUMP(NODEKIND__FINALE);
-   }
+   check_eoe();
 
    reason = msgs.err.syn.eot;
    gettok();
@@ -282,8 +280,7 @@ static void parse_line(void) {
 
    /* Handles the rest */
    for (;;) {
-      if (idx == len - 1)
-         JUMP(NODEKIND__FINALE);
+      check_eoe();
 
       /* if this token is the beginning of another line,
          then longjmp happens inside `seek_stmt_router` */
@@ -1476,7 +1473,10 @@ static void check_predicate(void) {
 }
 
 static void nexttok(void) {
-   if (++idx == len) synerr();
+   if (idx == len - 1) {
+      synerr();
+   }
+   idx++;
    tok = array_peek(toks, idx);
 }
 
@@ -1558,6 +1558,12 @@ static void readtoks_until(char *scanset, tree_t *t) {
 static inline void rewind_tokstate(size_t orig_idx) {
    idx = orig_idx;
    tok = array_peek(toks, idx);
+}
+
+static inline void check_eoe(void) {
+   if (idx == len - 1) {
+      JUMP(NODEKIND__FINALE);
+   }
 }
 
 static void synerr(void) {
