@@ -13,7 +13,7 @@ extern array_t *array_create(void) {
 }
 
 extern void array_destroy(array_t *a) {
-   for (int i = 0; i < a->len; i++)
+   for (size_t i = 0; i < a->len; i++)
       free(a->container[i]);
    free(a->container);
    free(a);
@@ -34,11 +34,11 @@ extern void *array_peek(array_t *a, int idx) {
 }
 
 extern void array_foreach(array_t *a, array_iterator_t *iterate) {
-   for (int i = 0; i < a->len; i++)
+   for (size_t i = 0; i < a->len; i++)
       (*iterate)(a->container[i], i);
 }
 
-extern int array_size(array_t *a) {
+extern size_t array_size(array_t *a) {
    return a->len;
 }
 
