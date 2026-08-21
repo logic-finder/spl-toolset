@@ -1,14 +1,13 @@
 #include "transpile.h"
 #include "transpile.internals.h"
 
-extern void transpile(optflg_t *of, optval_t *ov) {
+extern void transpile(compile_ctx_t *cctx) {
    tree_t *title, *dp, *nrtv;
 
-   (void) of, (void) ov;
    fp = safe_fopen(FP_NAME, "w");
-   title = tree_child(pt, 0);
-   dp    = tree_child(pt, 1);
-   nrtv  = tree_child(pt, 2);
+   title = tree_child(cctx->pt, 0);
+   dp    = tree_child(cctx->pt, 1);
+   nrtv  = tree_child(cctx->pt, 2);
    you_flag = false;
 
    gen_header();

@@ -1,8 +1,8 @@
 #ifndef TRANSPILE_H
 #define TRANSPILE_H
 
-#include "argparse.h"
+#include "splc.h"
 
-void transpile(optflg_t *of, optval_t *ov);
+void transpile(compile_ctx_t *cctx);
 
 #endif
