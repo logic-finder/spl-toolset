@@ -171,16 +171,16 @@ static void store_punct(lex_ctx_t *lctx) {
 
 static void store_string(lex_ctx_t *lctx, tokkind_t kind) {
    token_t tok;
-   char *run;
-   size_t len;
+   char *buf;
+   size_t bufsiz;
 
    lctx->buf[lctx->idx] = '\0';
-   len = lctx->idx + 1;
-   run = safe_malloc(len);
-   strcpy(run, lctx->buf); // fixme: consider memcpy
+   bufsiz = lctx->idx + 1;
+   buf = safe_malloc(bufsiz);
+   memcpy(buf, lctx->buf, bufsiz);
 
-   tok.run = run;
-   tok.len = len;
+   tok.run = buf;
+   tok.len = bufsiz;
    tok.kind = kind;
    tok.lnum = lctx->real_lnum;
    tok.lpos = lctx->real_lpos;
