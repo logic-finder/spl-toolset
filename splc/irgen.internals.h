@@ -6,16 +6,15 @@
 #include "tree.adt.h"
 
 typedef struct {
-   tree_t
-      *irt,
-      *nrtv,
-      *curr_act,
-      *curr_scene,
-      *curr_block;
+   tree_t *irt, *dp, *nrtv;
+   tree_t *curr_act, *curr_scene, *curr_block;
+   tree_t *pt_dp, *pt_nrtv;
    size_t labelcnt;
+   tree_t *t;
+   node_t *n;
 } irgen_ctx_t;
 
-typedef void handler_t(tree_t *t, irgen_ctx_t *ictx);
+typedef void handler_t(irgen_ctx_t *ictx);
 
 static void set_dpsz(irgen_ctx_t *ictx);
 static tree_callback_t route;
@@ -26,7 +25,7 @@ static handler_t handle_exit;
 static handler_t handle_exeunt;
 static handler_t handle_line;
 static handler_t handle_asgn;
-static void handle_io(tree_t *t, irgen_ctx_t *ictx, iropcode_t opcode);
+static void handle_io(irgen_ctx_t *ictx, iropcode_t opcode);
 static handler_t handle_goto;
 static handler_t handle_cond;
 static handler_t handle_if;

@@ -1,180 +1,182 @@
 #include "irgen.h"
 #include "irgen.internals.h"
 
-extern void irgenerate(void) {
+extern void irgenerate(compile_ctx_t *cctx) {
    irgen_ctx_t ictx;
-   tree_t *pt_nrtv;
 
    /* irt -> [0] dp
           -> [1] nrtv */
 
-   pt_nrtv = tree_child(pt, 2);
-   irt = ictx.irt = plant_tree(NULL, 0, IrnodekindRoot, 0, 0);
+   ictx.pt_dp = tree_child(cctx->pt, 1);
+   ictx.pt_nrtv = tree_child(cctx->pt, 2);
+
+   ictx.irt = plant_tree(NULL, 0, IrnodekindRoot, 0, 0);
    set_dpsz(&ictx);  /* appends the dp tree to irt */
    ictx.nrtv = graft_tree_i(ictx.irt, 0, IrnodekindNrtv);
-   tree_pre_traverse(pt_nrtv, route, 0, &ictx);
+   tree_pre_traverse(ictx.pt_nrtv, route, 0, &ictx);
    /* Marks the last node with END OF PROGRAM */
    graft_tree_i(ictx.curr_block, 0, IrnodekindEop);
+
+   cctx->irt = ictx.irt;
+   return;
 }
 
 static void set_dpsz(irgen_ctx_t *ictx) {
-   tree_t *pt_dp, *irt_dp, *opcode;
+   tree_t *opcode;
    int dpsz;
 
-   irt_dp = graft_tree_i(ictx->irt, 0, IrnodekindDp);
-   pt_dp = tree_child(pt, 1);
-   dpsz = (int) tree_clen(pt_dp);
+   ictx->dp = graft_tree_i(ictx->irt, 0, IrnodekindDp);
+   dpsz = (int) tree_clen(ictx->pt_dp);
 
-   opcode = graft_tree_opcode(irt_dp, IropcodeSet, 0, 0);
+   opcode = graft_tree_opcode(ictx->dp, IropcodeSet, 0, 0);
    graft_tree_ui(opcode, IrvarDpsz, IrnodekindVar);
    graft_tree_i(opcode, dpsz, IrnodekindConst);
 }
 
 static void route(tree_t *t, int lv, void *ctx) {
-   node_t *n;
    irgen_ctx_t *ictx;
 
    (void) lv;
-   n = tree_dat(t);
-   ictx = ctx;
 
-   switch (n->kind) {
-      case NODEKIND_ACT    : handle_act   (t, ictx); break;
-      case NODEKIND_SCENE  : handle_scene (t, ictx); break;
-      case NODEKIND_ENTER  : handle_enter (t, ictx); break;
-      case NODEKIND_EXIT   : handle_exit  (t, ictx); break;
-      case NODEKIND_EXEUNT : handle_exeunt(t, ictx); break;
-      case NODEKIND_LINE   : handle_line  (t, ictx); break;
+   ictx = ctx;
+   ictx->t = t;
+   ictx->n = tree_dat(t);
+
+   switch (ictx->n->kind) {
+      case NODEKIND_ACT    : handle_act   (ictx); break;
+      case NODEKIND_SCENE  : handle_scene (ictx); break;
+      case NODEKIND_ENTER  : handle_enter (ictx); break;
+      case NODEKIND_EXIT   : handle_exit  (ictx); break;
+      case NODEKIND_EXEUNT : handle_exeunt(ictx); break;
+      case NODEKIND_LINE   : handle_line  (ictx); break;
       case NODEKIND_ASGN1  : /* fall-through */
       case NODEKIND_ASGN2  : /* fall-through */
-      case NODEKIND_ASGN3  : handle_asgn  (t, ictx); break;
-      case NODEKIND_OUT_N  : handle_io(t, ictx, IropcodeOutN); break;
-      case NODEKIND_OUT_C  : handle_io(t, ictx, IropcodeOutC); break;
-      case NODEKIND_IN_N   : handle_io(t, ictx, IropcodeInN ); break;
-      case NODEKIND_IN_C   : handle_io(t, ictx, IropcodeInC ); break;
-      case NODEKIND_GOTO   : handle_goto  (t, ictx); break;
-      case NODEKIND_COND   : handle_cond  (t, ictx); break;
-      case NODEKIND_IF     : handle_if    (t, ictx); break;
-      case NODEKIND_PUSH   : handle_push  (t, ictx); break;
-      case NODEKIND_POP    : handle_pop   (t, ictx); break;
+      case NODEKIND_ASGN3  : handle_asgn  (ictx); break;
+      case NODEKIND_OUT_N  : handle_io(ictx, IropcodeOutN); break;
+      case NODEKIND_OUT_C  : handle_io(ictx, IropcodeOutC); break;
+      case NODEKIND_IN_N   : handle_io(ictx, IropcodeInN ); break;
+      case NODEKIND_IN_C   : handle_io(ictx, IropcodeInC ); break;
+      case NODEKIND_GOTO   : handle_goto  (ictx); break;
+      case NODEKIND_COND   : handle_cond  (ictx); break;
+      case NODEKIND_IF     : handle_if    (ictx); break;
+      case NODEKIND_PUSH   : handle_push  (ictx); break;
+      case NODEKIND_POP    : handle_pop   (ictx); break;
       default: ;  /* DEPEND, CONST, and operators fall here */
    }
 }
 
-static void handle_act(tree_t *t, irgen_ctx_t *ictx) {
-   node_t *act, *romnum;
+static void handle_act(irgen_ctx_t *ictx) {
+   node_t *romnum;
 
-   act = tree_dat(t);
-   romnum = tree_chdat(t, 0);
+   romnum = tree_chdat(ictx->t, 0);
 
    ictx->curr_act = graft_tree_s(
       ictx->nrtv,
       romnum->dat.s.run,
       romnum->dat.s.len,
       IrnodekindAct,
-      act->lnum,
-      act->lpos
+      ictx->n->lnum,
+      ictx->n->lpos
    );
 }
 
-static void handle_scene(tree_t *t, irgen_ctx_t *ictx) {
-   node_t *scene, *romnum;
+static void handle_scene(irgen_ctx_t *ictx) {
+   node_t *romnum;
 
-   scene = tree_dat(t);
-   romnum = tree_chdat(t, 0);
+   romnum = tree_chdat(ictx->t, 0);
 
    ictx->curr_scene = graft_tree_s(
       ictx->curr_act,
       romnum->dat.s.run,
       romnum->dat.s.len,
       IrnodekindScene,
-      scene->lnum,
-      scene->lpos
+      ictx->n->lnum,
+      ictx->n->lpos
    );
    ictx->labelcnt = 0;
    add_block(ictx, ictx->labelcnt);  /* updates curr_block */
 }
 
-static void handle_enter(tree_t *t, irgen_ctx_t *ictx) {
+static void handle_enter(irgen_ctx_t *ictx) {
    tree_t *opcode;
-   node_t *n;
    size_t len;
+   node_t *chdat;
    spl_uint_t charidx;
 
-   n = tree_dat(t);
-   len = tree_clen(t);
+   len = tree_clen(ictx->t);
 
    /* Generates 'ENTER <charidx>' */
    for (size_t i = 0; i < len; i++) {
-      charidx = TREE_CHDAT(t, i)->dat.n;
+      chdat = tree_chdat(ictx->t, i);
+      charidx = chdat->dat.n;
       opcode = graft_tree_opcode(
          ictx->curr_block,
          IropcodeEnter,
-         n->lnum,
-         n->lpos
+         ictx->n->lnum,
+         ictx->n->lpos
       );
       graft_tree_charidx(opcode, charidx);
    }
 }
 
-static void handle_exit(tree_t *t, irgen_ctx_t *ictx) {
+static void handle_exit(irgen_ctx_t *ictx) {
    tree_t *opcode;
-   node_t *n;
+   node_t *chdat;
    spl_uint_t charidx;
 
-   n = tree_dat(t);
-   charidx = TREE_CHDAT(t, 0)->dat.n;
+   chdat = tree_chdat(ictx->t, 0);
+   charidx = chdat->dat.n;
 
    opcode = graft_tree_opcode(
       ictx->curr_block,
       IropcodeExit,
-      n->lnum,
-      n->lpos
+      ictx->n->lnum,
+      ictx->n->lpos
    );
    graft_tree_charidx(opcode, charidx);
 }
 
-static void handle_exeunt(tree_t *t, irgen_ctx_t *ictx) {
+static void handle_exeunt(irgen_ctx_t *ictx) {
    tree_t *opcode;
-   node_t *n;
    size_t len;
+   node_t *chdat;
    spl_uint_t charidx;
 
-   n = tree_dat(t);
-   len = tree_clen(t);
+   len = tree_clen(ictx->t);
 
    /* Generates 'EXEUNT' */
    if (!len) {
       graft_tree_opcode(
          ictx->curr_block,
          IropcodeExeunt,
-         n->lnum,
-         n->lpos
+         ictx->n->lnum,
+         ictx->n->lpos
       );
       return;
    }
 
    /* Generates 'EXIT <charidx>' */
    for (size_t i = 0; i < len; i++) {
-      charidx = TREE_CHDAT(t, i)->dat.n;
+      chdat = tree_chdat(ictx->t, i);
+      charidx = chdat->dat.n;
       opcode = graft_tree_opcode(
          ictx->curr_block,
          IropcodeExit,
-         n->lnum,
-         n->lpos
+         ictx->n->lnum,
+         ictx->n->lpos
       );
       graft_tree_charidx(opcode, charidx);
    }
 }
 
-static void handle_line(tree_t *t, irgen_ctx_t *ictx) {
+static void handle_line(irgen_ctx_t *ictx) {
    tree_t *opcode;
    node_t *dat, *chdat;
    spl_uint_t charidx;
 
-   chdat = tree_chdat(t, 0);
+   chdat = tree_chdat(ictx->t, 0);
    charidx = chdat->dat.n;
-   dat = tree_dat(t);
+   dat = tree_dat(ictx->t);
 
    /* Generates 'SPEAK <charidx>' */
    opcode = graft_tree_opcode(
@@ -186,51 +188,47 @@ static void handle_line(tree_t *t, irgen_ctx_t *ictx) {
    graft_tree_charidx(opcode, charidx);
 }
 
-static void handle_asgn(tree_t *t, irgen_ctx_t *ictx) {
+static void handle_asgn(irgen_ctx_t *ictx) {
    tree_t *c, *opcode;
-   node_t *n;
 
-   c = tree_child(t, 0);
+   c = tree_child(ictx->t, 0);
    resolve_const(c, ictx);  /* ... PUSH const */
 
    // fixme: POP을 생성하지 말고, PUSH const를 ASGN hearer const로 고쳐도 되지 않을까?
 
    /* Generates 'POP hearer' */
-   n = tree_dat(t);
    opcode = graft_tree_opcode(
       ictx->curr_block,
       IropcodePop,
-      n->lnum,
-      n->lpos
+      ictx->n->lnum,
+      ictx->n->lpos
    );
    graft_tree_var(opcode, IrvarHearer);
 }
 
-static void handle_io(tree_t *t, irgen_ctx_t *ictx, iropcode_t opcode) {
+static void handle_io(irgen_ctx_t *ictx, iropcode_t opcode) {
    /* Generates '<opcode>' */
-   node_t *n = tree_dat(t);
    graft_tree_opcode(
       ictx->curr_block,
       opcode,
-      n->lnum,
-      n->lpos
+      ictx->n->lnum,
+      ictx->n->lpos
    );
 }
 
-static void handle_goto(tree_t *t, irgen_ctx_t *ictx) {
+static void handle_goto(irgen_ctx_t *ictx) {
    tree_t *opcode;
    nodekind_t type;
-   node_t *node, *child;
+   node_t *child;
 
-   node = tree_dat(t);
-   type = node->dat.n;
-   child = tree_chdat(t, 0);
+   type = ictx->n->dat.n;
+   child = tree_chdat(ictx->t, 0);
 
    opcode = graft_tree_opcode(
       ictx->curr_block,
       IropcodeGoto,
-      node->lnum,
-      node->lpos
+      ictx->n->lnum,
+      ictx->n->lpos
    );
    graft_tree_ui(opcode, type, IrnodekindData);
    graft_tree_s(
@@ -243,7 +241,7 @@ static void handle_goto(tree_t *t, irgen_ctx_t *ictx) {
    );
 }
 
-static void handle_cond(tree_t *t, irgen_ctx_t *ictx) {
+static void handle_cond(irgen_ctx_t *ictx) {
    /* COND NODE STRUCTURE
          [0] = lhs -> p1 | p2 | (p3 -> const)
          [1] = negate | affirm
@@ -251,12 +249,12 @@ static void handle_cond(tree_t *t, irgen_ctx_t *ictx) {
          [3] = rhs -> const */
 
    tree_t *lhs_child, *rhs_child, *opcode;
-   node_t *node, *p, *op, *mode;
+   node_t *p, *op, *mode;
    irvar_t var;
    iropcode_t comp;
 
    /* Prepares left constant */
-   lhs_child = tree_child(tree_child(t, 0), 0);
+   lhs_child = tree_child(tree_child(ictx->t, 0), 0);
    p = tree_dat(lhs_child);
 
    if (p->kind == NODEKIND_P1 || p->kind == NODEKIND_P2) {
@@ -273,11 +271,11 @@ static void handle_cond(tree_t *t, irgen_ctx_t *ictx) {
    else resolve_const(tree_child(lhs_child, 0), ictx);
 
    /* Prepares right constant */
-   rhs_child = tree_child(tree_child(t, 3), 0);
+   rhs_child = tree_child(tree_child(ictx->t, 3), 0);
    resolve_const(rhs_child, ictx);
 
    /* Determines ==, <, or > */
-   op = tree_chdat(t, 2);
+   op = tree_chdat(ictx->t, 2);
    switch (op->kind) {
       case NODEKIND_LT: comp = IropcodeLt; break;
       case NODEKIND_EQ: comp = IropcodeEq; break;
@@ -287,37 +285,36 @@ static void handle_cond(tree_t *t, irgen_ctx_t *ictx) {
    }
 
    /* Generates the comparison */
-   node = tree_dat(t);
    set_operands(ictx);
    opcode = graft_tree_opcode(
       ictx->curr_block,
       comp,
-      node->lnum,
-      node->lpos
+      ictx->n->lnum,
+      ictx->n->lpos
    );
    graft_tree_var(opcode, IrvarOperandL);
    graft_tree_var(opcode, IrvarOperandR);
 
    /* Generates ! optionally */
-   mode = tree_chdat(t, 1);
+   mode = tree_chdat(ictx->t, 1);
    if (mode->kind == NODEKIND_AFFIRM)
       return;  /* early return */
    graft_tree_opcode(
       ictx->curr_block,
       IropcodeNegate,
-      node->lnum,
-      node->lpos
+      ictx->n->lnum,
+      ictx->n->lpos
    );
 }
 
-static void handle_if(tree_t *t, irgen_ctx_t *ictx) {
+static void handle_if(irgen_ctx_t *ictx) {
    /* IF NODE STRUCTURE
       [0] AFFIRM | NEGATE
       [1] CONSEQ
          [0] statement */
 
    tree_t *conseq, *stmt, *opcode;
-   node_t *ifdat, *mode, *stmtdat;
+   node_t *mode, *stmtdat;
    iropcode_t jump;
    size_t my_cnt;
 
@@ -326,19 +323,18 @@ static void handle_if(tree_t *t, irgen_ctx_t *ictx) {
          JUMPFALSE .Ln  if  "if so , ..."
       where n = labelcnt + 1 */
 
-   mode = tree_chdat(t, 0);
+   mode = tree_chdat(ictx->t, 0);
    switch (mode->kind) {
       case NODEKIND_AFFIRM: jump = IropcodeJumpF; break;
       case NODEKIND_NEGATE: jump = IropcodeJumpT; break;
       /* control never reaches here */
       default: jump = Iropcode_Unknown;
    }
-   ifdat = tree_dat(t);
    opcode = graft_tree_opcode(
       ictx->curr_block,
       jump,
-      ifdat->lnum,
-      ifdat->lpos
+      ictx->n->lnum,
+      ictx->n->lpos
    );
    my_cnt = ++ictx->labelcnt;  /* labelcnt updated */
    graft_tree_ui(opcode, my_cnt, IrnodekindData);
@@ -351,23 +347,27 @@ static void handle_if(tree_t *t, irgen_ctx_t *ictx) {
       .L2:
          ... */
 
-   conseq = tree_child(t, 1);
+   conseq = tree_child(ictx->t, 1);
    stmt = tree_child(conseq, 0);
    stmtdat = tree_dat(stmt);
+
+   ictx->t = stmt;
+   ictx->n = stmtdat;
+
    switch (stmtdat->kind) {
       case NODEKIND_ASGN1  : /* fall-through */
       case NODEKIND_ASGN2  : /* fall-through */
-      case NODEKIND_ASGN3  : handle_asgn(stmt, ictx); break;
-      case NODEKIND_OUT_N  : handle_io(t, ictx, IropcodeOutN); break;
-      case NODEKIND_OUT_C  : handle_io(t, ictx, IropcodeOutC); break;
-      case NODEKIND_IN_N   : handle_io(t, ictx, IropcodeInN ); break;
-      case NODEKIND_IN_C   : handle_io(t, ictx, IropcodeInC ); break;
-      case NODEKIND_GOTO   : handle_goto(stmt, ictx); break;
-      case NODEKIND_COND   : handle_cond(stmt, ictx); break;
-      case NODEKIND_PUSH   : handle_push(stmt, ictx); break;
-      case NODEKIND_POP    : handle_pop (stmt, ictx); break;
-      case NODEKIND_IF     : handle_if  (stmt, ictx); break;
-      default: ;  /* control never reaches here */
+      case NODEKIND_ASGN3  : handle_asgn(ictx); break;
+      case NODEKIND_OUT_N  : handle_io(ictx, IropcodeOutN); break;
+      case NODEKIND_OUT_C  : handle_io(ictx, IropcodeOutC); break;
+      case NODEKIND_IN_N   : handle_io(ictx, IropcodeInN ); break;
+      case NODEKIND_IN_C   : handle_io(ictx, IropcodeInC ); break;
+      case NODEKIND_GOTO   : handle_goto(ictx); break;
+      case NODEKIND_COND   : handle_cond(ictx); break;
+      case NODEKIND_PUSH   : handle_push(ictx); break;
+      case NODEKIND_POP    : handle_pop (ictx); break;
+      case NODEKIND_IF     : handle_if  (ictx); break;
+      default: ;  /* control never reaches default */
    }
 
    add_block(ictx, my_cnt);  /* updates curr_block */
@@ -379,32 +379,29 @@ static void handle_if(tree_t *t, irgen_ctx_t *ictx) {
 
 /* Note: this "push" means the Remember statement;
       not to be confused with IropcodePush! */
-static void handle_push(tree_t *t, irgen_ctx_t *ictx) {
+static void handle_push(irgen_ctx_t *ictx) {
    tree_t *c;
-   node_t *node;
    irnode_t *irnode;
    size_t last;
 
-   c = tree_child(t, 0);
+   c = tree_child(ictx->t, 0);
    resolve_const(c, ictx);  /* ... PUSH const */
 
    /* Replaces PUSH with REMEMB */
-   node = tree_dat(t);
    last = tree_clen(ictx->curr_block) - 1;
 
    irnode = tree_chdat(ictx->curr_block, last);
    irnode->dat.ui = IropcodeRememb;
-   irnode->lnum = node->lnum;
-   irnode->lpos = node->lpos;
+   irnode->lnum = ictx->n->lnum;
+   irnode->lpos = ictx->n->lpos;
 }
 
-static void handle_pop(tree_t *t, irgen_ctx_t *ictx) {
-   node_t *n = tree_dat(t);
+static void handle_pop(irgen_ctx_t *ictx) {
    graft_tree_opcode(
       ictx->curr_block,
       IropcodeRecall,
-      n->lnum,
-      n->lpos
+      ictx->n->lnum,
+      ictx->n->lpos
    );
 }
 

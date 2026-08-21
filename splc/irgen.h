@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 
+#include "splc.h"
 #include "common.h"
 #include "global.h"
 
@@ -89,6 +90,6 @@ typedef enum iropcode {
    IropcodeNegate   /* NEGATE */
 } iropcode_t;
 
-void irgenerate(void);
+void irgenerate(compile_ctx_t *cctx);
 
 #endif
