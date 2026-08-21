@@ -3,10 +3,9 @@
 
 #include "fatal.h"
 #include "global.h"
+#include "colorcode.h"
 
 static void validate_argc(int argc);
-static void init_extvar(optval_t *ov);
-
-const char *sfname;  /* external variable */
+static void init_opt(optval_t *ov);
 
 #endif
