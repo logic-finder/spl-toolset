@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include "splrt.h"
+#include "fatal.h"
 #include "global.h"
 #include "wrappers.h"
 
