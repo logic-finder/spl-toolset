@@ -9,13 +9,22 @@
 #include "dbhandler.h"
 #include "colorcode.h"
 
-typedef void typechecker_t(node_t *n);
+typedef struct {
+   const char *reason;
+   tree_t *pt, *title, *dp;
+   optval_t *ov;
+   array_t *ls;
+   tree_t *t;  /* temporary tree */
+   node_t *n;  /* temporary tree.dat */
+} typecheck_ctx_t;
+
+typedef void typechecker_t(typecheck_ctx_t *tctx);
 typedef const char *place_t[9];
 
 static void coalesce_childstr(tree_t *t);
-static void coalesce_title(void);
-static void coalesce_name(tree_t *dp);
-static void check_namecol(tree_t *dp);
+static inline void coalesce_title(typecheck_ctx_t *tctx);
+static void coalesce_name(typecheck_ctx_t *tctx);
+static void check_namecol(typecheck_ctx_t *tctx);
 
 static tree_callback_t typecheck_router;
 static typechecker_t typecheck_name;
@@ -30,15 +39,12 @@ static bool is_rnum(const char *rnum);
 static void setnds(node_t *n, char *s, int l);
 
 static inline void print_errheader(void);
-static void semerr_badword(node_t *n);
+static void semerr_badword(typecheck_ctx_t *tctx);
 static void semerr_dupname(
+   typecheck_ctx_t *tctx,
    node_t * restrict curr,
    node_t * restrict prev
 );
-
-extern const char *sfname;  // see global.h
-extern tree_t *pt;  // see global.h
-extern msg_t msgs;  // see global.h
 
 static const char *reason;  // error message
 
