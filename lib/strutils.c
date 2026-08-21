@@ -22,6 +22,17 @@ extern size_t match_str(
    return arrlen;
 }
 
+extern size_t match_str_case(
+   const char *  restrict str,
+   const char ** restrict arr,
+   size_t arrlen
+) {
+   for (size_t i = 0; i < arrlen; i++)
+      if (!strcasecmp(str, arr[i]))
+         return i;
+   return arrlen;
+}
+
 extern char *basename(const char *src) {
    /* There are four possible cases for src:
          (1) .../name

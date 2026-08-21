@@ -13,6 +13,12 @@ size_t match_str(
    size_t arrlen
 );
 
+size_t match_str_case(
+   const char *  restrict str,
+   const char ** restrict arr,
+   size_t arrlen
+);
+
 /* need to free the return value later */
 char *basename(const char *src);
 
