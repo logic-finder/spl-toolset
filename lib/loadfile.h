@@ -5,7 +5,7 @@
 
 typedef struct line {
    char *run;
-   int len, num;
+   size_t len, num;
 } line_t;
 
 array_t *loadfile(

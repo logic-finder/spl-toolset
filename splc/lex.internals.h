@@ -4,71 +4,57 @@
 #include <ctype.h>
 #include <stdarg.h>
 #include <setjmp.h>
+#include <stdbool.h>
+
 #include "msg.h"
 #include "global.h"
 #include "strutils.h"
 #include "wrappers.h"
 #include "colorcode.h"
 
-/**********
- * MACROS *
- **********/
-#define LONGJMP_ENV env_lex
-#define JUMP(v) LONGJMP_TEMPLET(LONGJMP_ENV, (v))
+/*==========*
+ | TYPEDEFS |
+ *==========*/
+typedef struct {
+   array_t *ls;  /* array of line_t */
+   size_t lc;    /* length of ls */
+   size_t lnum;  /* line number */
+   size_t lpos;  /* column in line */
+   line_t *l;    /* a line */
+   size_t tlnum;  /* temporary lnum */
+   size_t tlpos;  /* temporary lpos */
+   char ch;    /* a char */
+   char *buf;  /* a buffer */
+   size_t idx;  /* column in buf */
+   size_t max;  /* max size of buf */
+   jmp_buf env;  /* setjmp & longjmp */
+   bool eoe;  /* end of everything */
+} lex_ctx_t;
 
-/************
- * TYPEDEFS *
- ************/
-typedef int processor_t(va_list *ap);
-typedef int checker_t(va_list *ap);
+typedef int processor_t(lex_ctx_t *lctx, va_list *ap);
+typedef int checker_t(lex_ctx_t *lctx, va_list *ap);
 
-/***********************
- * FUNCTION PROTOTYPES *
- ***********************/
+/*=====================*
+ | FUNCTION PROTOTYPES |
+ *=====================*/
+
 /* Character Handling */
-static void skip_space(void);
-static void read_token(void);
-static void read_nchar(int n);
+static void skip_space(lex_ctx_t *lctx);
+static void read_token(lex_ctx_t *lctx);
+static void read_nchar(lex_ctx_t *lctx, size_t n);
 
 /* Utils */
-static inline void save_state(void);
-static void store_token(array_t *toks);
-static void store_punct(array_t *toks);
+static inline void save_state(lex_ctx_t *lctx);
+static void store_token(lex_ctx_t *lctx, array_t *toks);
+static void store_punct(lex_ctx_t *lctx, array_t *toks);
 
 /* Miscellaneous */
-static inline void iterate_lines(processor_t *process, ...);
+static inline void iterate_lines(lex_ctx_t *lctx, processor_t *process, ...);
 static processor_t process_skip;
 static processor_t process_read;
 static checker_t check_space;
 static checker_t check_cntlessthan;
 static checker_t check_token;
-static void store_string(array_t *toks, tokkind_t kind);
-
-/******************************
- * IMPORTANT GLOBAL VARIABLES *
- ******************************/
-/* Line Access */
-
-// extern array_t *ls;    // array of line_t (see global.h)
-
-static int lls;      // length of ls
-
-static int p;        // line number
-static int q;        // position in line
-static line_t *l;    // l = array_peek(ls, p)
-
-static int tp;       // temp. var. for p
-static int tq;       // temp. var. for q
-
-/* Line Contents Copy */
-static char ch;      // to store a char
-static char *buf;    // to store a string
-static int idx;      // position in buf
-static size_t max;      // size of buf
-
-/* Miscellaneous */
-static jmp_buf LONGJMP_ENV;  // for setjmp & longjmp
-static bool eoe;             // end-of-everything
-const tokkind_t tokkind;     // kind of token
+static void store_string(lex_ctx_t *lctx, array_t *toks, tokkind_t kind);
 
 #endif

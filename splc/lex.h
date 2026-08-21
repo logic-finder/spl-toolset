@@ -1,9 +1,9 @@
 #ifndef LEX_H
 #define LEX_H
 
-#include "array.adt.h"
 #include "loadfile.h"
 #include "argparse.h"
+#include "array.adt.h"
 
 /*
  * `TOKKIND_TOK` - a token
@@ -23,9 +23,9 @@ typedef enum tokkind {
  */
 typedef struct token {
    char *run;
-   int len;
+   size_t len;
    tokkind_t kind;
-   int lnum, lpos;
+   size_t lnum, lpos;
 } token_t;
 
 /**
@@ -38,6 +38,7 @@ typedef struct token {
 array_t *lex(
    optflg_t *of,
    optval_t *ov,
+   array_t *ls,
    size_t lc
 );
 

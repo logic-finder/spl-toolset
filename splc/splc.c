@@ -21,7 +21,7 @@ int main(int argc, const char **argv) {
 
    /* MAIN LOGIC */
    safe_fputs(stdout, ENPREFIX "scanning...");
-   toks = lex(&of, &ov, lc);
+   toks = lex(&of, &ov, ls, lc);
    safe_vprintf(" " Cgreen "done!" Creset
       "\t(total " Cbwhite "%zu" Creset " tokens)\n",
       array_size(toks)
