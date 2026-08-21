@@ -2,7 +2,8 @@
 #define LOADFILE_INTERNALS_H
 
 #include <ctype.h>
-#include "global.h"
+
+#include "fatal.h"
 #include "wrappers.h"
 #include "strutils.h"
 #include "readline.h"

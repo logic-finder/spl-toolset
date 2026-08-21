@@ -1,5 +1,3 @@
-// fixme: lib으로 옮기기
-
 #include "loadfile.h"
 #include "loadfile.internals.h"
 
@@ -29,7 +27,7 @@ extern array_t *loadfile(
    }
 
    if (lcnt == 0) {
-      ERR("empty source file");
+      fatal("empty source file");
    }
 
    line_t *last = array_peek(lines, lcnt - 1);
@@ -53,7 +51,7 @@ extern array_t *loadfile(
 extern void unloadfl(array_t *lines, size_t lc) {
    line_t *l;
 
-   for (int i = 0; i < lc; i++) {
+   for (size_t i = 0; i < lc; i++) {
       l = array_peek(lines, i);
       free(l->run);
    }
