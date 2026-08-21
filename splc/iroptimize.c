@@ -54,13 +54,16 @@
    - (2 + a) + 3 == a + 5 이런식으로 바꿀수도 있을듯 (나눗셈은 예외케이스 있을듯)
 */
 
-extern void iroptimize(void) {
-   tree_t *nrtv;
+extern void iroptimize(compile_ctx_t *cctx) {
+   iroptmiz_ctx_t zctx;
 
-   nrtv = tree_child(irt, 1);
+   zctx.ls = cctx->ls;
+   zctx.ov = cctx->ov;
+   zctx.irt = cctx->irt;
+   zctx.nrtv = tree_child(zctx.irt, 1);
 
    /* Note: the order fc -> pc -> ro & rc is intended */
-   fold_const(nrtv);
+   fold_const(&zctx);
    // propagate_const()
    // reduce_operator()
    // remove_comparison()
@@ -69,7 +72,7 @@ extern void iroptimize(void) {
    // remove_contradict()
 }
 
-static void fold_const(tree_t *nrtv) {
+static void fold_const(iroptmiz_ctx_t *zctx) {
    size_t nrtvsiz, actsiz, scenesiz;
    tree_t *act, *scene, *block, *new_block;
 
@@ -78,10 +81,10 @@ static void fold_const(tree_t *nrtv) {
    // fixme: no longer meaningful?
    // /* k = 1 to skip SET dpsz 0 */
 
-   nrtvsiz = tree_clen(nrtv);
+   nrtvsiz = tree_clen(zctx->nrtv);
 
    for (size_t k = 0; k < nrtvsiz; k++) {
-      act = tree_child(nrtv, k);
+      act = tree_child(zctx->nrtv, k);
       actsiz = tree_clen(act);
 
       for (size_t m = 0; m < actsiz; m++) {
@@ -96,7 +99,7 @@ static void fold_const(tree_t *nrtv) {
             /* reuse block->dat */
             tree_setdat(new_block, tree_dat(block));
 
-            fold_const_work(block, new_block);
+            fold_const_work(zctx, block, new_block);
 
             tree_setchild(scene, n, new_block);
             /* since we reuse block->dat, need not to free it */
@@ -106,11 +109,12 @@ static void fold_const(tree_t *nrtv) {
    }
 }
 
-static void fold_const_work(tree_t *block, tree_t *new_block) {
+static void fold_const_work(iroptmiz_ctx_t *zctx, tree_t *block, tree_t *new_block) {
    size_t blocksiz, j;
    tree_t *op, *p1, *p2, *temp;
    irnode_t *opdat, *p1dat, *p2dat, *tempdat;
-   int val, flow_lnum, flow_lpos;
+   int val;
+   size_t flow_lnum, flow_lpos;
    bool flow_flag;
 
    blocksiz = tree_clen(block);
@@ -147,34 +151,37 @@ static void fold_const_work(tree_t *block, tree_t *new_block) {
          tempdat = tree_dat(temp);
          if (tempdat->dat.i != Iropcode2x)
             break;
-         if (val > SPL_INT_MAX / 2 || val < SPL_INT_MIN / 2)
-            if (!flow_flag) {
-               flow_flag = true;
-               flow_lnum = tempdat->lnum;
-               flow_lpos = tempdat->lpos;
-               break;  /* stops before over/underflow */
-            }
+         if (val > SPL_INT_MAX / 2 || val < SPL_INT_MIN / 2) {
+            flow_flag = true;
+            flow_lnum = tempdat->lnum;
+            flow_lpos = tempdat->lpos;
+            break;  /* stops before over/underflow */
+         }
          val *= 2;
          tree_prune(temp);
       }
       if (flow_flag)
-         warn(flow_lnum, flow_lpos);
+         warn(zctx, flow_lnum, flow_lpos);
 
       p2dat->dat.i = val;
       i = j - 1;  /* fast-forwards i */
+
    graft:
       tree_graft(new_block, op);
    }
 }
 
-static void warn(int lnum, int lpos) {
-   line_t *l = array_peek(ls, lnum - 1);
+static void warn(iroptmiz_ctx_t *zctx, size_t lnum, size_t lpos) {
+   line_t *l;
+
+   l = array_peek(zctx->ls, lnum - 1);
+
    safe_vprintf(
       Cbred "\n<optimizer warning>" Creset " %s\n"
-      "[%s:%d:%d] " Cbwhite "note:" Creset " problematic since here\n"
+      "[%s:%zu:%zu] " Cbwhite "note:" Creset " problematic since here\n"
       "%4d|%.*s" Cbblue "%s" Creset "\n",
       msgs.warn.optimizer.flow,
-      sfname, lnum, lpos,
+      zctx->ov->src, lnum, lpos,
       lnum, lpos - 1, l->run, &l->run[lpos - 1]
    );
 }
