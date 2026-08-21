@@ -157,7 +157,7 @@ static void write_sect_type_A(
    FILE *src;
    fpos_t ecnt_pos, eos_pos;
    char *ln;
-   int llen, residual;
+   size_t llen, residual;
    uint32_t ecnt;
    array_t *records;
    record_A_t temp, *r;
@@ -239,7 +239,7 @@ static void write_sect_type_B(
       **elems,  // = split(ln, ",")
       *str,     // elems[0]
       *kind;    // elems[1]
-   int
+   size_t
       llen,    // length of ln
       slen,    // length of <str>
       klen,    // length of <kind>

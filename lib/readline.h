@@ -5,6 +5,6 @@
 
 #define READLINE_UNIT   64
 
-int readln(FILE *fp, char **line, int *len);
+int readln(FILE *fp, char **line, size_t *len);
 
 #endif

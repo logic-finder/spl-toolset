@@ -1,13 +1,14 @@
 #include "readline.h"
 #include "readline.internals.h"
 
-extern int readln(FILE *fp, char **line, int *len) {
-   // Test whether there is nothing to read
+extern int readln(FILE *fp, char **line, size_t *len) {
    int ch, pos, bufsiz;
    bool eol;
    char *buf;
 
+   /* Checks whether there is nothing to read */
    ch = getc(fp);
+
    if (ch == EOF) {
       if (ferror(fp)) vfatal(errmsg, __func__);
       *line = NULL;
@@ -16,12 +17,12 @@ extern int readln(FILE *fp, char **line, int *len) {
    }
    else ungetc(ch, fp);
 
-   // Read chars from the file so as to construct a string
    bufsiz = READLINE_UNIT;
    buf = safe_malloc(bufsiz);
    pos = 0;
    eol = false;
 
+   /* Reads chars from the file so as to construct a string */
    for (;;) {
       if (eol) {
 // fixme: append \n at eol if there isn't
