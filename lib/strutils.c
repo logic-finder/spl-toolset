@@ -225,3 +225,18 @@ extern int strcasecmp(const char *s1, const char *s2) {
 
    return tolower((unsigned char) *s1) - tolower((unsigned char) *s2);
 }
+
+extern char *tolower_str(const char *orig) {
+   size_t bufsiz;
+   char *dest;
+
+   bufsiz = strlen(orig);
+   dest = safe_malloc(bufsiz + 1);  /* +1 for \0 */
+
+   for (size_t i = 0; i < bufsiz; i++) {
+      dest[i] = tolower((unsigned char) orig[i]);
+   }
+   dest[bufsiz] = '\0';
+
+   return dest;
+}

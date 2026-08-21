@@ -44,6 +44,8 @@ char *make_destname(
 
 int strcasecmp(const char *s1, const char *s2);
 
+char *tolower_str(const char *orig);
+
 /* Inline Functions */
 inline char lastch(const char *line) {
    return line[strlen(line) - 1];
