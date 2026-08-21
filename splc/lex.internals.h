@@ -16,13 +16,14 @@
  | TYPEDEFS |
  *==========*/
 typedef struct {
-   array_t *ls;  /* array of line_t */
+   array_t *toks;  /* array of token_t */
+   array_t *ls;    /* array of line_t */
    size_t lc;    /* length of ls */
    size_t lnum;  /* line number */
    size_t lpos;  /* column in line */
    line_t *l;    /* a line */
-   size_t tlnum;  /* temporary lnum */
-   size_t tlpos;  /* temporary lpos */
+   size_t real_lnum;  /* actual lnum */
+   size_t real_lpos;  /* actual lpos */
    char ch;    /* a char */
    char *buf;  /* a buffer */
    size_t idx;  /* column in buf */
@@ -45,8 +46,8 @@ static void read_nchar(lex_ctx_t *lctx, size_t n);
 
 /* Utils */
 static inline void save_state(lex_ctx_t *lctx);
-static void store_token(lex_ctx_t *lctx, array_t *toks);
-static void store_punct(lex_ctx_t *lctx, array_t *toks);
+static void store_token(lex_ctx_t *lctx);
+static void store_punct(lex_ctx_t *lctx);
 
 /* Miscellaneous */
 static inline void iterate_lines(lex_ctx_t *lctx, processor_t *process, ...);
@@ -55,6 +56,6 @@ static processor_t process_read;
 static checker_t check_space;
 static checker_t check_cntlessthan;
 static checker_t check_token;
-static void store_string(lex_ctx_t *lctx, array_t *toks, tokkind_t kind);
+static void store_string(lex_ctx_t *lctx, tokkind_t kind);
 
 #endif

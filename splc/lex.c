@@ -7,6 +7,7 @@ extern array_t *lex(optflg_t *of, optval_t *ov, array_t *ls, size_t lc) {
 
    (void) of, (void) ov;
 
+   lctx.toks = array_create();
    lctx.ls = ls;
    lctx.lc = lc;
    lctx.lnum = 0;
@@ -17,9 +18,8 @@ extern array_t *lex(optflg_t *of, optval_t *ov, array_t *ls, size_t lc) {
    lctx.eoe = false;
 
    /* Constructs a stream of tokens */
-   array_t *toks = array_create();
-
    ret = setjmp(lctx.env);
+
    if (ret == 0)
       goto tokenize;
    else
@@ -33,33 +33,39 @@ tokenize:
       lctx.eoe ? longjmp(lctx.env, 2)
       : save_state(&lctx),
         read_token(&lctx),
-        store_token(&lctx, toks);
+        store_token(&lctx);
 
       lctx.eoe ? longjmp(lctx.env, 3)
       : save_state(&lctx),
         read_nchar(&lctx, 1),
-        store_punct(&lctx, toks);
+        store_punct(&lctx);
    }
 
 cleanup:
    free(lctx.buf);
 
-   return toks;
+   return lctx.toks;
 }
 
-static void store_token(lex_ctx_t *lctx, array_t *toks) {
+static inline void save_state(lex_ctx_t *lctx) {
+   /* actual lnum and lpos starts from the number 1 */
+   lctx->real_lnum = lctx->lnum + 1;
+   lctx->real_lpos = lctx->lpos + 1;
+}
+
+static void store_token(lex_ctx_t *lctx) {
    if (lctx->idx == 0)
       return;
-   store_string(lctx, toks, TOKKIND_TOK);
+   store_string(lctx, TOKKIND_TOK);
 }
 
-static void store_punct(lex_ctx_t *lctx, array_t *toks) {
+static void store_punct(lex_ctx_t *lctx) {
    if (isspace(lctx->buf[0]))
       return;
-   store_string(lctx, toks, TOKKIND_PNT);
+   store_string(lctx, TOKKIND_PNT);
 }
 
-static void store_string(lex_ctx_t *lctx, array_t *toks, tokkind_t kind) {
+static void store_string(lex_ctx_t *lctx, tokkind_t kind) {
    token_t tok;
    char *run;
    size_t len;
@@ -72,10 +78,10 @@ static void store_string(lex_ctx_t *lctx, array_t *toks, tokkind_t kind) {
    tok.run = run;
    tok.len = len;
    tok.kind = kind;
-   tok.lnum = lctx->tlnum;
-   tok.lpos = lctx->tlpos;
+   tok.lnum = lctx->real_lnum;
+   tok.lpos = lctx->real_lpos;
 
-   array_append(toks, &tok, sizeof tok);
+   array_append(lctx->toks, &tok, sizeof tok);
 }
 
 static void skip_space(lex_ctx_t *lctx) {
@@ -195,9 +201,4 @@ static inline void iterate_lines(lex_ctx_t *lctx, processor_t *process, ...) {
 
 end:
    return;
-}
-
-static inline void save_state(lex_ctx_t *lctx) {
-   lctx->tlnum = lctx->lnum + 1;
-   lctx->tlpos = lctx->lpos + 1;
 }
