@@ -1,6 +1,6 @@
 #include "splc.internals.h"
 
-int main(int argc, const char **argv) {
+int main(int argc, const char *argv[]) {
    optflg_t of = {0};
    optval_t ov;
    array_t *toks;
