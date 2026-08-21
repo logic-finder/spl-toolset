@@ -1,7 +1,7 @@
 #include "assembler.h"
 #include "assembler.internals.h"
 
-extern void assemble(void) {
+extern void assemble(compile_ctx_t *cctx) {
    /* OBJECT FILE STRUCTURE
          Section 0 - Header      : total 21 bytes
             format indicator     - 4 bytes; BE; contains "SPLO"
@@ -28,10 +28,11 @@ extern void assemble(void) {
    char *destname;
 
    actx.le = isle(), actx.be = !actx.le;
-   actx.nrtv = tree_child(irt, 1);
+   actx.nrtv = tree_child(cctx->irt, 1);
+   actx.ls = cctx->ls;
 
    destname = make_destname("hello.spl", OBJ_EXTENSION);
-   fp = safe_fopen(destname, "w");
+   actx.fp = safe_fopen(destname, "w");
 
    safe_vprintf(ENPREFIX "generating object file " Cbyellow "\"%s\"" Creset "...", destname);
 
@@ -40,7 +41,7 @@ extern void assemble(void) {
    tree_pre_traverse(actx.nrtv, setoffset_route, 0, &actx.offset);
 
    /* Writes the code section */
-   tree_pre_traverse(actx.nrtv, write_route, 0, NULL);
+   tree_pre_traverse(actx.nrtv, write_route, 0, &actx);
 
    /* Writes the debug info & source file section */
    actx.s2p = actx.offset;
@@ -50,7 +51,7 @@ extern void assemble(void) {
       write_srcfile(&actx);
    }
 
-   rewind(fp);
+   rewind(actx.fp);
 
    /* Finally, writes the header section */
    write_header(1, &actx);
@@ -62,7 +63,7 @@ extern void assemble(void) {
    );
 
    /* Cleans up */
-   safe_fclose(fp);
+   safe_fclose(actx.fp);
    free(destname);
 }
 
@@ -120,34 +121,37 @@ static void setoffset_route(tree_t *t, int lv, void *ctx) {
 }
 
 static void write_route(tree_t *t, int lv, void *ctx) {
-   irnode_t *n;
+   asm_ctx_t *actx;
 
-   (void) lv, (void) ctx;
-   n = tree_dat(t);
+   (void) lv;
 
-   if (n->kind != IrnodekindOpcode)
+   actx = ctx;
+   actx->t = t;
+   actx->n = tree_dat(actx->t);
+
+   if (actx->n->kind != IrnodekindOpcode)
       return;
 
-   switch (n->dat.ui) {
-      case IropcodeSet    : write_set(t); break;
+   switch (actx->n->dat.ui) {
+      case IropcodeSet    : write_set(actx); break;
       case IropcodeEnter  : /* fall-through */
       case IropcodeExit   : /* fall-through */
-      case IropcodeSpeak  : write_enterlike(t); break;
+      case IropcodeSpeak  : write_enterlike(actx); break;
       case IropcodeOutN   : /* fall-through */
       case IropcodeOutC   : /* fall-through */
       case IropcodeInN    : /* fall-through */
       case IropcodeInC    : /* fall-through */
       case IropcodeRecall : /* fall-through */
       case IropcodeNegate : /* fall-through */
-      case IropcodeExeunt : write_paramless_opcode(t); break;
+      case IropcodeExeunt : write_paramless_opcode(actx); break;
       case IropcodeRememb : /* fall-through */
       case IropcodePush   : /* fall-through */
-      case IropcodePop    : write_pushlike(t); break;
+      case IropcodePop    : write_pushlike(actx); break;
       case IropcodeSum    : /* fall-through */
       case IropcodeDiff   : /* fall-through */
       case IropcodeProd   : /* fall-through */
       case IropcodeQuot   : /* fall-through */
-      case IropcodeRem    : write_binary_op(t); break;
+      case IropcodeRem    : write_binary_op(actx); break;
       case IropcodeSqrt   : /* fall-through */
       case IropcodeSqur   : /* fall-through */
       case IropcodeCube   : /* fall-through */
@@ -156,88 +160,81 @@ static void write_route(tree_t *t, int lv, void *ctx) {
       case IropcodeEq     : /* fall-through */
       case IropcodeGt     : /* fall-through */
       case IropcodeLt     : /* fall-through */
-      case IropcodeAsgn   : write_unary_op(t); break;
-      case IropcodeGoto   : write_goto(t); break;
+      case IropcodeAsgn   : write_unary_op(actx); break;
+      case IropcodeGoto   : write_goto(actx); break;
       case IropcodeJumpT  : /* fall-through */
-      case IropcodeJumpF  : write_jumplike(t); break;
-      default: ;
+      case IropcodeJumpF  : write_jumplike(actx); break;
+      default: ;  /* control never reaches default */
    }
 }
 
-static void write_set(tree_t *t) {
-   irnode_t *n, *p1, *p2;
+static void write_set(asm_ctx_t *actx) {
+   irnode_t *p1, *p2;
 
-   n = tree_dat(t);
-   p1 = tree_chdat(t, 0);
-   p2 = tree_chdat(t, 1);
+   p1 = tree_chdat(actx->t, 0);
+   p2 = tree_chdat(actx->t, 1);
 
-   safe_fwrite(&n->dat.i, SPL_OPCODE_SIZ, 1, fp);
-   safe_fwrite(&p1->dat.i, SPL_VAR_SIZ, 1, fp);
-   safe_fwrite(&p2->dat.i, SPL_CONST_SIZ, 1, fp);
+   safe_fwrite(&actx->n->dat.i, SPL_OPCODE_SIZ, 1, actx->fp);
+   safe_fwrite(&p1->dat.i, SPL_VAR_SIZ, 1, actx->fp);
+   safe_fwrite(&p2->dat.i, SPL_CONST_SIZ, 1, actx->fp);
 }
 
-static void write_enterlike(tree_t *t) {
-   irnode_t *n, *p1;
+static void write_enterlike(asm_ctx_t *actx) {
+   irnode_t *p1;
 
-   n = tree_dat(t);
-   p1 = tree_chdat(t, 0);
+   p1 = tree_chdat(actx->t, 0);
 
-   safe_fwrite(&n->dat.i, SPL_OPCODE_SIZ, 1, fp);
-   safe_fwrite(&p1->dat.i, SPL_PERSON_SIZ, 1, fp);
+   safe_fwrite(&actx->n->dat.i, SPL_OPCODE_SIZ, 1, actx->fp);
+   safe_fwrite(&p1->dat.i, SPL_PERSON_SIZ, 1, actx->fp);
 }
 
-static void write_paramless_opcode(tree_t *t) {
-   irnode_t *n = tree_dat(t);
-   safe_fwrite(&n->dat.i, SPL_OPCODE_SIZ, 1, fp);
+static void write_paramless_opcode(asm_ctx_t *actx) {
+   safe_fwrite(&actx->n->dat.i, SPL_OPCODE_SIZ, 1, actx->fp);
 }
 
-static void write_pushlike(tree_t *t) {
-   irnode_t *n, *p1;
+static void write_pushlike(asm_ctx_t *actx) {
+   irnode_t *p1;
 
-   n = tree_dat(t);
-   p1 = tree_chdat(t, 0);
+   p1 = tree_chdat(actx->t, 0);
 
-   safe_fwrite(&n->dat.i, SPL_OPCODE_SIZ, 1, fp);
-   safe_fwrite(&p1->dat.i, SPL_VAR_SIZ, 1, fp);
+   safe_fwrite(&actx->n->dat.i, SPL_OPCODE_SIZ, 1, actx->fp);
+   safe_fwrite(&p1->dat.i, SPL_VAR_SIZ, 1, actx->fp);
 }
 
-static void write_binary_op(tree_t *t) {
-   irnode_t *n, *p1, *p2, *p3;
+static void write_binary_op(asm_ctx_t *actx) {
+   irnode_t *p1, *p2, *p3;
 
-   n = tree_dat(t);
-   p1 = tree_chdat(t, 0);
-   p2 = tree_chdat(t, 1);
-   p3 = tree_chdat(t, 2);
+   p1 = tree_chdat(actx->t, 0);
+   p2 = tree_chdat(actx->t, 1);
+   p3 = tree_chdat(actx->t, 2);
 
-   safe_fwrite(&n->dat.i, SPL_OPCODE_SIZ, 1, fp);
-   safe_fwrite(&p1->dat.i, SPL_VAR_SIZ, 1, fp);
-   safe_fwrite(&p2->dat.i, SPL_VAR_SIZ, 1, fp);
-   safe_fwrite(&p3->dat.i, SPL_VAR_SIZ, 1, fp);
+   safe_fwrite(&actx->n->dat.i, SPL_OPCODE_SIZ, 1, actx->fp);
+   safe_fwrite(&p1->dat.i, SPL_VAR_SIZ, 1, actx->fp);
+   safe_fwrite(&p2->dat.i, SPL_VAR_SIZ, 1, actx->fp);
+   safe_fwrite(&p3->dat.i, SPL_VAR_SIZ, 1, actx->fp);
 }
 
-static void write_unary_op(tree_t *t) {
-   irnode_t *n, *p1, *p2;
+static void write_unary_op(asm_ctx_t *actx) {
+   irnode_t *p1, *p2;
 
-   n = tree_dat(t);
-   p1 = tree_chdat(t, 0);
-   p2 = tree_chdat(t, 1);
+   p1 = tree_chdat(actx->t, 0);
+   p2 = tree_chdat(actx->t, 1);
 
-   safe_fwrite(&n->dat.i, SPL_OPCODE_SIZ, 1, fp);
-   safe_fwrite(&p1->dat.i, SPL_VAR_SIZ, 1, fp);
-   safe_fwrite(&p2->dat.i, SPL_VAR_SIZ, 1, fp);
+   safe_fwrite(&actx->n->dat.i, SPL_OPCODE_SIZ, 1, actx->fp);
+   safe_fwrite(&p1->dat.i, SPL_VAR_SIZ, 1, actx->fp);
+   safe_fwrite(&p2->dat.i, SPL_VAR_SIZ, 1, actx->fp);
 }
 
-static void write_goto(tree_t *t) {
+static void write_goto(asm_ctx_t *actx) {
    tree_t *root, *act, *scene, *block, *op;
-   irnode_t *n, *p1, *p2;
+   irnode_t *p1, *p2;
    irnode_t *act_dat, *op_dat;
-   int a, s;
+   size_t a, s;
 
-   n = tree_dat(t);
-   p1 = tree_chdat(t, 0);
-   p2 = tree_chdat(t, 1);
+   p1 = tree_chdat(actx->t, 0);
+   p2 = tree_chdat(actx->t, 1);
 
-   block = tree_parent(t);
+   block = tree_parent(actx->t);
    scene = tree_parent(block);
    act = tree_parent(scene);
    root = tree_parent(act);
@@ -254,22 +251,21 @@ static void write_goto(tree_t *t) {
    }
    op_dat = tree_dat(op);
 
-   safe_fwrite(&n->dat.i, SPL_OPCODE_SIZ, 1, fp);
-   safe_fwrite(&op_dat->offset, SPL_ADDR_SIZ, 1, fp);
+   safe_fwrite(&actx->n->dat.i, SPL_OPCODE_SIZ, 1, actx->fp);
+   safe_fwrite(&op_dat->offset, SPL_ADDR_SIZ, 1, actx->fp);
 }
 
-static void write_jumplike(tree_t *t) {
+static void write_jumplike(asm_ctx_t *actx) {
    tree_t *root, *act, *scene, *block, *op;
-   irnode_t *n, *p1;
+   irnode_t *p1;
    irnode_t *act_dat, *scene_dat, *block_dat, *op_dat;
    size_t scene_siz, a, s, b;
 
-   n = tree_dat(t);
-   p1 = tree_chdat(t, 0);
+   p1 = tree_chdat(actx->t, 0);
 
    /* Approaches the current block & scene in sequence
       in which this node is */
-   block = tree_parent(t);
+   block = tree_parent(actx->t);
    scene = tree_parent(block);
 
    /* Searches the matching block in reverse order */
@@ -296,8 +292,8 @@ static void write_jumplike(tree_t *t) {
    op = find_nearest_opcode(root, a, s, b);
    op_dat = tree_dat(op);
 
-   safe_fwrite(&n->dat.i, SPL_OPCODE_SIZ, 1, fp);
-   safe_fwrite(&op_dat->offset, SPL_ADDR_SIZ, 1, fp);
+   safe_fwrite(&actx->n->dat.i, SPL_OPCODE_SIZ, 1, actx->fp);
+   safe_fwrite(&op_dat->offset, SPL_ADDR_SIZ, 1, actx->fp);
 }
 
 static tree_t *find_nearest_opcode(tree_t *root, size_t a, size_t s, size_t b) {
@@ -332,17 +328,17 @@ static void write_debug_info(asm_ctx_t *actx) {
    spl_uint_t before, diff;
    uint32_t ecnt;
 
-   safe_fgetpos(fp, &ecnt_pos);
+   safe_fgetpos(actx->fp, &ecnt_pos);
    actx->offset += OBJFILE_DI_EC;
    before = actx->offset;
    tree_pre_traverse(actx->nrtv, write_dbginfo_route, 0, actx);
-   safe_fgetpos(fp, &eos_pos);
+   safe_fgetpos(actx->fp, &eos_pos);
    diff = actx->offset - before;
    ecnt = diff / OBJFILE_DI_ETSIZ;
-   safe_fsetpos(fp, &ecnt_pos);
+   safe_fsetpos(actx->fp, &ecnt_pos);
    if (actx->be) ecnt = endrev32(ecnt);
-   safe_fwrite(&ecnt, OBJFILE_DI_EC, 1, fp);
-   safe_fsetpos(fp, &eos_pos);
+   safe_fwrite(&ecnt, OBJFILE_DI_EC, 1, actx->fp);
+   safe_fsetpos(actx->fp, &eos_pos);
 }
 
 static void write_dbginfo_route(tree_t *t, int lv, void *ctx) {
@@ -350,6 +346,7 @@ static void write_dbginfo_route(tree_t *t, int lv, void *ctx) {
    asm_ctx_t *actx;
 
    (void) lv;
+
    actx = ctx;
    n = tree_dat(t);
 
@@ -358,9 +355,9 @@ static void write_dbginfo_route(tree_t *t, int lv, void *ctx) {
 
    // fixme: 프로젝트 전체적으로 lnum lpos 사이즈 spl_...로 통일
    // fixme: 프로젝트에서 size_t를 쓰는게 적절한곳엔 size_t 사용
-   safe_fwrite(&actx->offset, OBJFILE_DI_ET_OP, 1, fp);
-   safe_fwrite(&n->lnum, OBJFILE_DI_ET_SL, 1, fp);
-   safe_fwrite(&n->lpos, OBJFILE_DI_ET_SP, 1, fp);
+   safe_fwrite(&actx->offset, OBJFILE_DI_ET_OP, 1, actx->fp);
+   safe_fwrite(&n->lnum, OBJFILE_DI_ET_SL, 1, actx->fp);
+   safe_fwrite(&n->lpos, OBJFILE_DI_ET_SP, 1, actx->fp);
 
    actx->offset += OBJFILE_DI_ETSIZ;
 }
@@ -370,16 +367,16 @@ static void write_srcfile(asm_ctx_t *actx) {
    size_t lls, cnt;
    line_t *l;
 
-   lls = array_size(ls);
+   lls = array_size(actx->ls);
    cnt = 0;
 
    for (size_t i = 0; i < lls; i++) {
-      l = array_peek(ls, i);
-      safe_fwrite(l->run, 1, l->len, fp);
+      l = array_peek(actx->ls, i);
+      safe_fwrite(l->run, 1, l->len, actx->fp);
    }
 
    for (size_t i = 0; i < lls; i++) {
-      l = array_peek(ls, i);
+      l = array_peek(actx->ls, i);
       cnt += l->len;
    }
    actx->offset += cnt;
@@ -393,10 +390,10 @@ static void write_header(bool debug_flag, asm_ctx_t *actx) {
    s0p = 0;
    s1p = OBJFILE_HDSIZ;
 
-   safe_fwrite(&fi, sizeof fi, 1, fp);
-   safe_fwrite(&debug_flag, 1, 1, fp);
-   safe_fwrite(&s0p, sizeof s0p, 1, fp);
-   safe_fwrite(&s1p, sizeof s1p, 1, fp);
-   safe_fwrite(&actx->s2p, sizeof actx->s2p, 1, fp);
-   safe_fwrite(&actx->s3p, sizeof actx->s3p, 1, fp);
+   safe_fwrite(&fi, sizeof fi, 1, actx->fp);
+   safe_fwrite(&debug_flag, 1, 1, actx->fp);
+   safe_fwrite(&s0p, sizeof s0p, 1, actx->fp);
+   safe_fwrite(&s1p, sizeof s1p, 1, actx->fp);
+   safe_fwrite(&actx->s2p, sizeof actx->s2p, 1, actx->fp);
+   safe_fwrite(&actx->s3p, sizeof actx->s3p, 1, actx->fp);
 }

@@ -16,13 +16,17 @@
 #define SPL_ADDR_SIZ   4
 
 typedef struct {
+   FILE *fp;
    bool le, be;
    spl_uint_t offset;
    uint32_t s2p, s3p;
    tree_t *nrtv;
+   array_t *ls;
+   tree_t *t;
+   irnode_t *n;
 } asm_ctx_t;
 
-typedef void writer_t(tree_t *t);
+typedef void writer_t(asm_ctx_t *actx);
 
 static tree_callback_t setoffset_route;
 static tree_callback_t write_route;
@@ -42,7 +46,5 @@ static tree_t *find_nearest_opcode(tree_t *root, size_t a, size_t s, size_t b);
 static void write_debug_info(asm_ctx_t *actx);
 static void write_srcfile(asm_ctx_t *actx);
 static void write_header(bool debug_flag, asm_ctx_t *actx);
-
-static FILE *fp;
 
 #endif
