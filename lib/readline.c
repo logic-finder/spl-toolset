@@ -24,12 +24,10 @@ extern int readln(FILE *fp, char **line, size_t *len) {
    for (;;) {
       ch = safe_fgetc(fp);
 
-      switch (ch) {
-         case EOF  : /* fall-through */
-         case '\n' : break;
-         case '\r' : continue;
-         default: ;
-      }
+      if (ch == EOF || ch == '\n')
+         break;
+      if (ch == '\r')
+         continue;
 
       buf[pos] = ch;
 
