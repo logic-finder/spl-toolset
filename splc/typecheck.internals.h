@@ -12,6 +12,7 @@
 typedef void typechecker_t(node_t *n);
 typedef const char *place_t[9];
 
+static void coalesce_childstr(tree_t *t);
 static void coalesce_title(void);
 static void coalesce_name(tree_t *dp);
 static void check_namecol(tree_t *dp);

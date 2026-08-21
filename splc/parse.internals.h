@@ -80,6 +80,7 @@ static int parse_stmt(parse_ctx_t *pctx);
 static void parse_namelist(parse_ctx_t *pctx, tree_t *t);
 static bool parse_line_as_conseq(parse_ctx_t *pctx);
 static void parse_const(parse_ctx_t *pctx, tree_t *stmt);
+static void parse_noun_phrase(parse_ctx_t *pctx, tree_t *cnst);
 static void parse_cond_eq(parse_ctx_t *pctx, tree_t *cond);
 static void parse_cond_ineq(parse_ctx_t *pctx, tree_t *cond);
 static void parse_op(parse_ctx_t *pctx, tree_t *stmt, nodekind_t kind);
@@ -186,36 +187,9 @@ static tree_t *graft_tree_n(
    size_t lpos
 );
 
-/******************************
- * IMPORTANT GLOBAL VARIABLES *
- ******************************/
-/* Token Stream */
-// static array_t *toks;
-// static token_t
-//    *tok,    // toks[idx]
-//    *etok;   // used in `tell()` for printing an error
-// static size_t
-//    len,     // toks.length
-//    idx;     // current index in toks
-
-// /* Parse Tree */
-// extern tree_t
-//    *pt;     // parse tree (see global.h)
-// static tree_t
-//    *nrtv,   // contains the whole narrative
-//    *act,    // current act
-//    *scene,  // current scene
-//    *line;   // current line
-
-// /* Miscellaneous */
-
-// // extern const char *sfname;   // see global.h
-// // extern msg_t msgs;           // see global.h
-
-// static const char *reason;   // error message
-// static jmp_buf LONGJMP_ENV;  // for setjmp & longjmp
-// static int charidx;          // used by `is_name` & its caller
-
+/*==================*
+ | GLOBAL VARIABLES |
+ *==================*/
 static const stmthandler_t stmt_hdlrs[] = {
    { seek_if   , parse_if   },  /* MUST be 1st! see `parse_line_as_conseq` */
    { seek_asgn , parse_asgn },
@@ -226,7 +200,5 @@ static const stmthandler_t stmt_hdlrs[] = {
    { seek_push , parse_push },
    { seek_pop  , parse_pop  }
 };
-
-// static size_t be_kind;  /* be verb conjugation kind */
 
 #endif

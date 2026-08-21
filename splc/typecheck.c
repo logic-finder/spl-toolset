@@ -20,58 +20,19 @@ extern void typecheck(optflg_t *of, optval_t *ov) {
 }
 
 static void coalesce_title(void) {
-   const tree_t *title;
-   node_t *n;
-   char *buf;
-   size_t i, clen, rlen;
+   tree_t *title;
 
-   // Get the title node
    title = tree_child(pt, 0);
-   n = tree_dat(title);
-   clen = tree_clen(title);
-
-   // Calculate the length of the title
-   rlen = 0;
-   for (i = 0; i < clen; i++)
-      // notice that len == strlen(run) + 1
-      rlen += TREE_CHDAT(title, i)->dat.s.len;
-
-   rlen++;
-   buf = safe_malloc(rlen);
-   buf[0] = '\0';
-   for (i = 0; i < clen; i++) {
-      strcat(buf, TREE_CHDAT(title, i)->dat.s.run);
-      strcat(buf, " ");
-   }
-   buf[rlen - 2] = '\0';
-   setnds(n, buf, rlen);
+   coalesce_childstr(title);
 }
 
 static void coalesce_name(tree_t *dp) {
    tree_t *chardecl;
-   char *buf;
-   size_t dp_len, chardecl_len, total_len;
+   const size_t dp_len = tree_clen(dp);
 
-   dp_len = tree_clen(dp);
    for (size_t i = 0; i < dp_len; i++) {
       chardecl = tree_child(dp, i);
-      chardecl_len = tree_clen(chardecl);
-      total_len = 0;
-
-      for (size_t k = 0; k < chardecl_len; k++) {
-         /* Note that s.len == strlen(s.run) + 1 */
-         total_len += TREE_CHDAT(chardecl, k)->dat.s.len;
-      }
-
-      // fixme: no need to +1?
-      buf = safe_malloc(total_len + 1);  /* a room for ' ' */
-      buf[0] = '\0';
-      for (size_t k = 0; k < chardecl_len; k++) {
-         strcat(buf, TREE_CHDAT(chardecl, k)->dat.s.run);
-         strcat(buf, " ");
-      }
-      buf[total_len - 1] = '\0';
-      setnds(tree_dat(chardecl), buf, total_len);
+      coalesce_childstr(chardecl);
    }
 }
 
@@ -287,7 +248,7 @@ static void semerr_badword(node_t *n) {
       reason, n->dat.s.run,
       sfname, lnum, lpos,
       lnum, lpos - 1, l->run,
-      n->dat.s.run, &l->run[lpos - 1 + n->dat.s.len - 1]
+      n->dat.s.run, &l->run[lpos - 1 + n->dat.s.len]
    );
    exit(EXIT_FAILURE);
 }
@@ -311,10 +272,38 @@ static void semerr_dupname(
       curr->dat.s.run,
       sfname, curr->lnum, curr->lpos,
       curr->lnum, curr->lpos - 1, cl->run,
-         curr->dat.s.run, &cl->run[curr->lpos - 1 + curr->dat.s.len - 1],
+         curr->dat.s.run, &cl->run[curr->lpos - 1 + curr->dat.s.len],
       sfname, prev->lnum, prev->lpos,
       prev->lnum, prev->lpos - 1, pl->run,
-         prev->dat.s.run, &pl->run[prev->lpos - 1 + prev->dat.s.len - 1]
+         prev->dat.s.run, &pl->run[prev->lpos - 1 + prev->dat.s.len]
    );
    exit(EXIT_FAILURE);
+}
+
+static void coalesce_childstr(tree_t *t) {
+   node_t *dat, *chdat;
+   char *buf;
+   size_t clen, bufsiz;
+
+   clen = tree_clen(t);
+   bufsiz = 0;
+
+   for (size_t i = 0; i < clen; i++) {
+      chdat = tree_chdat(t, i);
+      bufsiz += chdat->dat.s.len + 1;  /* +1 for ' ' or \0 */
+   }
+   bufsiz--;  /* -1 not to count \0 */
+
+   buf = safe_malloc(bufsiz + 1);  /* +1 for \0 */
+
+   buf[0] = '\0';
+   for (size_t i = 0; i < clen; i++) {
+      chdat = tree_chdat(t, i);
+      strcat(buf, chdat->dat.s.run);
+      strcat(buf, " ");
+   }
+   buf[bufsiz] = '\0';
+
+   dat = tree_dat(t);
+   setnds(dat, buf, bufsiz);
 }

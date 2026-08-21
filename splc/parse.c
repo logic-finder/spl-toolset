@@ -506,7 +506,7 @@ static tree_t *parse_asgn_i(parse_ctx_t *pctx, token_t *you) {
    /* TYPE 1: You A(.|!) */
    return graft_tree_s(
       pctx->line, you->run, you->len, NODEKIND_ASGN1,
-      pctx->tok->lnum, pctx->tok->lpos
+      you->lnum, you->lpos
    );
 }
 
@@ -530,7 +530,7 @@ static tree_t *parse_asgn_ii(parse_ctx_t *pctx, token_t *you) {
 
    return graft_tree_s(
       pctx->line, you->run, you->len, NODEKIND_ASGN2,
-      pctx->tok->lnum, pctx->tok->lpos
+      you->lnum, you->lpos
    );
 }
 
@@ -538,7 +538,7 @@ static tree_t *parse_asgn_iii(parse_ctx_t *pctx, token_t *you) {
    /* TYPE 3: You be (B|C|D)(.|!) */
    return graft_tree_s(
       pctx->line, you->run, you->len, NODEKIND_ASGN3,
-      pctx->tok->lnum, pctx->tok->lpos
+      you->lnum, you->lpos
    );
 }
 
@@ -1147,7 +1147,7 @@ static void parse_const(parse_ctx_t *pctx, tree_t *stmt) {
       gettok(pctx);
    }
 
-   /* noun? */
+   /* noun */
    if (query_noun(pctx->tok->run, &query_result)) {
       kind = query_result ? NODEKIND_PNOUN : NODEKIND_NNOUN;
       graft_tree_s(
@@ -1155,37 +1155,57 @@ static void parse_const(parse_ctx_t *pctx, tree_t *stmt) {
          pctx->tok->lnum, pctx->tok->lpos
       );
    }
-   else {  /* noun phrase */
-      // TODO: refactor later!!
-      token_t *prev_tok;
-      char *buf;
-      size_t bufsiz;
-
-      prev_tok = pctx->tok;
-
-      pctx->reason = msgs.err.syn.cnst.incomp;
-      gettok(pctx);
-
-      bufsiz = prev_tok->len + pctx->tok->len;
-      buf = safe_malloc(bufsiz);
-      memcpy(buf, prev_tok->run, prev_tok->len);
-      buf[prev_tok->len - 1] = ' ';
-      memcpy(buf + prev_tok->len, pctx->tok->run, pctx->tok->len);
-
-      if(!query_noun(buf, &query_result)) {
-         ungettok(pctx);
-         pctx->reason = msgs.err.syn.cnst.no_noun;
-         synerr(pctx);
-      }
-
-      kind = query_result ? NODEKIND_PNOUN : NODEKIND_NNOUN;
-      graft_tree_s(
-         cnst, buf, bufsiz, kind, pctx->tok->lnum, pctx->tok->lpos
-      );
+   /* noun phrase */
+   else {
+      parse_noun_phrase(pctx, cnst);
    }
 
    /* end of const */
    check_const_end(pctx);
+}
+
+static void parse_noun_phrase(parse_ctx_t *pctx, tree_t *cnst) {
+   token_t *prev_tok;
+   char *buf;
+   size_t bufsiz;
+   nodekind_t kind;
+   int query_result;
+
+   prev_tok = pctx->tok;
+
+   pctx->reason = msgs.err.syn.cnst.incomp;
+   gettok(pctx);
+
+   /* EXAMPLE
+      prev = "stone\0"  (len = 5)
+      tok  = "wall\0"   (len = 4)
+      buf  = "stone wall\0"  (len = 10) */
+
+   bufsiz = prev_tok->len + 1 + pctx->tok->len;
+   buf = safe_malloc(bufsiz + 1);  /* +1 for \0 */
+   memcpy(
+      buf,
+      prev_tok->run,
+      prev_tok->len
+   );
+   buf[prev_tok->len] = ' ';
+   memcpy(
+      buf + prev_tok->len + 1,
+      pctx->tok->run,
+      pctx->tok->len
+   );
+   buf[bufsiz] = '\0';
+
+   if(!query_noun(buf, &query_result)) {
+      ungettok(pctx);
+      pctx->reason = msgs.err.syn.cnst.no_noun;
+      synerr(pctx);
+   }
+
+   kind = query_result ? NODEKIND_PNOUN : NODEKIND_NNOUN;
+   graft_tree_s(
+      cnst, buf, bufsiz, kind, pctx->tok->lnum, pctx->tok->lpos
+   );
 }
 
 static nodekind_t seek_op(parse_ctx_t *pctx) {
