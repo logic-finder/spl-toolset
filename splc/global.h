@@ -122,14 +122,4 @@
 #define KEYWRD_TYSELF "thyself"
 #define KEYWRD_YRSELF "yourself"
 
-/* fixme: 여기 말고, 각자의 h파일로 옮길것 */
-/**********************
- * EXTERNAL VARIABLES *
- **********************/
-extern const char *sfname;   // from optprocessor.c
-extern msg_t msgs;           // from msg.c
-extern array_t *ls;            // from splc.c
-extern tree_t *pt;           // from splc.c
-extern tree_t *irt;          // from irgen.c
-
 #endif
