@@ -7,7 +7,6 @@
 
 #include "fatal.h"
 #include "common.h"
-#include "global.h"
 #include "wrappers.h"
 
 #define INIT_CMAX 2
