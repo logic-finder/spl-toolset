@@ -12,7 +12,6 @@
 #include "global.h"
 #include "wrappers.h"
 #include "loadfile.h"
-#include "argparse.h"
 #include "ctxcheck.h"
 #include "dbhandler.h"
 #include "transpile.h"
@@ -32,11 +31,5 @@ static tree_callback_t cleanup_node;
 static array_iterator_t print_token;
 static tree_callback_t print_node;
 static const char *nodekind2str(nodekind_t kind);
-
-/*********************
- * External Variable *
- *********************/
-array_t *ls;
-tree_t *pt;
 
 #endif

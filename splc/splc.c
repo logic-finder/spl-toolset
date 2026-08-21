@@ -1,84 +1,88 @@
+#include "splc.h"
 #include "splc.internals.h"
 
 int main(int argc, const char *argv[]) {
-   optflg_t of = {0};
-   optval_t ov;
-   array_t *toks;
-   size_t lc, wc;
+   compile_ctx_t cctx;
+
+   cctx.argc = argc;
+   cctx.argv = argv;
 
    /* Initialization */
    init_msg();
-   parse_args(argv, &of, &ov);
-   process_opts(argc, &of, &ov);
+   parse_args(&cctx);
+   process_opts(&cctx);
 
-   ls = loadfile(ov.src, &lc, &wc);
+   cctx.ls = loadfile(cctx.ov->src, &cctx.lc, &cctx.wc);
    safe_vprintf(ENPREFIX
       "loaded the source file " Cbyellow "%s" Creset
       " (total " Cbwhite "%d" Creset " lines, " Cbwhite "%d" Creset " chars)\n",
-      ov.src, lc, wc);
+      cctx.ov->src, cctx.lc, cctx.wc);
 
    dbload();
 
    /* MAIN LOGIC */
    safe_fputs(stdout, ENPREFIX "scanning...");
-   toks = lex(&of, &ov, ls, lc);
+   lex(&cctx);
    safe_vprintf(" " Cgreen "done!" Creset
       "\t(total " Cbwhite "%zu" Creset " tokens)\n",
-      array_size(toks)
+      array_size(cctx.toks)
    );
    // array_foreach(toks, print_token);
 
    safe_fputs(stdout, ENPREFIX "parsing...");
-   pt = parse(&of, &ov, toks);
+   parse(&cctx);
    safe_vprintf(" " Cgreen "done!" Creset
       "\t(total " Cbwhite "%zu" Creset " nodes)\n",
-      count_tree_node(pt)
+      count_tree_node(cctx.pt)
    );
    // tree_pre_traverse(pt, print_node, 0, NULL);
 
    safe_fputs(stdout, ENPREFIX "type-checking...");
-   typecheck(&of, &ov);
+   typecheck(&cctx);
    safe_vprintf(" " Cgreen "done!" Creset "\n");
    // tree_pre_traverse(pt, print_node, 0, NULL);
 
    safe_fputs(stdout, ENPREFIX "context-checking...");
-   ctxcheck(&of, &ov);
+   ctxcheck(&cctx);
    safe_vprintf(" " Cgreen "done!" Creset "\n");
    // tree_pre_traverse(pt, print_node, 0, NULL);
 
    safe_fputs(stdout, ENPREFIX "generating IR...");
-   irgenerate();
+   irgenerate(&cctx);
    safe_vprintf(" " Cgreen "done!" Creset
       "\t(total " Cbwhite "%zu" Creset " nodes)\n",
-      count_opcodes(irt)
+      count_opcodes(cctx.irt)
    );
    // tree_pre_traverse(irt, debug_print_irnode, 0, NULL);
 
-   if (of.opt) {
+   if (cctx.of->opt) {
       safe_fputs(stdout, ENPREFIX "optimizing IR...");
-      iroptimize();
+      iroptimize(&cctx);
       safe_vprintf(" " Cgreen "done!" Creset
          "\t(total " Cbwhite "%zu" Creset " nodes)\n",
-         count_opcodes(irt)
+         count_opcodes(cctx.irt)
       );
       // tree_pre_traverse(irt, debug_print_irnode, 0, NULL);
    }
 
-   if (1) irdump();
+   if (cctx.of->dmp) irdump(&cctx);
 
-   assemble();
-   // tree_pre_traverse(irt, debug_print_irnode, 0, NULL);
-
-   transpile2c();
+   if (cctx.of->tgt) {
+      transpile2c(&cctx);
+   }
+   else {
+      assemble(&cctx);
+      // tree_pre_traverse(irt, debug_print_irnode, 0, NULL);
+   }
 
    // safe_fputs(stdout, ENPREFIX "transpiling...");
    // transpile(&of, &ov);
    // safe_vprintf(" " Cgreen "done!" Creset "\n");
 
    /* Cleanup */
-   tree_post_traverse(pt, cleanup_node, 0, NULL);
-   tree_prune(pt);
-   unloadfl(ls, lc);
+   tree_post_traverse(cctx.pt, cleanup_node, 0, NULL);
+   tree_prune(cctx.pt);
+   unloadfl(cctx.ls, cctx.lc);
    dbunload();
 
    return 0;
@@ -154,6 +158,7 @@ static void opcode_counter(tree_t *t, int lv, void *ctx) {
    size_t *counter;
 
    (void) lv;
+
    n = tree_dat(t);
    if (n->kind != IrnodekindBlock)
       return;
