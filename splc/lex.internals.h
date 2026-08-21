@@ -2,7 +2,6 @@
 #define LEX_INTERNALS_H
 
 #include <ctype.h>
-#include <stdarg.h>
 #include <setjmp.h>
 #include <stdbool.h>
 
@@ -15,7 +14,11 @@
 /*==========*
  | TYPEDEFS |
  *==========*/
-typedef struct {
+typedef struct tag_lex_ctx_t lex_ctx_t;
+typedef int processor_t(lex_ctx_t *lctx);
+typedef int checker_t(lex_ctx_t *lctx);
+
+struct tag_lex_ctx_t {
    array_t *toks;  /* array of token_t */
    array_t *ls;    /* array of line_t */
    size_t lc;    /* length of ls */
@@ -30,10 +33,10 @@ typedef struct {
    size_t max;  /* max size of buf */
    jmp_buf env;  /* setjmp & longjmp */
    bool eoe;  /* end of everything */
-} lex_ctx_t;
-
-typedef int processor_t(lex_ctx_t *lctx, va_list *ap);
-typedef int checker_t(lex_ctx_t *lctx, va_list *ap);
+   processor_t *process;
+   checker_t *check;
+   size_t char_limit;  /* used in read_nchar() */
+};
 
 /*=====================*
  | FUNCTION PROTOTYPES |
@@ -50,7 +53,7 @@ static void store_token(lex_ctx_t *lctx);
 static void store_punct(lex_ctx_t *lctx);
 
 /* Miscellaneous */
-static inline void iterate_lines(lex_ctx_t *lctx, processor_t *process, ...);
+static inline void iterate_lines(lex_ctx_t *lctx);
 static processor_t process_skip;
 static processor_t process_read;
 static checker_t check_space;

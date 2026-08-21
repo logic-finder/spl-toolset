@@ -47,15 +47,12 @@ cleanup:
    return lctx.toks;
 }
 
-static inline void iterate_lines(lex_ctx_t *lctx, processor_t *process, ...) {
-   va_list ap;
+static inline void iterate_lines(lex_ctx_t *lctx) {
    int ret;
 
    while (lctx->lnum < lctx->lc) {
       while (lctx->lpos < lctx->l->len) {
-         va_start(ap, process);
-         ret = (*process)(lctx, &ap);
-         va_end(ap);
+         ret = (*lctx->process)(lctx);
          if (!ret) {
             goto end;
          }
@@ -70,28 +67,23 @@ end:
    return;
 }
 
-static int process_skip(lex_ctx_t *lctx, va_list *ap) {
-   checker_t *check;
-
-   check = va_arg(*ap, checker_t *);
+static int process_skip(lex_ctx_t *lctx) {
    lctx->ch = lctx->l->run[lctx->lpos];
 
-   if ((*check)(lctx, ap)) {
+   if ((*lctx->check)(lctx)) {
       lctx->lpos++;
       return 1;
    }
-   else
-      return 0;
+
+   return 0;
 }
 
-static int process_read(lex_ctx_t *lctx, va_list *ap) {
-   checker_t *check;
+static int process_read(lex_ctx_t *lctx) {
    bool last_char;
 
-   check = va_arg(*ap, checker_t *);
    lctx->ch = lctx->l->run[lctx->lpos];
 
-   if ((*check)(lctx, ap)) {
+   if ((*lctx->check)(lctx)) {
       lctx->buf[lctx->idx] = lctx->ch;
 
       last_char = (lctx->max - lctx->idx == 1);
@@ -103,18 +95,11 @@ static int process_read(lex_ctx_t *lctx, va_list *ap) {
       lctx->lpos++;
       return 1;
    }
-   else {
-      /* BEWARE OF THE BUG!
-         buf[idx] = '\0';
-      if it were here, buf would not be null-
-      terminated when we reach the end of ls */
-      return 0;
-   }
+
+   return 0;
 }
 
-static int check_space(lex_ctx_t *lctx, va_list *ap) {
-   (void) ap;
-
+static int check_space(lex_ctx_t *lctx) {
    if (isspace(lctx->ch)) {
       return 1;
    }
@@ -122,15 +107,10 @@ static int check_space(lex_ctx_t *lctx, va_list *ap) {
    return 0;
 }
 
-static int check_cntlessthan(lex_ctx_t *lctx, va_list *ap) {
+static int check_cntlessthan(lex_ctx_t *lctx) {
    static size_t cnt = 0;
-   size_t n;
 
-   (void) lctx;
-
-   n = va_arg(*ap, size_t);
-
-   if (cnt < n) {
+   if (cnt < lctx->char_limit) {
       cnt++;
       return 1;
    }
@@ -139,11 +119,9 @@ static int check_cntlessthan(lex_ctx_t *lctx, va_list *ap) {
    return 0;
 }
 
-static int check_token(lex_ctx_t *lctx, va_list *ap) {
+static int check_token(lex_ctx_t *lctx) {
    static const char *sentinels
       = ".,:[]?! \a\b\t\n\v\f\r";
-
-   (void) ap;
 
    if (!match(lctx->ch, sentinels)) {
       return 1;
@@ -153,17 +131,24 @@ static int check_token(lex_ctx_t *lctx, va_list *ap) {
 }
 
 static void skip_space(lex_ctx_t *lctx) {
-   iterate_lines(lctx, process_skip, check_space);
+   lctx->process = process_skip;
+   lctx->check = check_space;
+   iterate_lines(lctx);
 }
 
 static void read_token(lex_ctx_t *lctx) {
    lctx->idx = 0;
-   iterate_lines(lctx, process_read, check_token);
+   lctx->process = process_read;
+   lctx->check = check_token;
+   iterate_lines(lctx);
 }
 
 static void read_nchar(lex_ctx_t *lctx, size_t n) {
    lctx->idx = 0;
-   iterate_lines(lctx, process_read, check_cntlessthan, n);
+   lctx->process = process_read;
+   lctx->check = check_cntlessthan;
+   lctx->char_limit = n;
+   iterate_lines(lctx);
 }
 
 static inline void save_state(lex_ctx_t *lctx) {
