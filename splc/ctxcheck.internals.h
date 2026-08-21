@@ -2,25 +2,29 @@
 #define CTXCHECK_INTERNALS_H
 
 #include <stdbool.h>
+
 #include "msg.h"
 #include "global.h"
 #include "wrappers.h"
 
-typedef void ctxchecker_t(tree_t *t);
+typedef struct {
+   const char *reason;
+   tree_t *nrtv, *act, *scene;
+   tree_t *t;  /* temporary tree */
+   node_t *n;  /* temporary tree.dat */
+   array_t *ls;
+   optval_t *ov;
+} ctxcheck_ctx_t;
+
+typedef void ctxchecker_t(ctxcheck_ctx_t *octx);
 
 static tree_callback_t ctxcheck_router;
 static inline ctxchecker_t ctxcheck_act;
 static inline ctxchecker_t ctxcheck_scene;
 static ctxchecker_t ctxcheck_goto;
 
-static void print_err(node_t *n);
-static void trace(tree_t *t, const char *type);
-static void semerr_unknown_label(node_t *n, const char *s);
-
-extern const char *sfname;  // see global.h
-extern msg_t msgs;          // see global.h
-
-static const char *reason;  // error message
-static tree_t *nrtv, *act, *scene;
+static void print_err(ctxcheck_ctx_t *octx);
+static void trace(ctxcheck_ctx_t *octx, tree_t *t, const char *type);
+static void semerr_unknown_label(ctxcheck_ctx_t *octx, const char *s);
 
 #endif
