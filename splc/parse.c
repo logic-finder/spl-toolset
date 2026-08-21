@@ -47,8 +47,11 @@ EOE:;
 }
 
 static void cleanup_tokstream(void *tok, int idx) {
+   token_t *t;
+
    (void) idx;
-   free(((token_t *) tok)->run);
+   t = tok;
+   free(t->run);
 }
 
 static void parse_title(parse_ctx_t *pctx) {
