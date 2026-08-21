@@ -1,6 +1,7 @@
 #ifndef LEX_H
 #define LEX_H
 
+#include "splc.h"
 #include "loadfile.h"
 #include "argparse.h"
 #include "array.adt.h"
@@ -31,15 +32,8 @@ typedef struct token {
 /**
  * `lex` processes the character stream from a source file
  * and produces a token stream.
- * @param of option flag
- * @param ov option value
- * @param lc the length of ls
+ * @param cctx a pointer to compile_ctx_t
  */
-array_t *lex(
-   optflg_t *of,
-   optval_t *ov,
-   array_t *ls,
-   size_t lc
-);
+void lex(compile_ctx_t *cctx);
 
 #endif

@@ -1,15 +1,13 @@
 #include "lex.h"
 #include "lex.internals.h"  /* contains typedefs & prototypes */
 
-extern array_t *lex(optflg_t *of, optval_t *ov, array_t *ls, size_t lc) {
+extern void lex(compile_ctx_t *cctx) {
    lex_ctx_t lctx;
    int ret;
 
-   (void) of, (void) ov;
-
    lctx.toks = array_create();
-   lctx.ls = ls;
-   lctx.lc = lc;
+   lctx.ls = cctx->ls;
+   lctx.lc = cctx->lc;
    lctx.lnum = 0;
    lctx.lpos = 0;
    lctx.l = array_peek(lctx.ls, lctx.lnum);
@@ -44,7 +42,8 @@ tokenize:
 cleanup:
    free(lctx.buf);
 
-   return lctx.toks;
+   cctx->toks = lctx.toks;
+   return;
 }
 
 static inline void iterate_lines(lex_ctx_t *lctx) {
@@ -59,7 +58,7 @@ static inline void iterate_lines(lex_ctx_t *lctx) {
       }
       lctx->lnum++;
       lctx->lpos = 0;
-      lctx->l = array_peek(ls, lctx->lnum);
+      lctx->l = array_peek(lctx->ls, lctx->lnum);
    }
    lctx->eoe = true;
 
