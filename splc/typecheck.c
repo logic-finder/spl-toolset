@@ -302,7 +302,7 @@ static void coalesce_childstr(tree_t *t) {
       strcat(buf, chdat->dat.s.run);
       strcat(buf, " ");
    }
-   buf[bufsiz] = '\0';
+   buf[bufsiz] = '\0';  /* overwrite the last ' ' */
 
    dat = tree_dat(t);
    setnds(dat, buf, bufsiz);

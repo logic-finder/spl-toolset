@@ -1093,9 +1093,8 @@ static void parse_noun_phrase(parse_ctx_t *pctx, tree_t *cnst) {
    memcpy(
       buf + prev_tok->len + 1,
       pctx->tok->run,
-      pctx->tok->len
+      pctx->tok->len + 1  /* \0 copied */
    );
-   buf[bufsiz] = '\0';
 
    if(!query_noun(buf, &query_result)) {
       ungettok(pctx);
@@ -1654,8 +1653,8 @@ static tree_t *plant_tree(
    char *buf;
 
    if (run) {
-      buf = safe_malloc(len);  /* already has a room for \0 */
-      memcpy(buf, run, len);
+      buf = safe_malloc(len + 1);  /* +1 for \0 */
+      memcpy(buf, run, len + 1);  /* \0 copied */
    }
    else buf = NULL;
 

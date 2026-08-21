@@ -638,8 +638,8 @@ static tree_t *plant_tree(
    char *buf;
 
    if (run) {
-      buf = safe_malloc(len);  /* already has a room for \0 */
-      memcpy(buf, run, len);
+      buf = safe_malloc(len + 1);  /* +1 for \0 */
+      memcpy(buf, run, len + 1);  /* \0 copied */
    }
    else buf = NULL;
 

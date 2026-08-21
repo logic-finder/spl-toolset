@@ -177,7 +177,7 @@ static void store_string(lex_ctx_t *lctx, tokkind_t kind) {
    lctx->buf[lctx->idx] = '\0';
    bufsiz = lctx->idx;
    buf = safe_malloc(bufsiz + 1);  /* +1 for \0 */
-   memcpy(buf, lctx->buf, bufsiz + 1);
+   memcpy(buf, lctx->buf, bufsiz + 1);  /* \0 copied */
 
    tok.run = buf;
    tok.len = bufsiz;
