@@ -1,9 +1,10 @@
 #ifndef PARSE_H
 #define PARSE_H
 
-#include "array.adt.h"
+#include "splc.h"
 #include "tree.adt.h"
 #include "argparse.h"
+#include "array.adt.h"
 
 // fixme: rename meaningfully
 #define TREE_CHDAT(t,i) ((node_t *) tree_chdat((t),(i)))
@@ -100,13 +101,9 @@ typedef struct node {
       } s;
    } dat;
    nodekind_t kind;
-   int lnum, lpos;
+   size_t lnum, lpos;
 } node_t;
 
-tree_t *parse(
-   optflg_t *of,
-   optval_t *ov,
-   array_t *tokens
-);
+void parse(compile_ctx_t *cctx);
 
 #endif

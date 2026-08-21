@@ -3,18 +3,16 @@
 
 // fixme: STREQL 매크로 정의해서 쓰기 (!strcmp 대체 프로젝트 전체적으로)
 
-extern tree_t *parse(optflg_t *of, optval_t *ov, array_t *tokens) {
+extern void parse(compile_ctx_t *cctx) {
    parse_ctx_t pctx;
 
-   (void) of, (void) ov;
-
-   pctx.toks = tokens;
+   pctx.ov = cctx->ov;
+   pctx.ls = cctx->ls;
+   pctx.toks = cctx->toks;
    pctx.tok = array_peek(pctx.toks, 0);
    pctx.len = array_size(pctx.toks);
    pctx.idx = 0;
    pctx.pt = plant_tree(NULL, 0, NODEKIND_ROOT, 0, 0);
-
-   pt = pctx.pt;
 
    /* Constructs the parse tree
          pt[0] = title
@@ -23,7 +21,7 @@ extern tree_t *parse(optflg_t *of, optval_t *ov, array_t *tokens) {
 
    parse_title(&pctx);
    parse_dp(&pctx);
-   pctx.nrtv = graft_tree_n(pt, 0, NODEKIND_NRTV, pctx.tok);
+   pctx.nrtv = graft_tree_n(pctx.pt, 0, NODEKIND_NRTV, pctx.tok);
    for (;;) {
       parse_act(&pctx);
       for (;;) {
@@ -43,7 +41,8 @@ EOE:;
    array_foreach(pctx.toks, cleanup_tokstream);
    array_destroy(pctx.toks);
 
-   return pt;
+   cctx->pt = pctx.pt;
+   return;
 }
 
 static void cleanup_tokstream(void *tok, int idx) {
@@ -58,14 +57,14 @@ static void parse_title(parse_ctx_t *pctx) {
    tree_t *title;
 
    pctx->reason = msgs.err.syn.title.incomp;
-   title = graft_tree_n(pt, 0, NODEKIND_TITLE, pctx->tok);
+   title = graft_tree_n(pctx->pt, 0, NODEKIND_TITLE, pctx->tok);
    readtoks_until(pctx, ".!?", title);
 }
 
 static void parse_dp(parse_ctx_t *pctx) {
    tree_t *dp, *character;
 
-   dp = graft_tree_n(pt, 0, NODEKIND_DP, pctx->tok);
+   dp = graft_tree_n(pctx->pt, 0, NODEKIND_DP, pctx->tok);
    for (;;) {
       pctx->reason = msgs.err.syn.dp.incomp;
       gettok(pctx);
@@ -1442,7 +1441,7 @@ static bool is_name(parse_ctx_t *pctx) {
    /* We assume that all names are unique, i.e. there is
       no overlap like "the Romeo" and "the Romeo Rome" */
 
-   dp = tree_child(pt, 1);
+   dp = tree_child(pctx->pt, 1);
    dpsiz = tree_clen(dp);
    pctx->reason = "incomplete name";
 
@@ -1627,19 +1626,19 @@ static inline void check_eoe(parse_ctx_t *pctx) {
 }
 
 static void synerr(parse_ctx_t *pctx) {
-   int lnum, lpos;
+   size_t lnum, lpos;
    line_t *l;
 
    lnum = pctx->etok->lnum;
    lpos = pctx->etok->lpos;
-   l = array_peek(ls, lnum - 1);
+   l = array_peek(pctx->ls, lnum - 1);
 
    safe_vprintf(
       Cbred "\n<syntax error>" Creset " %s\n"
-      "[%s:%d:%d] " Cbwhite "note:" Creset " problematic since here\n"
+      "[%s:%zu:%zu] " Cbwhite "note:" Creset " problematic since here\n"
       "%4d|%.*s" Cbblue "%s" Creset "\n",
       pctx->reason,
-      sfname, lnum, lpos,
+      pctx->ov->src, lnum, lpos,
       lnum, lpos - 1, l->run, &l->run[lpos - 1]
    );
    exit(EXIT_FAILURE);

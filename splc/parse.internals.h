@@ -10,6 +10,7 @@
 #include "lex.h"
 #include "common.h"
 #include "global.h"
+#include "argparse.h"
 #include "wrappers.h"
 #include "strutils.h"
 #include "tree.adt.h"
@@ -20,6 +21,8 @@
  | TYPEDEFS |
  *==========*/
 typedef struct {
+   optval_t *ov;  /* option values */
+   array_t *ls;  /* array of line_t */
    array_t *toks;  /* token stream */
    token_t *tok;   /* toks[idx] */
    token_t *etok;  /* used in synerr() to print a error */
