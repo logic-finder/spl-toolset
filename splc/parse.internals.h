@@ -16,15 +16,9 @@
 #include "colorcode.h"
 #include "dbhandler.h"
 
-/**********
- * MACROS *
- **********/
-// #define LONGJMP_ENV env_parse_stmt
-// #define JUMP(v) LONGJMP_TEMPLET(LONGJMP_ENV, (v))
-
-/************
- * TYPEDEFS *
- ************/
+/*==========*
+ | TYPEDEFS |
+ *==========*/
 typedef struct {
    array_t *toks;  /* token stream */
    token_t *tok;   /* toks[idx] */
@@ -52,9 +46,10 @@ typedef struct stmthandler {
 
 typedef void operator_t(parse_ctx_t *pctx, tree_t *op);
 
-/***********************
- * FUNCTION PROTOTYPES *
- ***********************/
+/*=====================*
+ | FUNCTION PROTOTYPES |
+ *=====================*/
+
 /* Seekers */
 static void seek_stmt(parse_ctx_t *pctx);
 static void seek_stmt_router(parse_ctx_t *pctx);
