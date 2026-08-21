@@ -2,15 +2,14 @@
 #include "readline.internals.h"
 
 extern int readln(FILE *fp, char **line, size_t *len) {
-   int ch, pos, bufsiz;
-   bool eol;
+   int ch;
+   size_t pos, bufsiz;
    char *buf;
 
-   /* Checks whether there is nothing to read */
-   ch = getc(fp);
+   /* First of all, checks whether there is nothing to read */
+   ch = safe_fgetc(fp);
 
    if (ch == EOF) {
-      if (ferror(fp)) vfatal(errmsg, __func__);
       *line = NULL;
       *len = 0;
       return 1;
@@ -20,36 +19,38 @@ extern int readln(FILE *fp, char **line, size_t *len) {
    bufsiz = READLINE_UNIT;
    buf = safe_malloc(bufsiz);
    pos = 0;
-   eol = false;
 
-   /* Reads chars from the file so as to construct a string */
+   /* Reads the file, one line at a time */
    for (;;) {
-      if (eol) {
-// fixme: append \n at eol if there isn't
-   end_of_line:
-         buf[pos] = '\0';
-         *line = buf;
-         *len = pos;  /* i.e. len == strlen(buf) + 1 */
-         return 0;
+      ch = safe_fgetc(fp);
+
+      switch (ch) {
+         case EOF  : /* fall-through */
+         case '\n' : break;
+         case '\r' : continue;
+         default: ;
       }
-// fixme: use getc wrapper
-      ch = getc(fp);
 
-      if (ch == EOF) {
-// fixme: eliminate this ferror with using of getc wrapper
-         if (ferror(fp)) vfatal(errmsg, __func__);
-         goto end_of_line;
-      }
-      if (ch == '\r')
-         continue;
-      if (ch == '\n')
-         eol = true;
+      buf[pos] = ch;
 
-      buf[pos++] = ch;
-
-      if (pos == bufsiz) {
+      if (bufsiz - pos == 1) {
          bufsiz *= 2;
          buf = safe_realloc2x(buf, bufsiz);
       }
+
+      pos++;
    }
+
+   /* Stores \n\0 at the end */
+   if (bufsiz - pos == 1) {
+      bufsiz *= 2;
+      buf = safe_realloc2x(buf, bufsiz);
+   }
+
+   buf[pos++] = '\n';
+   buf[pos] = '\0';
+
+   *line = buf;
+   if (len != NULL) *len = pos;
+   return 0;
 }
