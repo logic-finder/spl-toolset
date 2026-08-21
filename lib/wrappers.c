@@ -10,18 +10,34 @@ extern void *safe_malloc(size_t siz) {
    return ret;
 }
 
-// fixme: take *siz
-extern void *safe_realloc2x(void *ptr, size_t siz) {
-   ptr = realloc(ptr, siz);
-   if (!ptr) fatal("realloc error");
-   return ptr;
+extern void *safe_realloc2x(void *orig, size_t *siz) {
+   size_t new_siz;
+   void *ret;
+
+   new_siz = (*siz) * 2;
+   ret = realloc(orig, new_siz);
+
+   if (!ret) {
+      fatal("realloc error");
+   }
+
+   *siz = new_siz;
+   return ret;
 }
 
-// fixme: take *siz
-extern void *safe_realloc2x_arr(void *arr, int cnt, size_t esiz) {
-   arr = realloc(arr, cnt * esiz);
-   if (!arr) fatal("realloc error (arr)");
-   return arr;
+extern void *safe_realloc2x_arr(void *orig_arr, size_t *cnt, size_t esiz) {
+   size_t new_cnt;
+   void *ret;
+
+   new_cnt = (*cnt) * 2;
+   ret = realloc(orig_arr, new_cnt * esiz);
+
+   if (!ret) {
+      fatal("realloc error");
+   }
+
+   *cnt = new_cnt;
+   return ret;
 }
 
 extern void *safe_calloc(size_t n, size_t siz) {

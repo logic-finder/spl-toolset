@@ -39,10 +39,9 @@ static bool tree_full(const tree_t *t) {
 }
 
 static void tree_enlarge(tree_t *t) {
-   t->cmax *= 2;
    t->children = safe_realloc2x_arr(
       t->children,
-      t->cmax,
+      &t->cmax,
       ESIZ(t->children)
    );
 }

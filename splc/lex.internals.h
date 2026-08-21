@@ -64,7 +64,7 @@ static int tq;       // temp. var. for q
 static char ch;      // to store a char
 static char *buf;    // to store a string
 static int idx;      // position in buf
-static int max;      // size of buf
+static size_t max;      // size of buf
 
 /* Miscellaneous */
 static jmp_buf LONGJMP_ENV;  // for setjmp & longjmp

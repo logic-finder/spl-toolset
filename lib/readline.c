@@ -34,8 +34,7 @@ extern int readln(FILE *fp, char **line, size_t *len) {
       buf[pos] = ch;
 
       if (bufsiz - pos == 1) {
-         bufsiz *= 2;
-         buf = safe_realloc2x(buf, bufsiz);
+         buf = safe_realloc2x(buf, &bufsiz);
       }
 
       pos++;
@@ -43,8 +42,7 @@ extern int readln(FILE *fp, char **line, size_t *len) {
 
    /* Stores \n\0 at the end */
    if (bufsiz - pos == 1) {
-      bufsiz *= 2;
-      buf = safe_realloc2x(buf, bufsiz);
+      buf = safe_realloc2x(buf, &bufsiz);
    }
 
    buf[pos++] = '\n';

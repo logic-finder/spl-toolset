@@ -47,10 +47,9 @@ static inline bool array_full(array_t *a) {
 }
 
 static void array_enlarge(array_t *a) {
-   a->max *= 2;
    a->container = safe_realloc2x_arr(
       a->container,
-      a->max,
+      &a->max,
       ESIZ(a->container)
    );
 }
