@@ -1,5 +1,5 @@
-#ifndef DB_H
-#define DB_H
+#ifndef DBHANDLER_H
+#define DBHANDLER_H
 
 #include <stdbool.h>
 

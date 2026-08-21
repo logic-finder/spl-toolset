@@ -1,5 +1,5 @@
-#ifndef DB_INTERNALS_H
-#define DB_INTERNALS_H
+#ifndef DBHANDLER_INTERNALS_H
+#define DBHANDLER_INTERNALS_H
 
 #include <stdint.h>
 
@@ -31,6 +31,7 @@ static comparer_t compare_rec_B;
 
 static inline void dberr(const char *reason);
 
+/* since these are invariable, no need to make a context struct */
 static uint32_t secpos[SECTNUM];
 static uint32_t ecnts[SECTNUM];
 static void *sects[SECTNUM];

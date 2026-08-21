@@ -18,89 +18,9 @@ extern void dbload(void) {
 }
 
 extern void dbunload(void) {
-   for (int i = 0; i < SECTNUM; i++)
+   for (int i = 0; i < SECTNUM; i++) {
       free(sects[i]);
-}
-
-static void load_section(sectkind_t kind, size_t esiz) {
-   unsigned int ret;
-
-   sects[kind] = safe_malloc(ecnts[kind] * esiz);
-   safe_fseek(db, secpos[kind], SEEK_SET);
-   ret = fread(sects[kind], esiz, ecnts[kind], db);
-   if (ret < ecnts[kind])
-      ERR("fread error");
-}
-
-static void dbcheck(void) {
-   int ret;
-   uint32_t header;
-   uint8_t af;
-
-   le = isle(), be = !le;
-   db = safe_fopen(DBFILENAME, "rb");
-
-   // Check metadata section header
-   ret = fread(&header, MTDT_HD, 1, db);
-   if (ret < 1) ERR("fread error");
-   if (le) header = endrev32(header);
-   if (header != HEADER_METADATA)
-      dberr(msgs.sys.db.corrupted);
-
-   // Check metadata section archive flag
-   ret = fread(&af, MTDT_AF, 1, db);
-   if (ret < 1) ERR("fread error");
-   if (af == Arcflg_t)
-      dberr(msgs.sys.db.archived);
-
-   // Read section positions
-   ret = fread(secpos, MTDT_SP, SECTNUM, db);
-   if (ret < SECTNUM) ERR("fread error");
-   if (be) for (int i = 0; i < SECTNUM; i++)
-      secpos[i] = endrev32(secpos[i]);
-
-   // Check section header & read entry count
-   check_secthead(SECTKIND_NAME, NAME_HD, HEADER_NAMESECT);
-   read_ecnt(SECTKIND_NAME, NAME_EC);
-
-   check_secthead(SECTKIND_ADJ, ADJ_HD, HEADER_ADJSECT);
-   read_ecnt(SECTKIND_ADJ, ADJ_EC);
-
-   check_secthead(SECTKIND_NOUN, NOUN_HD, HEADER_NOUNSECT);
-   read_ecnt(SECTKIND_NOUN, NOUN_EC);
-
-   check_secthead(SECTKIND_COMP, COMP_HD, HEADER_COMPSECT);
-   read_ecnt(SECTKIND_COMP, COMP_EC);
-
-   // Update section positions
-   secpos[SECTKIND_NAME] += NAME_MTDTSIZ;
-   secpos[SECTKIND_ADJ ] +=  ADJ_MTDTSIZ;
-   secpos[SECTKIND_NOUN] += NOUN_MTDTSIZ;
-   secpos[SECTKIND_COMP] += COMP_MTDTSIZ;
-}
-
-static void check_secthead(
-   sectkind_t kind,
-   int hdsiz,
-   uint32_t against
-) {
-   int ret;
-   uint32_t header;
-
-   safe_fseek(db, secpos[kind], SEEK_SET);
-   ret = fread(&header, hdsiz, 1, db);
-   if (ret < 1) ERR("fread error");
-   if (le) header = endrev32(header);
-   if (header != against)
-      dberr(msgs.sys.db.corrupted);
-}
-
-static void read_ecnt(sectkind_t kind, int ecntsiz) {
-   int ret;
-
-   ret = fread(&ecnts[kind], ecntsiz, 1, db);
-   if (ret < 1) ERR("fread error");
-   if (be) ecnts[kind] = endrev32(ecnts[kind]);
+   }
 }
 
 extern bool query_name(const char *key) {
@@ -157,6 +77,93 @@ extern bool query_comp(const char *key, int *ret) {
    if (ret)
       *ret = ((char *) record)[0];
    return true;
+}
+
+static void dbcheck(void) {
+   int ret;
+   uint32_t header;
+   uint8_t af;
+
+   le = isle(), be = !le;
+   db = safe_fopen(DBFILENAME, "rb");
+
+   /* Checks metadata section header */
+   ret = fread(&header, MTDT_HD, 1, db);
+   if (ret < 1) ERR("fread error");
+   if (le) header = endrev32(header);
+   if (header != HEADER_METADATA) {
+      dberr(msgs.sys.db.corrupted);
+   }
+
+   /* Checks metadata section archive flag */
+   ret = fread(&af, MTDT_AF, 1, db);
+   if (ret < 1) ERR("fread error");
+   if (af == Arcflg_t) {
+      dberr(msgs.sys.db.archived);
+   }
+
+   /* Reads section positions */
+   ret = fread(secpos, MTDT_SP, SECTNUM, db);
+   if (ret < SECTNUM) ERR("fread error");
+   if (be) {
+      for (size_t i = 0; i < SECTNUM; i++) {
+         secpos[i] = endrev32(secpos[i]);
+      }
+   }
+
+   // Check section header & read entry count
+   check_secthead(SECTKIND_NAME, NAME_HD, HEADER_NAMESECT);
+   read_ecnt(SECTKIND_NAME, NAME_EC);
+
+   check_secthead(SECTKIND_ADJ, ADJ_HD, HEADER_ADJSECT);
+   read_ecnt(SECTKIND_ADJ, ADJ_EC);
+
+   check_secthead(SECTKIND_NOUN, NOUN_HD, HEADER_NOUNSECT);
+   read_ecnt(SECTKIND_NOUN, NOUN_EC);
+
+   check_secthead(SECTKIND_COMP, COMP_HD, HEADER_COMPSECT);
+   read_ecnt(SECTKIND_COMP, COMP_EC);
+
+   // Update section positions
+   secpos[SECTKIND_NAME] += NAME_MTDTSIZ;
+   secpos[SECTKIND_ADJ ] +=  ADJ_MTDTSIZ;
+   secpos[SECTKIND_NOUN] += NOUN_MTDTSIZ;
+   secpos[SECTKIND_COMP] += COMP_MTDTSIZ;
+}
+
+static void check_secthead(
+   sectkind_t kind,
+   int hdsiz,
+   uint32_t against
+) {
+   int ret;
+   uint32_t header;
+
+   safe_fseek(db, secpos[kind], SEEK_SET);
+   ret = fread(&header, hdsiz, 1, db);
+   if (ret < 1) ERR("fread error");
+   if (le) header = endrev32(header);
+   if (header != against)
+      dberr(msgs.sys.db.corrupted);
+}
+
+static void read_ecnt(sectkind_t kind, int ecntsiz) {
+   int ret;
+
+   ret = fread(&ecnts[kind], ecntsiz, 1, db);
+   if (ret < 1) ERR("fread error");
+   if (be) ecnts[kind] = endrev32(ecnts[kind]);
+}
+
+static void load_section(sectkind_t kind, size_t esiz) {
+   unsigned int ret;
+
+   sects[kind] = safe_malloc(ecnts[kind] * esiz);
+   safe_fseek(db, secpos[kind], SEEK_SET);
+   ret = fread(sects[kind], esiz, ecnts[kind], db);
+   if (ret < ecnts[kind]) {
+      ERR("fread error");
+   }
 }
 
 static int compare_rec_A(const void *key, const void *elem) {
