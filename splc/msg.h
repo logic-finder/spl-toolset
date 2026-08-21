@@ -243,4 +243,6 @@ struct msg {
 
 void init_msg(void);
 
+extern msg_t msgs;
+
 #endif
