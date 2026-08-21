@@ -205,7 +205,8 @@ static int parse_stmt(parse_ctx_t *pctx) {
       case NODEKIND_SCENE   : /* fall-through */
       case NODEKIND_ACT     : /* fall-through */
       case NODEKIND__FINALE : return ret;
-      case NODEKIND__SETJMP : ; /* first setjmp call */
+      case NODEKIND__SETJMP : break;  /* first setjmp call */
+      default: ;  /* control never reaches default */
    }
    seek_stmt(pctx);
 
