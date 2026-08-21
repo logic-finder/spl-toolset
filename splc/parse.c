@@ -4,29 +4,33 @@
 // fixme: STREQL 매크로 정의해서 쓰기 (!strcmp 대체 프로젝트 전체적으로)
 
 extern tree_t *parse(optflg_t *of, optval_t *ov, array_t *tokens) {
+   parse_ctx_t pctx;
+
    (void) of, (void) ov;
 
-   /* Initializes global variables */
-   toks = tokens;
-   tok = array_peek(toks, 0);
-   len = array_size(toks);
-   idx = 0;
-   pt = plant_tree(NULL, 0, NODEKIND_ROOT, 0, 0);
+   pctx.toks = tokens;
+   pctx.tok = array_peek(pctx.toks, 0);
+   pctx.len = array_size(pctx.toks);
+   pctx.idx = 0;
+   pctx.pt = plant_tree(NULL, 0, NODEKIND_ROOT, 0, 0);
+
+   pt = pctx.pt;
 
    /* Constructs the parse tree
          pt[0] = title
          pt[1] = dp
          pt[2] = nrtv  */
 
-   act = scene = line = NULL;
-   parse_title();
-   parse_dp();
-   nrtv = graft_tree_n(pt, 0, NODEKIND_NRTV);
+   parse_title(&pctx);
+   parse_dp(&pctx);
+   pctx.nrtv = graft_tree_n(
+      pt, 0, NODEKIND_NRTV, pctx.tok->lnum, pctx.tok->lpos
+   );
    for (;;) {
-      parse_act();
+      parse_act(&pctx);
       for (;;) {
-         parse_scene();
-         switch (parse_stmt()) {
+         parse_scene(&pctx);
+         switch (parse_stmt(&pctx)) {
             case NODEKIND_SCENE   : goto EOS;
             case NODEKIND_ACT     : goto EOA;
             case NODEKIND__FINALE : goto EOE;
@@ -38,8 +42,8 @@ extern tree_t *parse(optflg_t *of, optval_t *ov, array_t *tokens) {
 EOE:;
 
    /* Cleanup */
-   array_foreach(toks, cleanup_tokstream);
-   array_destroy(toks);
+   array_foreach(pctx.toks, cleanup_tokstream);
+   array_destroy(pctx.toks);
 
    return pt;
 }
@@ -49,95 +53,111 @@ static void cleanup_tokstream(void *tok, int idx) {
    free(((token_t *) tok)->run);
 }
 
-static void parse_title(void) {
+static void parse_title(parse_ctx_t *pctx) {
    tree_t *title;
 
-   reason = msgs.err.syn.title.incomp;
-   title = graft_tree_n(pt, 0, NODEKIND_TITLE);
-   readtoks_until(".!?", title);
+   pctx->reason = msgs.err.syn.title.incomp;
+   title = graft_tree_n(
+      pt, 0, NODEKIND_TITLE, pctx->tok->lnum, pctx->tok->lpos
+   );
+   readtoks_until(pctx, ".!?", title);
 }
 
-static void parse_dp(void) {
+static void parse_dp(parse_ctx_t *pctx) {
    tree_t *dp, *character;
 
-   dp = graft_tree_n(pt, 0, NODEKIND_DP);
+   dp = graft_tree_n(
+      pt, 0, NODEKIND_DP, pctx->tok->lnum, pctx->tok->lpos
+   );
    for (;;) {
-      reason = msgs.err.syn.dp.incomp;
-      gettok();
-      reason = msgs.err.syn.dp.noname;
-      eqtok(',');  // fixme: 삭제하고 char의 clen이 0인지 검사
-      character = graft_tree_n(dp, 0, NODEKIND_CHDECL);
-      ungettok();
-      reason = msgs.err.syn.dp.chardecl_incomp;
-      readtoks(',', character);
+      pctx->reason = msgs.err.syn.dp.incomp;
+      gettok(pctx);
+      pctx->reason = msgs.err.syn.dp.noname;
+      eqtok(pctx, ',');  // fixme: 삭제하고 char의 clen이 0인지 검사
+      character = graft_tree_n(
+         dp, 0, NODEKIND_CHDECL, pctx->tok->lnum, pctx->tok->lpos
+      );
+      ungettok(pctx);
+      pctx->reason = msgs.err.syn.dp.chardecl_incomp;
+      readtoks(pctx, ',', character);
       // fixme: 셰익스피어 이름인지 검사 if (1)
-      reason = msgs.err.syn.dp.desc_incomp;
-      skiptoks2(".!?");
-      reason = msgs.err.syn.dp.nonext;
-      gettok();
-      if (seek_act()) break;
-      ungettok();
+      pctx->reason = msgs.err.syn.dp.desc_incomp;
+      skiptoks2(pctx, ".!?");
+      pctx->reason = msgs.err.syn.dp.nonext;
+      gettok(pctx);
+      if (seek_act(pctx)) break;
+      ungettok(pctx);
    }
 }
 
-static int seek_act(void) {
-   return strcmp(tok->run, KEYWRD_ACT) ? 0 : 1;
+static int seek_act(parse_ctx_t *pctx) {
+   return strcmp(pctx->tok->run, KEYWRD_ACT) ? 0 : 1;
 }
 
-static void parse_act(void) {
-   act = graft_tree_n(nrtv, 0, NODEKIND_ACT);
-   reason = msgs.err.syn.act.incomp;
-   gettok();
+static void parse_act(parse_ctx_t *pctx) {
+   pctx->act = graft_tree_n(
+      pctx->nrtv, 0, NODEKIND_ACT, pctx->tok->lnum, pctx->tok->lpos
+   );
+   pctx->reason = msgs.err.syn.act.incomp;
+   gettok(pctx);
    // fixme: 실제로 로마 숫자인지 검사할 것
-   if (tok->kind == TOKKIND_PNT) {
-      reason = msgs.err.syn.act.nornum;
-      synerr();
+   if (pctx->tok->kind == TOKKIND_PNT) {
+      pctx->reason = msgs.err.syn.act.nornum;
+      synerr(pctx);
    }
-   (void) graft_tree_s(act, tok->run, tok->len, NODEKIND_ROMNUM);
-   gettok();
-   reason = msgs.err.syn.act.nocolon;
-   neqtok(':');
-   reason = msgs.err.syn.act.desc_incomp;
-   skiptoks2(".!?");
-   reason = msgs.err.syn.act.noscene;
-   gettok();
-   if (!seek_scene()) synerr();
+   graft_tree_s(
+      pctx->act, pctx->tok->run, pctx->tok->len, NODEKIND_ROMNUM,
+      pctx->tok->lnum, pctx->tok->lpos
+   );
+   gettok(pctx);
+   pctx->reason = msgs.err.syn.act.nocolon;
+   neqtok(pctx, ':');
+   pctx->reason = msgs.err.syn.act.desc_incomp;
+   skiptoks2(pctx, ".!?");
+   pctx->reason = msgs.err.syn.act.noscene;
+   gettok(pctx);
+   if (!seek_scene(pctx)) synerr(pctx);
 }
 
-static int seek_scene(void) {
-   return strcmp(tok->run, KEYWRD_SCENE) ? 0 : 1;
+static int seek_scene(parse_ctx_t *pctx) {
+   return strcmp(pctx->tok->run, KEYWRD_SCENE) ? 0 : 1;
 }
 
-static void parse_scene(void) {
-   scene = graft_tree_n(act, 0, NODEKIND_SCENE);
-   reason = msgs.err.syn.scene.incomp;
-   gettok();
+static void parse_scene(parse_ctx_t *pctx) {
+   pctx->scene = graft_tree_n(
+      pctx->act, 0, NODEKIND_SCENE, pctx->tok->lnum, pctx->tok->lpos
+   );
+   pctx->reason = msgs.err.syn.scene.incomp;
+   gettok(pctx);
    // fixme: 실제로 로마 숫자인지 검사할 것
-   if (tok->kind == TOKKIND_PNT) {
-      reason = msgs.err.syn.scene.nornum;
-      synerr();
+   if (pctx->tok->kind == TOKKIND_PNT) {
+      pctx->reason = msgs.err.syn.scene.nornum;
+      synerr(pctx);
    }
-   (void) graft_tree_s(scene, tok->run, tok->len, NODEKIND_ROMNUM);
-   gettok();
-   reason = msgs.err.syn.scene.nocolon;
-   neqtok(':');
-   reason = msgs.err.syn.scene.desc_incomp;
-   skiptoks2(".!?");
+   graft_tree_s(
+      pctx->scene, pctx->tok->run, pctx->tok->len, NODEKIND_ROMNUM,
+      pctx->tok->lnum, pctx->tok->lpos
+   );
+   gettok(pctx);
+   pctx->reason = msgs.err.syn.scene.nocolon;
+   neqtok(pctx, ':');
+   pctx->reason = msgs.err.syn.scene.desc_incomp;
+   skiptoks2(pctx, ".!?");
 }
 
-static void seek_stmt(void) {
-   check_eoe();
+static void seek_stmt(parse_ctx_t *pctx) {
+   check_eoe(pctx);
 
-   reason = msgs.err.syn.eot;
-   gettok();
+   pctx->reason = msgs.err.syn.eot;
+   gettok(pctx);
 
-   seek_stmt_router();
+   seek_stmt_router(pctx);
 
-   reason = msgs.err.syn.incomprehensible;
-   synerr();
+   pctx->reason = msgs.err.syn.incomprehensible;
+   synerr(pctx);
 }
 
-static void seek_stmt_router(void) {
+static void seek_stmt_router(parse_ctx_t *pctx) {
    typedef struct jumper {
       seeker_t *seek;
       int retval;
@@ -156,18 +176,18 @@ static void seek_stmt_router(void) {
 
    /* Since backtracking can happen, we need to save the
       current parsing state */
-   const size_t orig_idx = idx;
+   const size_t orig_idx = pctx->idx;
 
    for (size_t i = 0; i < jps_len; i++) {
       jp = &jps[i];
-      if ((*jp->seek)()) {
-         JUMP(jp->retval);
+      if ((*jp->seek)(pctx)) {
+         longjmp(pctx->env, jp->retval);
       }
-      rewind_tokstate(orig_idx);
+      rewind_tokstate(pctx, orig_idx);
    }
 }
 
-static int parse_stmt(void) {
+static int parse_stmt(parse_ctx_t *pctx) {
    int ret;
 
    /* seek_stmt proceeds to either
@@ -176,160 +196,176 @@ static int parse_stmt(void) {
 
       parse_line => seek_stmt_router => longjmp */
 
-   ret = setjmp(LONGJMP_ENV);
+   ret = setjmp(pctx->env);
    switch (ret) {
-      case NODEKIND_ENTER  : parse_enter (); break;
-      case NODEKIND_EXIT   : parse_exit  (); break;
-      case NODEKIND_EXEUNT : parse_exeunt(); break;
-      case NODEKIND_LINE   : parse_line  (); break;
+      case NODEKIND_ENTER  : parse_enter (pctx); break;
+      case NODEKIND_EXIT   : parse_exit  (pctx); break;
+      case NODEKIND_EXEUNT : parse_exeunt(pctx); break;
+      case NODEKIND_LINE   : parse_line  (pctx); break;
       case NODEKIND_SCENE   : /* fall-through */
       case NODEKIND_ACT     : /* fall-through */
       case NODEKIND__FINALE : return ret;
       case NODEKIND__SETJMP : ; /* first setjmp call */
    }
-   seek_stmt();
+   seek_stmt(pctx);
 
    return 0;  /* control never reaches here */
 }
 
-static int seek_enterlike(const char *type) {
-   if (tok->run[0] != '[')
+static int seek_enterlike(parse_ctx_t *pctx, const char *type) {
+   if (pctx->tok->run[0] != '[') {
       return 0;
-   gettok();
-   if (strcmp(tok->run, type))
+   }
+
+   gettok(pctx);
+
+   if (strcmp(pctx->tok->run, type)) {
       return 0;
-   else
-      return 1;
+   }
+
+   return 1;
 }
 
-static int seek_enter(void) {
-   return seek_enterlike(KEYWRD_ENTER);
+static int seek_enter(parse_ctx_t *pctx) {
+   return seek_enterlike(pctx, KEYWRD_ENTER);
 }
 
-static void parse_enter(void) {
+static void parse_enter(parse_ctx_t *pctx) {
    tree_t *enter;
 
-   enter = graft_tree_n(scene, 0, NODEKIND_ENTER);
-   parse_namelist(enter);
+   enter = graft_tree_n(
+      pctx->scene, 0, NODEKIND_ENTER, pctx->tok->lnum, pctx->tok->lpos
+   );
+   parse_namelist(pctx, enter);
    if (tree_clen(enter))
       return;
-   reason = msgs.err.syn.enter.nochar;
-   synerr();
+   pctx->reason = msgs.err.syn.enter.nochar;
+   synerr(pctx);
 }
 
-static int seek_exit(void) {
-   return seek_enterlike(KEYWRD_EXIT);
+static int seek_exit(parse_ctx_t *pctx) {
+   return seek_enterlike(pctx, KEYWRD_EXIT);
 }
 
-static void parse_exit(void) {
+static void parse_exit(parse_ctx_t *pctx) {
    tree_t *exit;
 
-   exit = graft_tree_n(scene, 0, NODEKIND_EXIT);
-   parse_namelist(exit);
+   exit = graft_tree_n(
+      pctx->scene, 0, NODEKIND_EXIT, pctx->tok->lnum, pctx->tok->lpos
+   );
+   parse_namelist(pctx, exit);
    switch (tree_clen(exit)) {
-      case 0  : reason = msgs.err.syn.exit.nochar; break;
+      case 0  : pctx->reason = msgs.err.syn.exit.nochar; break;
       case 1  : return;
-      default : reason = msgs.err.syn.exit.exceed;
+      default : pctx->reason = msgs.err.syn.exit.exceed;
    }
-   synerr();
+   synerr(pctx);
 }
 
-static int seek_exeunt(void) {
-   return seek_enterlike(KEYWRD_EXEUNT);
+static int seek_exeunt(parse_ctx_t *pctx) {
+   return seek_enterlike(pctx, KEYWRD_EXEUNT);
 }
 
-static void parse_exeunt(void) {
+static void parse_exeunt(parse_ctx_t *pctx) {
    tree_t *exeunt;
 
-   exeunt = graft_tree_n(scene, 0, NODEKIND_EXEUNT);
-   parse_namelist(exeunt);
+   exeunt = graft_tree_n(
+      pctx->scene, 0, NODEKIND_EXEUNT, pctx->tok->lnum, pctx->tok->lpos
+   );
+   parse_namelist(pctx, exeunt);
    switch (tree_clen(exeunt)) {
       case 0  : return;
-      case 1  : reason = msgs.err.syn.exeunt.onechar; break;
+      case 1  : pctx->reason = msgs.err.syn.exeunt.onechar; break;
       case 2  : return;
-      default : reason = msgs.err.syn.exeunt.exceed;
+      default : pctx->reason = msgs.err.syn.exeunt.exceed;
    }
-   synerr();
+   synerr(pctx);
 }
 
-static int seek_line(void) {
-   return is_name();
+static int seek_line(parse_ctx_t *pctx) {
+   return is_name(pctx);
 }
 
-static void parse_line(void) {
-   reason = msgs.err.syn.line.incomp;
-   gettok();
+static void parse_line(parse_ctx_t *pctx) {
+   pctx->reason = msgs.err.syn.line.incomp;
+   gettok(pctx);
 
-   if (tok->run[0] != ':') {
-      reason = "a colon expected after a character name to construct a line";
-      synerr();
+   if (pctx->tok->run[0] != ':') {
+      pctx->reason = "a colon expected after a character name to construct a line";
+      synerr(pctx);
    }
 
    /* Note. charidx has been updated by is_name() in seek_line() */
-   line = graft_tree_n(scene, 0, NODEKIND_LINE);
-   (void) graft_tree_n(line, charidx, NODEKIND_CHAR);
+   pctx->line = graft_tree_n(
+      pctx->scene, 0, NODEKIND_LINE, pctx->tok->lnum, pctx->tok->lpos
+   );
+   graft_tree_n(
+      pctx->line, pctx->charidx, NODEKIND_CHAR, pctx->tok->lnum, pctx->tok->lpos
+   );
 
    /* Handles the first statement */
-   reason = msgs.err.syn.line.incomp;
-   gettok();
+   pctx->reason = msgs.err.syn.line.incomp;
+   gettok(pctx);
 
-   if (parse_line_router(stmt_hdlrs, ARRLEN(stmt_hdlrs))) {
-      reason = msgs.err.syn.line.nostmt;
-      synerr();
+   if (parse_line_router(pctx, stmt_hdlrs, ARRLEN(stmt_hdlrs))) {
+      pctx->reason = msgs.err.syn.line.nostmt;
+      synerr(pctx);
    }
 
    /* Handles the rest */
    for (;;) {
-      check_eoe();
+      check_eoe(pctx);
 
       /* if this token is the beginning of another line,
          then longjmp happens inside `seek_stmt_router` */
-      reason = msgs.err.syn.eot;
-      gettok();
+      pctx->reason = msgs.err.syn.eot;
+      gettok(pctx);
 
-      seek_stmt_router();
+      seek_stmt_router(pctx);
 
-      if (parse_line_router(stmt_hdlrs, ARRLEN(stmt_hdlrs))) {
-         reason = msgs.err.syn.line.nostmt;
-         synerr();
+      if (parse_line_router(pctx, stmt_hdlrs, ARRLEN(stmt_hdlrs))) {
+         pctx->reason = msgs.err.syn.line.nostmt;
+         synerr(pctx);
       }
    }
 }
 
-static bool parse_line_router(const stmthandler_t *table, size_t tsiz) {
+static bool parse_line_router(
+   parse_ctx_t *pctx, const stmthandler_t *table, size_t tsiz
+) {
    const stmthandler_t *handler;
    size_t i;
 
    /* Since backtracking can happen, we need to save the
       current parsing state */
-   const size_t orig_idx = idx;
+   const size_t orig_idx = pctx->idx;
 
    for (i = 0; i < tsiz; i++) {
       handler = &table[i];
-      if ((*handler->seek)()) {
-         (*handler->parse)();
+      if ((*handler->seek)(pctx)) {
+         (*handler->parse)(pctx);
          break;
       }
-      rewind_tokstate(orig_idx);
+      rewind_tokstate(pctx, orig_idx);
    }
 
    return (i == tsiz) ? 1 : 0;
 }
 
-static bool parse_line_as_conseq(void) {
+static bool parse_line_as_conseq(parse_ctx_t *pctx) {
    const stmthandler_t *table = stmt_hdlrs;
    size_t tsiz = ARRLEN(stmt_hdlrs);
 
-   reason = msgs.err.syn.ifstmt.conseq_incomp;
-   gettok();
+   pctx->reason = msgs.err.syn.ifstmt.conseq_incomp;
+   gettok(pctx);
 
-   if (isupper(tok->run[0])) {
-      reason = msgs.err.syn.ifstmt.conseq_cap;
-      synerr();
+   if (isupper(pctx->tok->run[0])) {
+      pctx->reason = msgs.err.syn.ifstmt.conseq_cap;
+      synerr(pctx);
    }
    else
-   if (islower(tok->run[0])) {
-      tok->run[0] = toupper(tok->run[0]);
+   if (islower(pctx->tok->run[0])) {
+      pctx->tok->run[0] = toupper(pctx->tok->run[0]);
    }
 
    /* 'if' statement can't have an 'if' statement as a consequent */
@@ -338,80 +374,93 @@ static bool parse_line_as_conseq(void) {
       tsiz--;
    }
 
-   return parse_line_router(table, tsiz);
+   return parse_line_router(pctx, table, tsiz);
 }
 
-static int seek_if(void) {
-   return strcmp(tok->run, KEYWRD_IF) ? 0 : 1;
+static int seek_if(parse_ctx_t *pctx) {
+   return strcmp(pctx->tok->run, KEYWRD_IF) ? 0 : 1;
 }
 
-static void parse_if(void) {
+static void parse_if(parse_ctx_t *pctx) {
    tree_t *ifstmt, *consequent, *tline;
 
-   ifstmt = graft_tree_n(line, 0, NODEKIND_IF);
+   ifstmt = graft_tree_n(
+      pctx->line, 0, NODEKIND_IF, pctx->tok->lnum, pctx->tok->lpos
+   );
 
-   reason = msgs.err.syn.ifstmt.incomp;
-   gettok();
+   pctx->reason = msgs.err.syn.ifstmt.incomp;
+   gettok(pctx);
 
-   if (!strcmp(tok->run, KEYWRD_SO)) {
-      (void) graft_tree_n(ifstmt, 0, NODEKIND_AFFIRM);
+   if (!strcmp(pctx->tok->run, KEYWRD_SO)) {
+      graft_tree_n(
+         ifstmt, 0, NODEKIND_AFFIRM, pctx->tok->lnum, pctx->tok->lpos
+      );
    }
    else
-   if (!strcmp(tok->run, KEYWRD_NOT)) {
-      (void) graft_tree_n(ifstmt, 0, NODEKIND_NEGATE);
+   if (!strcmp(pctx->tok->run, KEYWRD_NOT)) {
+      graft_tree_n(
+         ifstmt, 0, NODEKIND_NEGATE, pctx->tok->lnum, pctx->tok->lpos
+      );
    }
    else {
-      reason = msgs.err.syn.ifstmt.badsyn;
-      synerr();
+      pctx->reason = msgs.err.syn.ifstmt.badsyn;
+      synerr(pctx);
    }
 
-   gettok();
+   gettok(pctx);
 
-   if (tok->run[0] != ',') {
-      reason = msgs.err.syn.ifstmt.badsyn;
-      synerr();
+   if (pctx->tok->run[0] != ',') {
+      pctx->reason = msgs.err.syn.ifstmt.badsyn;
+      synerr(pctx);
    }
 
    /* Parses the consequent */
-   consequent = graft_tree_n(ifstmt, 0, NODEKIND_CONSEQ);
-   tline = line;
-   line = consequent;
+   consequent = graft_tree_n(
+      ifstmt, 0, NODEKIND_CONSEQ, pctx->tok->lnum, pctx->tok->lpos
+   );
+   tline = pctx->line;
+   pctx->line = consequent;
 
-   if (parse_line_as_conseq()) {
-      reason = msgs.err.syn.ifstmt.bad_conseq;
-      synerr();
+   if (parse_line_as_conseq(pctx)) {
+      pctx->reason = msgs.err.syn.ifstmt.bad_conseq;
+      synerr(pctx);
    }
 
-   line = tline;
+   pctx->line = tline;
 }
 
-static int seek_asgn(void) {
-   if (strcmp(tok->run, KEYWRD_YOU) && strcmp(tok->run, KEYWRD_THOU)) {
-      return 0;
-   }
-   return 1;
-}
-
-static int seek_out(void) {
-   /* Speak your mind! */
-   if (!strcmp(tok->run, KEYWRD_SPEAK)) {
+static int seek_asgn(parse_ctx_t *pctx) {
+   if (!strcmp(pctx->tok->run, KEYWRD_YOU)) {
       return 1;
    }
 
-   /* Open your heart! */
-   if (!strcmp(tok->run, KEYWRD_OPEN)) {
-      gettokn(2);  /* skips "your" */
-      if (strcmp(tok->run, KEYWRD_HEART)) {
-         return 0;
-      }
-      ungettokn(2);
+   if (!strcmp(pctx->tok->run, KEYWRD_THOU)) {
       return 1;
    }
 
    return 0;
 }
 
-static void parse_asgn(void) {
+static int seek_out(parse_ctx_t *pctx) {
+   /* Speak your mind! */
+   if (!strcmp(pctx->tok->run, KEYWRD_SPEAK)) {
+      return 1;
+   }
+
+   /* Open your heart! */
+   if (!strcmp(pctx->tok->run, KEYWRD_OPEN)) {
+      gettokn(pctx, 2);  /* skips "your" */
+      if (strcmp(pctx->tok->run, KEYWRD_HEART)) {
+         return 0;
+      }
+      ungettokn(pctx, 2);
+      return 1;
+   }
+
+   return 0;
+}
+
+static void parse_asgn(parse_ctx_t *pctx) {
    /* TYPE 1: You A(.|!)
       TYPE 2: You be as adj as (B|C|D)(.|!)
       TYPE 3: You be (B|C|D)(.|!) */
@@ -421,279 +470,297 @@ static void parse_asgn(void) {
 
    /* It's obvious that the current tok->run is either
       "you" or "thou" because of `seek_asgn()` */
-   you = tok;
+   you = pctx->tok;
 
-   reason = msgs.err.syn.asgn.incomp;
-   gettok();
+   pctx->reason = msgs.err.syn.asgn.incomp;
+   gettok(pctx);
 
-   if (is_be_conjs(tok->run)) {  /* type 2 or 3 */
-      gettok();
+   if (is_be_conjs(pctx)) {  /* type 2 or 3 */
+      gettok(pctx);
 
-      if (!strcmp(tok->run, "as")) {
-         asgn = parse_asgn_ii(you);  /* type 2 */
+      if (!strcmp(pctx->tok->run, "as")) {
+         asgn = parse_asgn_ii(pctx, you);  /* type 2 */
       }
       else {
-         ungettok();
-         asgn = parse_asgn_iii(you);  /* type 3 */
+         ungettok(pctx);
+         asgn = parse_asgn_iii(pctx, you);  /* type 3 */
       }
    }
    else {  /* type 1 */
-      ungettok();
-      asgn = parse_asgn_i(you);
+      ungettok(pctx);
+      asgn = parse_asgn_i(pctx, you);
    }
 
-   parse_const(asgn);
+   parse_const(pctx, asgn);
 
-   if (strchr(".!", tok->run[0])) {
+   if (strchr(".!", pctx->tok->run[0])) {
       return;
    }
 
-   reason = msgs.err.syn.asgn.invalid_end_symbol;
-   synerr();
+   pctx->reason = msgs.err.syn.asgn.invalid_end_symbol;
+   synerr(pctx);
 }
 
-static tree_t *parse_asgn_i(token_t *you) {
+static tree_t *parse_asgn_i(parse_ctx_t *pctx, token_t *you) {
    /* TYPE 1: You A(.|!) */
-   return graft_tree_s(line, you->run, you->len, NODEKIND_ASGN1);
+   return graft_tree_s(
+      pctx->line, you->run, you->len, NODEKIND_ASGN1,
+      pctx->tok->lnum, pctx->tok->lpos
+   );
 }
 
-static tree_t *parse_asgn_ii(token_t *you) {
+static tree_t *parse_asgn_ii(parse_ctx_t *pctx, token_t *you) {
    /* TYPE 2: You be as adj as (B|C|D)(.|!) */
-   reason = msgs.err.syn.asgn.incomp;
-   gettok();
+   pctx->reason = msgs.err.syn.asgn.incomp;
+   gettok(pctx);
 
-   if (!query_adj(tok->run)) {
-      reason = msgs.err.syn.asgn.not_adj;
-      synerr();
+   if (!query_adj(pctx->tok->run)) {
+      pctx->reason = msgs.err.syn.asgn.not_adj;
+      synerr(pctx);
    }
 
-   reason = msgs.err.syn.asgn.incomp;
-   gettok();
+   pctx->reason = msgs.err.syn.asgn.incomp;
+   gettok(pctx);
 
-   if (strcmp(tok->run, "as")) {
-      reason = msgs.err.syn.asgn.not_as;
-      synerr();
+   if (strcmp(pctx->tok->run, "as")) {
+      pctx->reason = msgs.err.syn.asgn.not_as;
+      synerr(pctx);
    }
 
-   return graft_tree_s(line, you->run, you->len, NODEKIND_ASGN2);
+   return graft_tree_s(
+      pctx->line, you->run, you->len, NODEKIND_ASGN2,
+      pctx->tok->lnum, pctx->tok->lpos
+   );
 }
 
-static tree_t *parse_asgn_iii(token_t *you) {
+static tree_t *parse_asgn_iii(parse_ctx_t *pctx, token_t *you) {
    /* TYPE 3: You be (B|C|D)(.|!) */
-   return graft_tree_s(line, you->run, you->len, NODEKIND_ASGN3);
+   return graft_tree_s(
+      pctx->line, you->run, you->len, NODEKIND_ASGN3,
+      pctx->tok->lnum, pctx->tok->lpos
+   );
 }
 
-static void parse_out(void) {
+static void parse_out(parse_ctx_t *pctx) {
    nodekind_t kind;
    bool test1, test2, test3;
 
-   if (!strcmp(tok->run, KEYWRD_OPEN)) {
+   if (!strcmp(pctx->tok->run, KEYWRD_OPEN)) {
       kind = NODEKIND_OUT_N;
    }
    else {  /* Speak */
       kind = NODEKIND_OUT_C;
    }
 
-   (void) graft_tree_n(line, 0, kind);
+   graft_tree_n(
+      pctx->line, 0, kind, pctx->tok->lnum, pctx->tok->lpos
+   );
 
-   reason = msgs.err.syn.out.incomp;
-   gettok();
+   pctx->reason = msgs.err.syn.out.incomp;
+   gettok(pctx);
 
-   test1 = !strcmp(tok->run, KEYWRD_YOUR)
-      || !strcmp(tok->run, KEYWRD_YOUR_U)
-      || !strcmp(tok->run, "thine")
-      || !strcmp(tok->run, KEYWRD_THY);
+   test1 = !strcmp(pctx->tok->run, KEYWRD_YOUR)
+      || !strcmp(pctx->tok->run, KEYWRD_YOUR_U)
+      || !strcmp(pctx->tok->run, "thine")
+      || !strcmp(pctx->tok->run, KEYWRD_THY);
 
    if (!test1) {
-      reason = msgs.err.syn.out.badsyn;
-      synerr();
+      pctx->reason = msgs.err.syn.out.badsyn;
+      synerr(pctx);
    }
 
-   gettok();
+   gettok(pctx);
 
-   test2 = (kind == NODEKIND_OUT_N) && (!strcmp(tok->run, KEYWRD_MIND));
-   test3 = (kind == NODEKIND_OUT_C) && (!strcmp(tok->run, KEYWRD_HEART));
+   test2 = (kind == NODEKIND_OUT_N) && (!strcmp(pctx->tok->run, KEYWRD_MIND));
+   test3 = (kind == NODEKIND_OUT_C) && (!strcmp(pctx->tok->run, KEYWRD_HEART));
 
    if (test2 || test3) {
-      reason = msgs.err.syn.out.unmatched;
-      synerr();
+      pctx->reason = msgs.err.syn.out.unmatched;
+      synerr(pctx);
    }
 
-   gettok();
+   gettok(pctx);
 
-   if (!match(tok->run[0], ".!")) {
-      reason = msgs.err.syn.out.badsyn;
-      synerr();
+   if (!match(pctx->tok->run[0], ".!")) {
+      pctx->reason = msgs.err.syn.out.badsyn;
+      synerr(pctx);
    }
 }
 
-static int seek_in(void) {
+static int seek_in(parse_ctx_t *pctx) {
    /* Listen to your heart! */
-   if (!strcmp(tok->run, "Listen")) {
+   if (!strcmp(pctx->tok->run, "Listen")) {
       return 1;
    }
 
    /* Open your mind! */
-   if (!strcmp(tok->run, "Open")) {
-      gettokn(2);  /* skips "your" */
-      if (strcmp(tok->run, "mind")) {
+   if (!strcmp(pctx->tok->run, "Open")) {
+      gettokn(pctx, 2);  /* skips "your" */
+      if (strcmp(pctx->tok->run, "mind")) {
          return 0;
       }
-      ungettokn(2);
+      ungettokn(pctx, 2);
       return 1;
    }
 
    return 0;
 }
 
-static void parse_in(void) {
+static void parse_in(parse_ctx_t *pctx) {
    nodekind_t kind;
    bool test1, test2, test3;
 
-   if (!strcmp(tok->run, KEYWRD_LISTEN)) {
+   if (!strcmp(pctx->tok->run, KEYWRD_LISTEN)) {
       kind = NODEKIND_IN_N;
    }
    else  { /* Open */
       kind = NODEKIND_IN_C;
    }
 
-   (void) graft_tree_n(line, 0, kind);
-   reason = msgs.err.syn.in.incomp;
+   graft_tree_n(
+      pctx->line, 0, kind, pctx->tok->lnum, pctx->tok->lpos
+   );
+   pctx->reason = msgs.err.syn.in.incomp;
 
    if (kind == NODEKIND_IN_N) {
-      gettok();
-      if (strcmp(tok->run, KEYWRD_TO)) {
-         reason = msgs.err.syn.in.badsyn;
-         synerr();
+      gettok(pctx);
+      if (strcmp(pctx->tok->run, KEYWRD_TO)) {
+         pctx->reason = msgs.err.syn.in.badsyn;
+         synerr(pctx);
       }
    }
 
-   gettok();
+   gettok(pctx);
 
-   test1 = !strcmp(tok->run, KEYWRD_YOUR)
-      || !strcmp(tok->run, KEYWRD_YOUR_U)
-      || !strcmp(tok->run, "thine")
-      || !strcmp(tok->run, "thy");
+   test1 = !strcmp(pctx->tok->run, KEYWRD_YOUR)
+      || !strcmp(pctx->tok->run, KEYWRD_YOUR_U)
+      || !strcmp(pctx->tok->run, "thine")
+      || !strcmp(pctx->tok->run, "thy");
 
    if (!test1) {
-      reason = msgs.err.syn.in.badsyn;
-      synerr();
+      pctx->reason = msgs.err.syn.in.badsyn;
+      synerr(pctx);
    }
 
-   gettok();
+   gettok(pctx);
 
-   test2 = (kind == NODEKIND_OUT_N) && (!strcmp(tok->run, KEYWRD_MIND));
-   test3 = (kind == NODEKIND_OUT_C) && (!strcmp(tok->run, KEYWRD_HEART));
+   test2 = (kind == NODEKIND_OUT_N) && (!strcmp(pctx->tok->run, KEYWRD_MIND));
+   test3 = (kind == NODEKIND_OUT_C) && (!strcmp(pctx->tok->run, KEYWRD_HEART));
 
    if (test2 || test3) {
-      reason = msgs.err.syn.in.unmatched;
-      synerr();
+      pctx->reason = msgs.err.syn.in.unmatched;
+      synerr(pctx);
    }
 
-   gettok();
+   gettok(pctx);
 
-   if (!match(tok->run[0], ".!")) {
-      reason = msgs.err.syn.in.badsyn;
-      synerr();
+   if (!match(pctx->tok->run[0], ".!")) {
+      pctx->reason = msgs.err.syn.in.badsyn;
+      synerr(pctx);
    }
 }
 
-static int seek_goto(void) {
-   if (strcmp(tok->run, KEYWRD_LET) && strcmp(tok->run, KEYWRD_WE)) {
+static int seek_goto(parse_ctx_t *pctx) {
+   if (strcmp(pctx->tok->run, KEYWRD_LET) && strcmp(pctx->tok->run, KEYWRD_WE)) {
       return 0;
    }
    return 1;
 }
 
-static void parse_goto(void) {
+static void parse_goto(parse_ctx_t *pctx) {
    enum { GototypeLet, GototypeWe } type;
    nodekind_t dest;
    bool test1, test2, test3, test4;
    tree_t *gt;
 
-   if (!strcmp(tok->run, KEYWRD_LET)) {
+   if (!strcmp(pctx->tok->run, KEYWRD_LET)) {
       type = GototypeLet;
    }
    else {  /* we */
       type = GototypeWe;
    }
 
-   reason = msgs.err.syn.gt.incomp;
-   gettok();
+   pctx->reason = msgs.err.syn.gt.incomp;
+   gettok(pctx);
 
-   test1 = !strcmp(tok->run, KEYWRD_US);
-   test2 = !strcmp(tok->run, KEYWRD_SHALL)
-           || !strcmp(tok->run, KEYWRD_MUST);
+   test1 = !strcmp(pctx->tok->run, KEYWRD_US);
+   test2 = !strcmp(pctx->tok->run, KEYWRD_SHALL)
+           || !strcmp(pctx->tok->run, KEYWRD_MUST);
 
    if (!test1 && !test2) {
-      reason = msgs.err.syn.gt.badsyn;
-      synerr();
+      pctx->reason = msgs.err.syn.gt.badsyn;
+      synerr(pctx);
    }
 
    test1 = (type == GototypeWe) && test1;
    test2 = (type == GototypeLet) && test2;
 
    if (test1 || test2) {
-      reason = msgs.err.syn.gt.unmatched;
-      synerr();
+      pctx->reason = msgs.err.syn.gt.unmatched;
+      synerr(pctx);
    }
 
-   gettok();
+   gettok(pctx);
 
-   test3 = strcmp(tok->run, KEYWRD_RETURN);
-   test4 = strcmp(tok->run, KEYWRD_PROCED);
+   test3 = strcmp(pctx->tok->run, KEYWRD_RETURN);
+   test4 = strcmp(pctx->tok->run, KEYWRD_PROCED);
 
    if (test3 && test4) {
-      reason = msgs.err.syn.gt.badsyn;
-      synerr();
+      pctx->reason = msgs.err.syn.gt.badsyn;
+      synerr(pctx);
    }
 
-   gettok();
+   gettok(pctx);
 
-   if (strcmp(tok->run, KEYWRD_TO)) {
-      reason = msgs.err.syn.gt.badsyn;
-      synerr();
+   if (strcmp(pctx->tok->run, KEYWRD_TO)) {
+      pctx->reason = msgs.err.syn.gt.badsyn;
+      synerr(pctx);
    }
 
-   gettok();
+   gettok(pctx);
 
-   if (!strcmp(tok->run, KEYWRD_ACT_L)) {
+   if (!strcmp(pctx->tok->run, KEYWRD_ACT_L)) {
       dest = NODEKIND_ACT;
    }
    else
-   if (!strcmp(tok->run, KEYWRD_SCENE_L)) {
+   if (!strcmp(pctx->tok->run, KEYWRD_SCENE_L)) {
       dest = NODEKIND_SCENE;
    }
    else {
-      reason = msgs.err.syn.gt.badsyn;
-      synerr();
+      pctx->reason = msgs.err.syn.gt.badsyn;
+      synerr(pctx);
    }
 
-   gt = graft_tree_n(line, dest, NODEKIND_GOTO);
+   gt = graft_tree_n(
+      pctx->line, dest, NODEKIND_GOTO, pctx->tok->lnum, pctx->tok->lpos
+   );
 
-   gettok();
+   gettok(pctx);
 
-   if (tok->kind == TOKKIND_PNT) {
-      reason = msgs.err.syn.gt.badsyn;
-      synerr();
+   if (pctx->tok->kind == TOKKIND_PNT) {
+      pctx->reason = msgs.err.syn.gt.badsyn;
+      synerr(pctx);
    }
 
    // fixme: 로마숫자인지 검사
-   (void) graft_tree_s(gt, tok->run, tok->len, NODEKIND_ROMNUM);
+   graft_tree_s(
+      gt, pctx->tok->run, pctx->tok->len, NODEKIND_ROMNUM,
+      pctx->tok->lnum, pctx->tok->lpos
+   );
 
-   gettok();
+   gettok(pctx);
 
-   if (!match(tok->run[0], ".!")) {
-      reason = msgs.err.syn.gt.badsyn;
-      synerr();
+   if (!match(pctx->tok->run[0], ".!")) {
+      pctx->reason = msgs.err.syn.gt.badsyn;
+      synerr(pctx);
    }
 }
 
-static int seek_cond(void) {
-   return is_be_conjs(tok->run);
+static int seek_cond(parse_ctx_t *pctx) {
+   return is_be_conjs(pctx);
 }
 
-static void parse_cond(void) {
+static void parse_cond(parse_ctx_t *pctx) {
    tree_t *condition,
           *lefthand,
           *righthand,
@@ -705,27 +772,31 @@ static void parse_cond(void) {
       type 2: [Art] thou not more cunning than the Ghost?
       type 3: [Is] a tree not as good as a shiny tree? */
 
-   condition = graft_tree_n(line, 0, NODEKIND_COND);
-   lefthand  = graft_tree_n(condition, 0, NODEKIND_LHS);
+   condition = graft_tree_n(
+      pctx->line, 0, NODEKIND_COND, pctx->tok->lnum, pctx->tok->lpos
+   );
+   lefthand  = graft_tree_n(
+      condition, 0, NODEKIND_LHS, pctx->tok->lnum, pctx->tok->lpos
+   );
 
-   reason = msgs.err.syn.cond.incomp;
-   gettok();
+   pctx->reason = msgs.err.syn.cond.incomp;
+   gettok(pctx);
 
    /* Am [I] not better than yourself?
       Art [thou] not more cunning than the Ghost?
       Is [a] tree not as good as a shiny tree? */
 
    if (0) {  // TODO: --pedantic
-      check_predicate();
+      check_predicate(pctx);
    }
 
-   if (be_kind == 3) {
+   if (pctx->be_kind == 3) {
       /* need to ungettok before parse_const() */
-      ungettok();
+      ungettok(pctx);
       /* [Is] a tree not as good as a shiny tree? */
    }
 
-   switch (be_kind) {
+   switch (pctx->be_kind) {
       case 0  : kind = NODEKIND_P1; break;
       case 1  : /* fall-through */
       case 2  : kind = NODEKIND_P2; break;
@@ -733,71 +804,82 @@ static void parse_cond(void) {
       /* control never reaches default */
       default : kind = NODEKIND__UNKNOWN;
    }
-   p = graft_tree_n(lefthand, 0, kind);
 
-   if (be_kind == 3) {
+   p = graft_tree_n(
+      lefthand, 0, kind, pctx->tok->lnum, pctx->tok->lpos
+   );
+
+   if (pctx->be_kind == 3) {
       /* parse_const() has consumed "a tree" */
-      parse_const(p);
+      parse_const(pctx, p);
       /* Is a tree [not] as good as a shiny tree? */
    } else {
-      reason = msgs.err.syn.cond.incomp;
-      gettok();
+      pctx->reason = msgs.err.syn.cond.incomp;
+      gettok(pctx);
       /* Am I [not] better than yourself?
          Art thou [not] more cunning than the Ghost? */
    }
 
-   if (!strcmp(tok->run, KEYWRD_NOT)) {
-      (void) graft_tree_n(condition, 0, NODEKIND_NEGATE);
-      reason = msgs.err.syn.cond.incomp;
-      gettok();
+   if (!strcmp(pctx->tok->run, KEYWRD_NOT)) {
+      graft_tree_n(
+         condition, 0, NODEKIND_NEGATE, pctx->tok->lnum, pctx->tok->lpos
+      );
+      pctx->reason = msgs.err.syn.cond.incomp;
+      gettok(pctx);
       /* Am I not [better] than yourself?
          Art thou not [more] cunning than the Ghost?
          Is a tree not [as] good as a shiny tree? */
    }
    else
-      (void) graft_tree_n(condition, 0, NODEKIND_AFFIRM);
+      graft_tree_n(
+         condition, 0, NODEKIND_AFFIRM, pctx->tok->lnum, pctx->tok->lpos
+      );
 
-   if (!strcmp(tok->run, KEYWRD_AS)) {
-      parse_cond_eq(condition);
+   if (!strcmp(pctx->tok->run, KEYWRD_AS)) {
+      parse_cond_eq(pctx, condition);
       /* Is a tree not as good [as] a shiny tree? */
    }
    else {
-      parse_cond_ineq(condition);
+      parse_cond_ineq(pctx, condition);
       /* Am I not better [than] yourself?
          Art thou not more cunning [than] the Ghost? */
    }
 
-   righthand = graft_tree_n(condition, 0, NODEKIND_RHS);
+   righthand = graft_tree_n(
+      condition, 0, NODEKIND_RHS, pctx->tok->lnum, pctx->tok->lpos
+   );
    /* The last noun is to be comsumed */
-   parse_const(righthand);
+   parse_const(pctx, righthand);
    /* Am I not better than yourself[?]
       Art thou not more cunning than the Ghost[?]
       Is a tree not as good as a shiny tree[?] */
 }
 
-static void parse_cond_eq(tree_t *cond) {
+static void parse_cond_eq(parse_ctx_t *pctx, tree_t *cond) {
    /* Is a tree not [as] good as a shiny tree? */
-   gettok();
+   gettok(pctx);
    /* Is a tree not as [good] as a shiny tree? */
 
-   if (tok->kind == TOKKIND_PNT) {
-      reason = msgs.err.syn.cond.badsyn;
-      synerr();
+   if (pctx->tok->kind == TOKKIND_PNT) {
+      pctx->reason = msgs.err.syn.cond.badsyn;
+      synerr(pctx);
    }
 
-   (void) graft_tree_s(
-      cond, tok->run, tok->len, NODEKIND_EQ);
+   graft_tree_s(
+      cond, pctx->tok->run, pctx->tok->len, NODEKIND_EQ,
+      pctx->tok->lnum, pctx->tok->lpos
+   );
 
-   gettok();
+   gettok(pctx);
    /* Is a tree not as good [as] a shiny tree? */
 
-   if (strcmp(tok->run, KEYWRD_AS)) {
-      reason = msgs.err.syn.cond.badsyn;
-      synerr();
+   if (strcmp(pctx->tok->run, KEYWRD_AS)) {
+      pctx->reason = msgs.err.syn.cond.badsyn;
+      synerr(pctx);
    }
 }
 
-static void parse_cond_ineq(tree_t *cond) {
+static void parse_cond_ineq(parse_ctx_t *pctx, tree_t *cond) {
    static const char *comps[2] = { "more", "less" };
    static const int comps_len = ARRLEN(comps);
 
@@ -807,17 +889,18 @@ static void parse_cond_ineq(tree_t *cond) {
    /* Art thou not [more] cunning than the Ghost?
       Am I not [better] than yourself? */
 
-   ret = match_str(tok->run, comps, comps_len);
+   ret = match_str(pctx->tok->run, comps, comps_len);
 
    /* like "more beautiful" or "less interesting" */
    if (ret < comps_len) {
-      reason = msgs.err.syn.cond.incomp;
-      gettok();
+      pctx->reason = msgs.err.syn.cond.incomp;
+      gettok(pctx);
+
       /* Art thou not more [cunning] than the Ghost? */
 
-      if (tok->kind == TOKKIND_PNT) {
-         reason = msgs.err.syn.cond.badsyn;
-         synerr();
+      if (pctx->tok->kind == TOKKIND_PNT) {
+         pctx->reason = msgs.err.syn.cond.badsyn;
+         synerr(pctx);
       }
 
       switch (ret) {
@@ -826,114 +909,128 @@ static void parse_cond_ineq(tree_t *cond) {
          default: ;  /* control never reaches default */
       }
 
-      (void) graft_tree_s(cond, tok->run, tok->len, kind);
+      graft_tree_s(
+         cond, pctx->tok->run, pctx->tok->len, kind,
+         pctx->tok->lnum, pctx->tok->lpos
+      );
    }
    /* one word comparative like "better" or "worse" */
-   else
-      (void) graft_tree_s(
-         cond, tok->run, tok->len, NODEKIND_INEQ);
+   else {
+      graft_tree_s(
+         cond, pctx->tok->run, pctx->tok->len, NODEKIND_INEQ,
+         pctx->tok->lnum, pctx->tok->lpos
+      );
+   }
 
-   reason = msgs.err.syn.cond.incomp;
-   gettok();
+   pctx->reason = msgs.err.syn.cond.incomp;
+   gettok(pctx);
    /* Am I not better [than] yourself?
       Art thou not more cunning [than] the Ghost? */
 
-   if (strcmp(tok->run, KEYWRD_THAN)) {
-      reason = msgs.err.syn.cond.badsyn;
-      synerr();
+   if (strcmp(pctx->tok->run, KEYWRD_THAN)) {
+      pctx->reason = msgs.err.syn.cond.badsyn;
+      synerr(pctx);
    }
 }
 
-static int seek_push(void) {
-   return strcmp(tok->run, KEYWRD_REMEMB) ? 0 : 1;
+static int seek_push(parse_ctx_t *pctx) {
+   return strcmp(pctx->tok->run, KEYWRD_REMEMB) ? 0 : 1;
 }
 
-static void parse_push(void) {
+static void parse_push(parse_ctx_t *pctx) {
    tree_t *push;
 
-   push = graft_tree_n(line, 0, NODEKIND_PUSH);
+   push = graft_tree_n(
+      pctx->line, 0, NODEKIND_PUSH, pctx->tok->lnum, pctx->tok->lpos
+   );
 
-   reason = msgs.err.syn.push.incomp;
-   gettok();
+   pctx->reason = msgs.err.syn.push.incomp;
+   gettok(pctx);
 
-   if (tok->kind == TOKKIND_PNT) {
-      reason = msgs.err.syn.push.badsyn;
-      synerr();
+   if (pctx->tok->kind == TOKKIND_PNT) {
+      pctx->reason = msgs.err.syn.push.badsyn;
+      synerr(pctx);
    }
 
-   ungettok();
+   ungettok(pctx);
 
-   parse_const(push);
+   parse_const(pctx, push);
 
-   if (!match(tok->run[0], ".!")) {
-      reason = msgs.err.syn.push.badsyn;
-      synerr();
+   if (!match(pctx->tok->run[0], ".!")) {
+      pctx->reason = msgs.err.syn.push.badsyn;
+      synerr(pctx);
    }
 }
 
-static int seek_pop(void) {
-   return strcmp(tok->run, KEYWRD_RECALL) ? 0 : 1;
+static int seek_pop(parse_ctx_t *pctx) {
+   return strcmp(pctx->tok->run, KEYWRD_RECALL) ? 0 : 1;
 }
 
-static void parse_pop(void) {
-   (void) graft_tree_n(line, 0, NODEKIND_POP);
-   reason = msgs.err.syn.pop.incomp;
-   skiptoks2(".!?");
+static void parse_pop(parse_ctx_t *pctx) {
+   graft_tree_n(
+      pctx->line, 0, NODEKIND_POP, pctx->tok->lnum, pctx->tok->lpos
+   );
+   pctx->reason = msgs.err.syn.pop.incomp;
+   skiptoks2(pctx, ".!?");
 }
 
-static void parse_namelist(tree_t *t) {
+static void parse_namelist(parse_ctx_t *pctx, tree_t *t) {
    /* Enter, Exit, and Exeunt takes a namelist:
          (1) [<enterlike> A]
          (2) [<enterlike> A and B]
          (3) [<enterlike> A, B, and C] */
 
-   reason = "incomplete namelist";
-   gettok();
-   if (tok->run[0] == ']')
+   pctx->reason = "incomplete namelist";
+   gettok(pctx);
+   if (pctx->tok->run[0] == ']')
          return;
-   ungettok();
+   ungettok(pctx);
 
    /* Currently, tok->run points to <enterlike> */
 
    /* Consumes tokens until "and" */
    do {
-      reason = "incomplete namelist"; // fixme: remove this
-      gettok();
-      if (!is_name_lower()) {
-         reason = "dp expected here";
-         synerr();
+      pctx->reason = "incomplete namelist"; // fixme: remove this
+      gettok(pctx);
+      if (!is_name_lower(pctx)) {
+         pctx->reason = "dp expected here";
+         synerr(pctx);
       }
-      graft_tree_n(t, charidx, NODEKIND_CHAR);
-      gettok();
-      if (tok->run[0] == ']')
+      graft_tree_n(
+         t, pctx->charidx, NODEKIND_CHAR, pctx->tok->lnum, pctx->tok->lpos
+      );
+      gettok(pctx);
+      if (pctx->tok->run[0] == ']')
          return;
-      if (!strcmp(tok->run, "and"))
+      if (!strcmp(pctx->tok->run, "and"))
          break;
-      if (tok->run[0] != ',') {
-         reason = ", expected here";
-         synerr();
+      if (pctx->tok->run[0] != ',') {
+         pctx->reason = ", expected here";
+         synerr(pctx);
       }
-      gettok();
-      if (!strcmp(tok->run, "and"))
+      gettok(pctx);
+      if (!strcmp(pctx->tok->run, "and"))
          break;
-      ungettok();
+      ungettok(pctx);
    } while (true);
 
    /* Skips "and" and consumes the last name */
-   gettok();
-   if (!is_name_lower()) {
-      reason = "dp expected here";
-      synerr();
+   gettok(pctx);
+   if (!is_name_lower(pctx)) {
+      pctx->reason = "dp expected here";
+      synerr(pctx);
    }
-   graft_tree_n(t, charidx, NODEKIND_CHAR);
-   gettok();
-   if (tok->run[0] != ']') {
-      reason = "] expected here";
-      synerr();
+   graft_tree_n(
+      t, pctx->charidx, NODEKIND_CHAR, pctx->tok->lnum, pctx->tok->lpos
+   );
+   gettok(pctx);
+   if (pctx->tok->run[0] != ']') {
+      pctx->reason = "] expected here";
+      synerr(pctx);
    }
 }
 
-static void parse_const(tree_t *stmt) {
+static void parse_const(parse_ctx_t *pctx, tree_t *stmt) {
    /* Before going further, let's recall where constants are used.
 
       Note:
@@ -981,45 +1078,58 @@ static void parse_const(tree_t *stmt) {
    int query_result;
 
    /* Makes a tree that represents a constant node */
-   cnst = graft_tree_n(stmt, 0, NODEKIND_CONST);
+   cnst = graft_tree_n(
+      stmt, 0, NODEKIND_CONST, pctx->tok->lnum, pctx->tok->lpos
+   );
 
-   reason = msgs.err.syn.cnst.incomp;
-   gettok();
+   pctx->reason = msgs.err.syn.cnst.incomp;
+   gettok(pctx);
 
    /* First of all, we check whether this is an operator */
-   if ((kind = seek_op()) != NODEKIND__NAO) {
-      parse_op(cnst, kind);
+   if ((kind = seek_op(pctx)) != NODEKIND__NAO) {
+      parse_op(pctx, cnst, kind);
       return;
    }
 
    /* Checks whether this token is
       a pronoun, a reflexive, a name, or a nil */
-   if (is_pronoun(tok->run)) {
-      graft_tree_s(cnst, tok->run, tok->len, what_pronoun(tok->run));
-      check_const_end();
+   if (is_pronoun(pctx->tok->run)) {
+      graft_tree_s(
+         cnst, pctx->tok->run, pctx->tok->len, what_pronoun(pctx->tok->run),
+         pctx->tok->lnum, pctx->tok->lpos
+      );
+      check_const_end(pctx);
       return;
    }
-   if (is_reflexive(tok->run)) {
-      graft_tree_s(cnst, tok->run, tok->len, what_reflexive(tok->run));
-      check_const_end();
+   if (is_reflexive(pctx->tok->run)) {
+      graft_tree_s(
+         cnst, pctx->tok->run, pctx->tok->len, what_reflexive(pctx->tok->run),
+         pctx->tok->lnum, pctx->tok->lpos
+      );
+      check_const_end(pctx);
       return;
    }
-   if (is_name_lower()) {
-      graft_tree_n(cnst, charidx, NODEKIND_CHAR);
-      check_const_end();
+   if (is_name_lower(pctx)) {
+      graft_tree_n(
+         cnst, pctx->charidx, NODEKIND_CHAR, pctx->tok->lnum, pctx->tok->lpos
+      );
+      check_const_end(pctx);
       return;
    }
-   if (is_nil(tok->run)) {
-      graft_tree_s(cnst, tok->run, tok->len, NODEKIND_ZERO);
-      check_const_end();
+   if (is_nil(pctx->tok->run)) {
+      graft_tree_s(
+         cnst, pctx->tok->run, pctx->tok->len, NODEKIND_ZERO,
+         pctx->tok->lnum, pctx->tok->lpos
+      );
+      check_const_end(pctx);
       return;
    }
 
    /* If not, this token is either TYPE A or TYPE B. Meanwhile,
       TYPE B = (art|pos) TYPE A. Let's exploit this structure */
-   if (is_article(tok->run) || is_possessive(tok->run)) {
-      reason = msgs.err.syn.cnst.incomp;
-      gettok();  /* skips the current token */
+   if (is_article(pctx->tok->run) || is_possessive(pctx->tok->run)) {
+      pctx->reason = msgs.err.syn.cnst.incomp;
+      gettok(pctx);  /* skips the current token */
       /* if the token had been of TYPE B, now it has become of TYPE A */
    }
 
@@ -1027,16 +1137,22 @@ static void parse_const(tree_t *stmt) {
 
    /* Consumes adjectives first */
    for (;;) {
-      if (!query_adj(tok->run))
+      if (!query_adj(pctx->tok->run))
          break;
-      graft_tree_s(cnst, tok->run, tok->len, NODEKIND_ADJ);
-      gettok();
+      graft_tree_s(
+         cnst, pctx->tok->run, pctx->tok->len, NODEKIND_ADJ,
+         pctx->tok->lnum, pctx->tok->lpos
+      );
+      gettok(pctx);
    }
 
    /* noun? */
-   if (query_noun(tok->run, &query_result)) {
+   if (query_noun(pctx->tok->run, &query_result)) {
       kind = query_result ? NODEKIND_PNOUN : NODEKIND_NNOUN;
-      graft_tree_s(cnst, tok->run, tok->len, kind);
+      graft_tree_s(
+         cnst, pctx->tok->run, pctx->tok->len, kind,
+         pctx->tok->lnum, pctx->tok->lpos
+      );
    }
    else {  /* noun phrase */
       // TODO: refactor later!!
@@ -1044,32 +1160,34 @@ static void parse_const(tree_t *stmt) {
       char *buf;
       size_t bufsiz;
 
-      prev_tok = tok;
+      prev_tok = pctx->tok;
 
-      reason = msgs.err.syn.cnst.incomp;
-      gettok();
+      pctx->reason = msgs.err.syn.cnst.incomp;
+      gettok(pctx);
 
-      bufsiz = prev_tok->len + tok->len;
+      bufsiz = prev_tok->len + pctx->tok->len;
       buf = safe_malloc(bufsiz);
       memcpy(buf, prev_tok->run, prev_tok->len);
       buf[prev_tok->len - 1] = ' ';
-      memcpy(buf + prev_tok->len, tok->run, tok->len);
+      memcpy(buf + prev_tok->len, pctx->tok->run, pctx->tok->len);
 
       if(!query_noun(buf, &query_result)) {
-         ungettok();
-         reason = msgs.err.syn.cnst.no_noun;
-         synerr();
+         ungettok(pctx);
+         pctx->reason = msgs.err.syn.cnst.no_noun;
+         synerr(pctx);
       }
 
       kind = query_result ? NODEKIND_PNOUN : NODEKIND_NNOUN;
-      graft_tree_s(cnst, buf, bufsiz, kind);
+      graft_tree_s(
+         cnst, buf, bufsiz, kind, pctx->tok->lnum, pctx->tok->lpos
+      );
    }
 
    /* end of const */
-   check_const_end();
+   check_const_end(pctx);
 }
 
-static nodekind_t seek_op(void) {
+static nodekind_t seek_op(parse_ctx_t *pctx) {
    typedef struct ophandler {
       const char *name;
       nodekind_t kind;
@@ -1096,19 +1214,19 @@ static nodekind_t seek_op(void) {
    nodekind_t k;
 
    /* twice operator? */
-   if (!strcmp(tok->run, "twice"))
+   if (!strcmp(pctx->tok->run, "twice"))
       return NODEKIND_2X;
 
    /* not begins with "the"? then it's not an operator */
-   if (strcmp(tok->run, "the"))
+   if (strcmp(pctx->tok->run, "the"))
       return NODEKIND__NAO;
 
-   reason = msgs.err.syn.cnst.incomp;
-   gettok();
+   pctx->reason = msgs.err.syn.cnst.incomp;
+   gettok(pctx);
 
    k = NODEKIND__NAO;
    for (size_t i = 0; i < ops_len; i++)
-      if (!strcmp(tok->run, ops[i].name)) {
+      if (!strcmp(pctx->tok->run, ops[i].name)) {
          k = ops[i].kind;
          break;
       }
@@ -1116,7 +1234,7 @@ static nodekind_t seek_op(void) {
    /* no match! turns out it isn't an operator,
       although it began with "the" */
    if (k == NODEKIND__NAO) {
-      ungettok();
+      ungettok(pctx);
       return k;
    }
 
@@ -1125,35 +1243,38 @@ static nodekind_t seek_op(void) {
       return k;
 
    /* to be a square or to be a square root? that's the question */
-   gettok();
-   if (!strcmp(tok->run, KEYWRD_ROOT))
+   gettok(pctx);
+   if (!strcmp(pctx->tok->run, KEYWRD_ROOT))
       k = NODEKIND_SQRT;
-   else ungettok();
+   else ungettok(pctx);
 
    return k;
 }
 
-static void parse_op(tree_t *stmt, nodekind_t kind) {
+static void parse_op(parse_ctx_t *pctx, tree_t *stmt, nodekind_t kind) {
    tree_t *op;
 
-   op = graft_tree_n(stmt, 0, kind);
-   reason = msgs.err.syn.op.incomp;
+   op = graft_tree_n(
+      stmt, 0, kind, pctx->tok->lnum, pctx->tok->lpos
+   );
+   pctx->reason = msgs.err.syn.op.incomp;
    switch (kind) {
-      case NODEKIND_SUM  : parse_op_sum (op); return;
-      case NODEKIND_DIFF : parse_op_diff(op); return;
-      case NODEKIND_PROD : parse_op_prod(op); return;
-      case NODEKIND_QUOT : parse_op_quot(op); return;
-      case NODEKIND_REM  : parse_op_rem (op); return;
-      case NODEKIND_SQRT : parse_op_sqrt(op); return;
-      case NODEKIND_SQUR : parse_op_squr(op); return;
-      case NODEKIND_CUBE : parse_op_cube(op); return;
-      case NODEKIND_2X   : parse_op_2x  (op); return;
-      case NODEKIND_FACT : parse_op_fact(op); return;
+      case NODEKIND_SUM  : parse_op_sum (pctx, op); return;
+      case NODEKIND_DIFF : parse_op_diff(pctx, op); return;
+      case NODEKIND_PROD : parse_op_prod(pctx, op); return;
+      case NODEKIND_QUOT : parse_op_quot(pctx, op); return;
+      case NODEKIND_REM  : parse_op_rem (pctx, op); return;
+      case NODEKIND_SQRT : parse_op_sqrt(pctx, op); return;
+      case NODEKIND_SQUR : parse_op_squr(pctx, op); return;
+      case NODEKIND_CUBE : parse_op_cube(pctx, op); return;
+      case NODEKIND_2X   : parse_op_2x  (pctx, op); return;
+      case NODEKIND_FACT : parse_op_fact(pctx, op); return;
       default: ;  /* control never reaches default */
    }
 }
 
 static void parse_op_unary(
+   parse_ctx_t *pctx,
    tree_t * restrict op,
    const char * restrict err
 ) {
@@ -1164,26 +1285,27 @@ static void parse_op_unary(
       same structure with other unary operators,
       it doesn't use this wrapper. */
 
-   reason = msgs.err.syn.op.incomp;
-   gettok();
+   pctx->reason = msgs.err.syn.op.incomp;
+   gettok(pctx);
 
-   if (strcmp(tok->run, "of")) {
-      reason = err;
-      synerr();
+   if (strcmp(pctx->tok->run, "of")) {
+      pctx->reason = err;
+      synerr(pctx);
    }
 
-   parse_const(op);
+   parse_const(pctx, op);
 }
 
 static void parse_op_binary(
+   parse_ctx_t *pctx,
    tree_t * restrict op,
    const char * restrict type,
    const char * restrict err
 ) {
    tree_t *lefthand, *righthand;
 
-   reason = msgs.err.syn.op.incomp;
-   gettok();
+   pctx->reason = msgs.err.syn.op.incomp;
+   gettok(pctx);
 
    /* the sum OF L and R
       the difference BETWEEN L and R
@@ -1191,86 +1313,90 @@ static void parse_op_binary(
       the quotient BETWEEN L and R
       the remainder OF the quotient BETWEEN L and R */
 
-   if (strcmp(tok->run, type)) {
-      reason = err;
-      synerr();
+   if (strcmp(pctx->tok->run, type)) {
+      pctx->reason = err;
+      synerr(pctx);
    }
 
-   lefthand = graft_tree_n(op, 0, NODEKIND_LHS);
-   parse_const(lefthand);
+   lefthand = graft_tree_n(
+      op, 0, NODEKIND_LHS, pctx->tok->lnum, pctx->tok->lpos
+   );
+   parse_const(pctx, lefthand);
 
-   if (strcmp(tok->run, KEYWRD_AND)) {
-      reason = msgs.err.syn.op.no_and;
-      synerr();
+   if (strcmp(pctx->tok->run, KEYWRD_AND)) {
+      pctx->reason = msgs.err.syn.op.no_and;
+      synerr(pctx);
    }
 
-   righthand = graft_tree_n(op, 0, NODEKIND_RHS);
-   parse_const(righthand);
+   righthand = graft_tree_n(
+      op, 0, NODEKIND_RHS, pctx->tok->lnum, pctx->tok->lpos
+   );
+   parse_const(pctx, righthand);
 }
 
-static inline void parse_op_sum(tree_t *op) {
-   parse_op_binary(op, KEYWRD_OF, msgs.err.syn.op.sum);
+static inline void parse_op_sum(parse_ctx_t *pctx, tree_t *op) {
+   parse_op_binary(pctx, op, KEYWRD_OF, msgs.err.syn.op.sum);
 }
 
-static inline void parse_op_diff(tree_t *op) {
-   parse_op_binary(op, KEYWRD_BTW, msgs.err.syn.op.diff);
+static inline void parse_op_diff(parse_ctx_t *pctx, tree_t *op) {
+   parse_op_binary(pctx, op, KEYWRD_BTW, msgs.err.syn.op.diff);
 }
 
-static inline void parse_op_prod(tree_t *op) {
-   parse_op_binary(op, KEYWRD_OF, msgs.err.syn.op.prod);
+static inline void parse_op_prod(parse_ctx_t *pctx, tree_t *op) {
+   parse_op_binary(pctx, op, KEYWRD_OF, msgs.err.syn.op.prod);
 }
 
-static inline void parse_op_quot(tree_t *op) {
-   parse_op_binary(op, KEYWRD_BTW, msgs.err.syn.op.quot);
+static inline void parse_op_quot(parse_ctx_t *pctx, tree_t *op) {
+   parse_op_binary(pctx, op, KEYWRD_BTW, msgs.err.syn.op.quot);
 }
 
-static inline void parse_op_rem(tree_t *op) {
+static inline void parse_op_rem(parse_ctx_t *pctx, tree_t *op) {
    /* the remainder of
          the quotient between <const> and <const> */
 
-   reason = msgs.err.syn.op.incomp;
-   gettok();
+   pctx->reason = msgs.err.syn.op.incomp;
+   gettok(pctx);
 
-   if (strcmp(tok->run, KEYWRD_OF)) {
-      reason = msgs.err.syn.op.rem;
-      synerr();
+   if (strcmp(pctx->tok->run, KEYWRD_OF)) {
+      pctx->reason = msgs.err.syn.op.rem;
+      synerr(pctx);
    }
 
-   gettok();
+   gettok(pctx);
 
-   if (strcmp(tok->run, KEYWRD_THE)) {
-      reason = msgs.err.syn.op.rem_quot_1;
-      synerr();
+   if (strcmp(pctx->tok->run, KEYWRD_THE)) {
+      pctx->reason = msgs.err.syn.op.rem_quot_1;
+      synerr(pctx);
    }
 
-   gettok();
+   gettok(pctx);
 
-   if (strcmp(tok->run, KEYWRD_QUOT)) {
-      reason = msgs.err.syn.op.rem_quot_2;
-      synerr();
+   if (strcmp(pctx->tok->run, KEYWRD_QUOT)) {
+      pctx->reason = msgs.err.syn.op.rem_quot_2;
+      synerr(pctx);
    }
 
-   parse_op_quot(op);
+   parse_op_quot(pctx, op);
 }
 
-static inline void parse_op_sqrt(tree_t *op) {
-   parse_op_unary(op, msgs.err.syn.op.sqrt);
+static inline void parse_op_sqrt(parse_ctx_t *pctx, tree_t *op) {
+   parse_op_unary(pctx, op, msgs.err.syn.op.sqrt);
 }
 
-static inline void parse_op_squr(tree_t *op) {
-   parse_op_unary(op, msgs.err.syn.op.squr);
+static inline void parse_op_squr(parse_ctx_t *pctx, tree_t *op) {
+   parse_op_unary(pctx, op, msgs.err.syn.op.squr);
 }
 
-static inline void parse_op_cube(tree_t *op) {
-   parse_op_unary(op, msgs.err.syn.op.cube);
+static inline void parse_op_cube(parse_ctx_t *pctx, tree_t *op) {
+   parse_op_unary(pctx, op, msgs.err.syn.op.cube);
 }
 
-static inline void parse_op_2x(tree_t *op) {
-   parse_const(op);
+static inline void parse_op_2x(parse_ctx_t *pctx, tree_t *op) {
+   parse_const(pctx, op);
 }
 
-static inline void parse_op_fact(tree_t *op) {
-   parse_op_unary(op, msgs.err.syn.op.fact);
+static inline void parse_op_fact(parse_ctx_t *pctx, tree_t *op) {
+   parse_op_unary(pctx, op, msgs.err.syn.op.fact);
 }
 
 // TODO: refactor is_xxx: (1) use macro (2) use lowercase
@@ -1353,24 +1479,26 @@ static nodekind_t what_reflexive(const char *str) {
    return NODEKIND__UNKNOWN;
 }
 
-static void check_const_end(void) {
-   reason = msgs.err.syn.cnst.incomp;
-   gettok();
+static void check_const_end(parse_ctx_t *pctx) {
+   pctx->reason = msgs.err.syn.cnst.incomp;
+   gettok(pctx);
 
-   if (strchr(".!?", tok->run[0])
-      || !strcmp(tok->run, "not")
-      || !strcmp(tok->run, "as")
-      || !strcmp(tok->run, "more")
-      || !strcmp(tok->run, "less")
-      || !strcmp(tok->run, "and")
-      || query_comp(tok->run, NULL))
+   if (strchr(".!?", pctx->tok->run[0])
+      || !strcmp(pctx->tok->run, "not")
+      || !strcmp(pctx->tok->run, "as")
+      || !strcmp(pctx->tok->run, "more")
+      || !strcmp(pctx->tok->run, "less")
+      || !strcmp(pctx->tok->run, "and")
+      || query_comp(pctx->tok->run, NULL))
+   {
       return;
+   }
 
-   reason = msgs.err.syn.cnst.no_end_symbol;
-   synerr();
+   pctx->reason = msgs.err.syn.cnst.no_end_symbol;
+   synerr(pctx);
 }
 
-static bool is_name(void) {
+static bool is_name(parse_ctx_t *pctx) {
    /* DP  (siz = 2)
          => CHAR  (siz = 1)
             => Romeo
@@ -1387,14 +1515,14 @@ static bool is_name(void) {
 
    /* Since backtracking can happen, we need to save the
       current parsing state */
-   const size_t orig_idx = idx;
+   const size_t orig_idx = pctx->idx;
 
    /* We assume that all names are unique, i.e. there is
       no overlap like "the Romeo" and "the Romeo Rome" */
 
    dp = tree_child(pt, 1);
    dpsiz = tree_clen(dp);
-   reason = "incomplete name";
+   pctx->reason = "incomplete name";
 
    for (i = 0; i < dpsiz; i++) {
       ch = tree_child(dp, i);
@@ -1402,16 +1530,16 @@ static bool is_name(void) {
 
       for (k = 0; k < chsiz; k++) {
          ch_subnode = tree_chdat(ch, k);
-         if (strcmp(ch_subnode->dat.s.run, tok->run)) {
-            rewind_tokstate(orig_idx);
+         if (strcmp(ch_subnode->dat.s.run, pctx->tok->run)) {
+            rewind_tokstate(pctx, orig_idx);
             break;
          }
-         gettok();
+         gettok(pctx);
       }
 
       if (k == chsiz) {
-         ungettok();
-         charidx = i;
+         ungettok(pctx);
+         pctx->charidx = i;
          return true;
       }
    }
@@ -1419,166 +1547,182 @@ static bool is_name(void) {
    return false;
 }
 
-static bool is_name_lower(void) {
-   if (!strcmp(tok->run, "A")
-      || !strcmp(tok->run, "An")
-      || !strcmp(tok->run, "The")
-   ) {
-      reason = msgs.err.syn.name_not_lowcase;
-      synerr();
+static bool is_name_lower(parse_ctx_t *pctx) {
+   if (!strcmp(pctx->tok->run, "A")
+      || !strcmp(pctx->tok->run, "An")
+      || !strcmp(pctx->tok->run, "The"))
+   {
+      pctx->reason = msgs.err.syn.name_not_lowcase;
+      synerr(pctx);
    }
 
-   if (!strcmp(tok->run, KEYWRD_A)
-      || !strcmp(tok->run, KEYWRD_AN)
-      || !strcmp(tok->run, KEYWRD_THE)
-   ) tok->run[0] = toupper(tok->run[0]);
+   if (!strcmp(pctx->tok->run, KEYWRD_A)
+      || !strcmp(pctx->tok->run, KEYWRD_AN)
+      || !strcmp(pctx->tok->run, KEYWRD_THE))
+   {
+      pctx->tok->run[0] = toupper(pctx->tok->run[0]);
+   }
 
-   if(is_name())
+   if(is_name(pctx)) {
       return 1;
-   tok->run[0] = tolower(tok->run[0]);
+   }
+
+   pctx->tok->run[0] = tolower(pctx->tok->run[0]);
    return 0;
 }
 
-static bool is_be_conjs(const char *str) {  /* conjs = conjugations */
+static bool is_be_conjs(parse_ctx_t *pctx) {  /* conjs = conjugations */
    static const char *conjs[] = {
       "am", "are", "art", "is", "be"
    };
    static const size_t conjs_len = ARRLEN(conjs);
 
-   be_kind = match_str(str, conjs, conjs_len);
+   pctx->be_kind = match_str(pctx->tok->run, conjs, conjs_len);
 
-   return (be_kind < conjs_len) ? true : false;
+   return (pctx->be_kind < conjs_len) ? true : false;
 }
 
-static void check_predicate(void) {
+static void check_predicate(parse_ctx_t *pctx) {
    static const char *cond_subjs[] = {
       KEYWRD_I, KEYWRD_YOU_L, KEYWRD_THOU_L
    };
    static const size_t cond_subjs_len = ARRLEN(cond_subjs);
 
-   switch (be_kind) {
-      case 0 : if (strcmp(tok->run, KEYWRD_I))
+   switch (pctx->be_kind) {
+      case 0 : if (strcmp(pctx->tok->run, KEYWRD_I))
                   goto hell; else break;
-      case 1 : if (strcmp(tok->run, KEYWRD_YOU_L))
+      case 1 : if (strcmp(pctx->tok->run, KEYWRD_YOU_L))
                   goto hell; else break;
-      case 2 : if (strcmp(tok->run, KEYWRD_THOU_L))
+      case 2 : if (strcmp(pctx->tok->run, KEYWRD_THOU_L))
                   goto hell; else break;
       /* i.e. check if "Is (I, you, thou)" */
-      case 3 : if (match_str(tok->run, cond_subjs, cond_subjs_len) < cond_subjs_len)
+      case 3 : if (match_str(pctx->tok->run, cond_subjs, cond_subjs_len) < cond_subjs_len)
                   goto hell; else break;
-      hell : /* FLAMING HOT */
-         reason = msgs.err.syn.cond.not_conj;
-         synerr();
+      hell: /* FLAMING HOT */
+         pctx->reason = msgs.err.syn.cond.not_conj;
+         synerr(pctx);
    }
 }
 
-static void nexttok(void) {
-   if (idx == len - 1) {
-      synerr();
+static void nexttok(parse_ctx_t *pctx) {
+   if (pctx->idx == pctx->len - 1) {
+      synerr(pctx);
    }
-   idx++;
-   tok = array_peek(toks, idx);
+   pctx->idx++;
+   pctx->tok = array_peek(pctx->toks, pctx->idx);
 }
 
-static void gettok(void) {
-   nexttok();
-   etok = tok;
+static void gettok(parse_ctx_t *pctx) {
+   nexttok(pctx);
+   pctx->etok = pctx->tok;
 }
 
-static void gettokn(int n) {
-   if (idx + n >= len) synerr();
-   idx += n;
-   tok = array_peek(toks, idx);
-   etok = tok;
+static void gettokn(parse_ctx_t *pctx, size_t n) {
+   if (pctx->idx + n >= pctx->len) {
+      synerr(pctx);
+   }
+
+   pctx->idx += n;
+   pctx->tok = array_peek(pctx->toks, pctx->idx);
+   pctx->etok = pctx->tok;
 }
 
-static void ungettok(void) {
-   tok = array_peek(toks, --idx);
-   etok = tok;
+static void ungettok(parse_ctx_t *pctx) {
+   pctx->idx--;
+   pctx->tok = array_peek(pctx->toks, pctx->idx);
+   pctx->etok = pctx->tok;
 }
 
-static void ungettokn(int n) {
-   idx -= n;
-   tok = array_peek(toks, idx);
-   etok = tok;
+static void ungettokn(parse_ctx_t *pctx, size_t n) {
+   pctx->idx -= n;
+   pctx->tok = array_peek(pctx->toks, pctx->idx);
+   pctx->etok = pctx->tok;
 }
 
-static void skiptoks2(const char *sentinels) {
+static void skiptoks2(parse_ctx_t *pctx, const char *sentinels) {
    for (;;) {
-      nexttok();
-      if (match(tok->run[0], sentinels))
+      nexttok(pctx);
+      if (match(pctx->tok->run[0], sentinels)) {
          break;
+      }
    }
-   etok = tok;
+   pctx->etok = pctx->tok;
 }
 
-static void eqtok(char ch) {
-   if (tok->run[0] != ch)
+static void eqtok(parse_ctx_t *pctx, char ch) {
+   if (pctx->tok->run[0] != ch) {
       return;
-   etok = tok;
-   synerr();
+   }
+   pctx->etok = pctx->tok;
+   synerr(pctx);
 }
 
-static void neqtok(char ch) {
-   if (tok->run[0] == ch)
+static void neqtok(parse_ctx_t *pctx, char ch) {
+   if (pctx->tok->run[0] == ch) {
       return;
-   etok = tok;
-   synerr();
+   }
+   pctx->etok = pctx->tok;
+   synerr(pctx);
 }
 
-static void readtoks(char sentinel, tree_t *base) {
+static void readtoks(parse_ctx_t *pctx, char sentinel, tree_t *base) {
    for (;;) {
-      nexttok();
-      if (tok->run[0] == sentinel)
+      nexttok(pctx);
+      if (pctx->tok->run[0] == sentinel)
          return;
-      (void) graft_tree_s(
-         base, tok->run, tok->len, NODEKIND_DATA);
+      graft_tree_s(
+         base, pctx->tok->run, pctx->tok->len, NODEKIND_DATA,
+         pctx->tok->lnum, pctx->tok->lpos
+      );
    }
-   etok = tok;
+   pctx->etok = pctx->tok;
 }
 
-static void readtoks_until(char *scanset, tree_t *t) {
+static void readtoks_until(parse_ctx_t *pctx, char *scanset, tree_t *t) {
    size_t i = 0;
 
    for (;;) {
-      nexttok();
+      nexttok(pctx);
 
       while (scanset[i] != '\0') {
-         if (tok->run[0] == scanset[i]) {
+         if (pctx->tok->run[0] == scanset[i]) {
             return;
          }
          i++;
       }
 
-      graft_tree_s(t, tok->run, tok->len, NODEKIND_DATA);
+      graft_tree_s(
+         t, pctx->tok->run, pctx->tok->len, NODEKIND_DATA,
+         pctx->tok->lnum, pctx->tok->lpos
+      );
       i = 0;
    }
 }
 
-static inline void rewind_tokstate(size_t orig_idx) {
-   idx = orig_idx;
-   tok = array_peek(toks, idx);
+static inline void rewind_tokstate(parse_ctx_t *pctx, size_t orig_idx) {
+   pctx->idx = orig_idx;
+   pctx->tok = array_peek(pctx->toks, pctx->idx);
 }
 
-static inline void check_eoe(void) {
-   if (idx == len - 1) {
-      JUMP(NODEKIND__FINALE);
+static inline void check_eoe(parse_ctx_t *pctx) {
+   if (pctx->idx == pctx->len - 1) {
+      longjmp(pctx->env, NODEKIND__FINALE);
    }
 }
 
-static void synerr(void) {
+static void synerr(parse_ctx_t *pctx) {
    int lnum, lpos;
    line_t *l;
 
-   lnum = etok->lnum;
-   lpos = etok->lpos;
+   lnum = pctx->etok->lnum;
+   lpos = pctx->etok->lpos;
    l = array_peek(ls, lnum - 1);
 
    safe_vprintf(
       Cbred "\n<syntax error>" Creset " %s\n"
       "[%s:%d:%d] " Cbwhite "note:" Creset " problematic since here\n"
       "%4d|%.*s" Cbblue "%s" Creset "\n",
-      reason,
+      pctx->reason,
       sfname, lnum, lpos,
       lnum, lpos - 1, l->run, &l->run[lpos - 1]
    );
@@ -1615,13 +1759,12 @@ static tree_t *graft_tree_s(
    tree_t *base,
    const char *run,
    int len,
-   nodekind_t kind
+   nodekind_t kind,
+   size_t lnum,
+   size_t lpos
 ) {
-   // fixme: consider not to rely on tok
-   // 매개변수로 lnum lpos 받기
    tree_t *sub = plant_tree(
-      run, len, kind,
-      tok->lnum, tok->lpos
+      run, len, kind, lnum, lpos
    );
 
    return tree_graft(base, sub);
@@ -1630,7 +1773,9 @@ static tree_t *graft_tree_s(
 static tree_t *graft_tree_n(
    tree_t *base,
    int val,
-   nodekind_t kind
+   nodekind_t kind,
+   size_t lnum,
+   size_t lpos
 ) {
    node_t node;
    tree_t *sub;
@@ -1638,8 +1783,8 @@ static tree_t *graft_tree_n(
    node.datkind = DATKIND_INT;
    node.dat.n = val;
    node.kind = kind;
-   node.lnum = tok->lnum; // fixme: 매개변수로 lnum lpos 받기
-   node.lpos = tok->lpos;
+   node.lnum = lnum;
+   node.lpos = lpos;
    sub = tree_plant(&node, sizeof node);
 
    return tree_graft(base, sub);
