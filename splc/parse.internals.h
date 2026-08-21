@@ -161,25 +161,21 @@ static inline void synerr(parse_ctx_t *pctx);
 static array_iterator_t cleanup_tokstream;
 static tree_t *plant_tree(
    const char *run,
-   int len,
-   nodekind_t kind,
-   int lnum,
-   int lpos
-);
-static tree_t *graft_tree_s(
-   tree_t *base,
-   const char *run,
-   int len,
+   size_t len,
    nodekind_t kind,
    size_t lnum,
    size_t lpos
+);
+static tree_t *graft_tree_s(
+   tree_t *base,
+   nodekind_t kind,
+   const token_t *tok
 );
 static tree_t *graft_tree_n(
    tree_t *base,
    int val,
    nodekind_t kind,
-   size_t lnum,
-   size_t lpos
+   const token_t *tok
 );
 
 /*==================*
