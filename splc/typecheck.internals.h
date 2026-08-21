@@ -3,6 +3,7 @@
 
 #include "msg.h"
 #include "parse.h"
+#include "common.h"
 #include "global.h"
 #include "wrappers.h"
 #include "dbhandler.h"

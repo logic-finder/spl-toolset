@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 
+#include "common.h"
 #include "global.h"
 
 /* IR Symbol Kind */

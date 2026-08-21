@@ -4,7 +4,6 @@
 #include "lex.h"
 #include "msg.h"
 #include "parse.h"
-#include "common.h"
 #include "loadfile.h"
 #include "colorcode.h"
 

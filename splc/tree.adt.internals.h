@@ -3,7 +3,10 @@
 
 #include <stddef.h>
 #include <string.h>
+#include <stdbool.h>
+
 #include "fatal.h"
+#include "common.h"
 #include "global.h"
 #include "wrappers.h"
 

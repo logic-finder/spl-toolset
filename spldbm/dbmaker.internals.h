@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <inttypes.h>
+
+#include "fatal.h"
 #include "common.h"
 #include "global.h"
 #include "wrappers.h"

@@ -2,6 +2,7 @@
 #define ASSEMBLER_INTERNALS_H
 
 #include "irgen.h"
+#include "common.h"
 #include "global.h"
 #include "tree.adt.h"
 #include "wrappers.h"

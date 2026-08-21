@@ -3,6 +3,9 @@
 
 #include <stdarg.h>
 
+#define ERR(msg) fatal(ENPREFIX msg)
+#define VERR(msg, ...) vfatal(ENPREFIX msg, __VA_ARGS__)
+
 /**
  * @brief `fatal` prints an error message `msg` to `stderr`, exiting 1.
  *    The string "fatal: " is prepended. A newline is appended at EOL.

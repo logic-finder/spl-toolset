@@ -2,6 +2,8 @@
 #define HASHTABLE_ADT_INTERNALS_H
 
 #include <string.h>
+
+#include "fatal.h"
 #include "common.h"
 #include "wrappers.h"
 

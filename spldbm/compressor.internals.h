@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
+
+#include "fatal.h"
 #include "global.h"
 #include "wrappers.h"
 #include "db.common.h"

@@ -2,9 +2,11 @@
 #define DB_INTERNALS_H
 
 #include <stdint.h>
+
 #include "msg.h"
-#include "global.h"
+#include "fatal.h"
 #include "common.h"
+#include "global.h"
 #include "array.adt.h"
 #include "wrappers.h"
 #include "db.common.h"

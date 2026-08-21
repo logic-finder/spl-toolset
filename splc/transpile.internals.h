@@ -2,6 +2,8 @@
 #define TRANSPILE_INTERNALS_H
 
 #include <stdio.h>
+#include <stdbool.h>
+
 #include "global.h"
 #include "wrappers.h"
 #include "tree.adt.h"

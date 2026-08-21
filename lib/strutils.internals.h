@@ -4,6 +4,7 @@
 #include <ctype.h>
 #include <stddef.h>
 
+#include "fatal.h"
 #include "common.h"
 #include "wrappers.h"
 

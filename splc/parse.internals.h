@@ -8,6 +8,7 @@
 
 #include "msg.h"
 #include "lex.h"
+#include "common.h"
 #include "global.h"
 #include "wrappers.h"
 #include "strutils.h"

@@ -2,6 +2,8 @@
 #define SPLDBM_INTERNALS_H
 
 #include <stdbool.h>
+
+#include "fatal.h"
 #include "global.h"
 #include "dbmaker.h"
 #include "argparse.h"

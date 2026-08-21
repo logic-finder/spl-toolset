@@ -3,7 +3,9 @@
 
 #include <string.h>
 #include <stddef.h>
+
 #include "fatal.h"
+#include "common.h"
 #include "global.h"
 #include "wrappers.h"
 #include "strutils.h"
