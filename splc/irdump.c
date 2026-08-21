@@ -1,66 +1,68 @@
 #include "irdump.h"
 #include "irdump.internals.h"
 
-extern void irdump(void) {
+extern void irdump(compile_ctx_t *cctx) {
+   irdump_ctx_t ictx;
+
    char *destname;
-   tree_t *nrtv;
+
+   ictx.of = cctx->of;
+   ictx.irt = cctx->irt;
+   ictx.nrtv = tree_child(ictx.irt, 1);
 
    destname = make_destname("hello.spl", IR_EXTENSION);
-   fp = safe_fopen(destname, "w");
+   ictx.fp = safe_fopen(destname, "w");
 
    safe_vprintf(ENPREFIX "dumping IR into " Cbyellow "\"%s\"" Creset "...", destname);
 
-   nrtv = tree_child(irt, 1);
-   debug = 0;  /* emit debugging data? */
-   tree_pre_traverse(nrtv, route, 0, NULL);
+   tree_pre_traverse(ictx.nrtv, route, 0, &ictx);
 
    safe_vprintf(" " Cgreen "done!" Creset "\n");
 
-   safe_fclose(fp);
+   safe_fclose(ictx.fp);
    free(destname);
 }
 
 static void route(tree_t *t, int lv, void *ctx) {
-   irnode_t *irn;
+   irdump_ctx_t *ictx;
 
-   (void) lv, (void) ctx;
-   irn = tree_dat(t);
+   (void) lv;
 
-   switch (irn->kind) {
-      case IrnodekindOpcode : handle_opcode(t); break;
-      case IrnodekindAct    : handle_act   (t); break;
-      case IrnodekindScene  : handle_scene (t); break;
-      case IrnodekindBlock  : handle_block (t); break;
+   ictx = ctx;
+   ictx->t = t;
+   ictx->n = tree_dat(t);
+
+   switch (ictx->n->kind) {
+      case IrnodekindOpcode : handle_opcode(ictx); break;
+      case IrnodekindAct    : handle_act   (ictx); break;
+      case IrnodekindScene  : handle_scene (ictx); break;
+      case IrnodekindBlock  : handle_block (ictx); break;
       default: ;
    }
 }
 
-static void handle_opcode(tree_t *t) {
-   irnode_t *n;
-
-   n = tree_dat(t);
-
-   switch (n->dat.ui) {
+static void handle_opcode(irdump_ctx_t *ictx) {
+   switch (ictx->n->dat.ui) {
       case IropcodeSet    : /* fall-through */
-      case IropcodeAsgn   : handle_setlike  (t); break;
+      case IropcodeAsgn   : handle_setlike  (ictx); break;
       case IropcodeEnter  : /* fall-through */
       case IropcodeExit   : /* fall-through */
-      case IropcodeSpeak  : handle_enterlike(t); break;
+      case IropcodeSpeak  : handle_enterlike(ictx); break;
       case IropcodeOutN   : /* fall-through */
       case IropcodeOutC   : /* fall-through */
       case IropcodeInN    : /* fall-through */
       case IropcodeInC    : /* fall-through */
       case IropcodeRecall : /* fall-through */
       case IropcodeNegate : /* fall-through */
-      case IropcodeExeunt : handle_paramless_opcode(t); break;
+      case IropcodeExeunt : handle_paramless_opcode(ictx); break;
       case IropcodeRememb : /* fall-through */
       case IropcodePush   : /* fall-through */
-      case IropcodePop    : handle_pushlike(t); break;
+      case IropcodePop    : handle_pushlike(ictx); break;
       case IropcodeSum    : /* fall-through */
       case IropcodeDiff   : /* fall-through */
       case IropcodeProd   : /* fall-through */
       case IropcodeQuot   : /* fall-through */
-      case IropcodeRem    : handle_binary_op(t); break;
+      case IropcodeRem    : handle_binary_op(ictx); break;
       case IropcodeSqrt   : /* fall-through */
       case IropcodeSqur   : /* fall-through */
       case IropcodeCube   : /* fall-through */
@@ -68,54 +70,47 @@ static void handle_opcode(tree_t *t) {
       case IropcodeFact   : /* fall-through */
       case IropcodeEq     : /* fall-through */
       case IropcodeGt     : /* fall-through */
-      case IropcodeLt     : handle_unary_op(t); break;
-      case IropcodeGoto   : handle_goto(t); break;
+      case IropcodeLt     : handle_unary_op(ictx); break;
+      case IropcodeGoto   : handle_goto(ictx); break;
       case IropcodeJumpT  : /* fall-through */
-      case IropcodeJumpF  : handle_jumplike(t); break;
-      default: ;
+      case IropcodeJumpF  : handle_jumplike(ictx); break;
+      default: ;  /* control never reaches default */
    }
 }
 
-static void handle_act(tree_t *t) {
-   irnode_t *n = tree_dat(t);
-   curr_act = n->dat.s.run;
+static void handle_act(irdump_ctx_t *ictx) {
+   ictx->curr_act = ictx->n->dat.s.run;
 }
 
-static void handle_scene(tree_t *t) {
-   irnode_t *n = tree_dat(t);
-   safe_fputc(fp, '\n');
-   if (debug) emit_debug_data(n);
+static void handle_scene(irdump_ctx_t *ictx) {
+   safe_fputc(ictx->fp, '\n');
+   if (ictx->of->dbg) emit_debug_data(ictx);
    safe_vfprintf(
-      fp,
+      ictx->fp,
       "Act_%s_Scene_%s:\n", // fixme: use KEYWRD_ACT _SCENE
-      curr_act,
-      n->dat.s.run
+      ictx->curr_act,
+      ictx->n->dat.s.run
    );
 }
 
-static void handle_block(tree_t *t) {
-   irnode_t *n;
-
-   n = tree_dat(t);
-
-   if (!n->dat.ui)
+static void handle_block(irdump_ctx_t *ictx) {
+   if (!ictx->n->dat.ui)
       return;
 
    safe_vfprintf(
-      fp,
+      ictx->fp,
       "\n.L%d:\n",
-      n->dat.ui
+      ictx->n->dat.ui
    );
 }
 
-static void handle_setlike(tree_t *t) {
-   irnode_t *n, *p1, *p2;
+static void handle_setlike(irdump_ctx_t *ictx) {
+   irnode_t *p1, *p2;
 
-   n = tree_dat(t);
-   p1 = tree_chdat(t, 0);
-   p2 = tree_chdat(t, 1);
+   p1 = tree_chdat(ictx->t, 0);
+   p2 = tree_chdat(ictx->t, 1);
 
-   if (debug) emit_debug_data(n);
+   if (ictx->of->dbg) emit_debug_data(ictx);
 
    switch (p2->kind) {
       // fixme: 별도 함수로 빼고 return하기
@@ -127,10 +122,10 @@ static void handle_setlike(tree_t *t) {
 
 person:
    safe_vfprintf(
-      fp,
+      ictx->fp,
       "%s%s %s dp[%d]\n",
       INDENT,
-      resolve_opcode(n->dat.ui),
+      resolve_opcode(ictx->n->dat.ui),
       resolve_var(p1->dat.ui),
       p2->dat.ui - Irvar_Dp_Begin
    );
@@ -138,10 +133,10 @@ person:
 
 var:
    safe_vfprintf(
-      fp,
+      ictx->fp,
       "%s%s %s %s\n",
       INDENT,
-      resolve_opcode(n->dat.ui),
+      resolve_opcode(ictx->n->dat.ui),
       resolve_var(p1->dat.ui),
       resolve_var(p2->dat.ui)
    );
@@ -149,150 +144,143 @@ var:
 
 cnst:
    safe_vfprintf(
-      fp,
+      ictx->fp,
       "%s%s %s %d\n",
       INDENT,
-      resolve_opcode(n->dat.ui),
+      resolve_opcode(ictx->n->dat.ui),
       resolve_var(p1->dat.ui),
       p2->dat.i
    );
 }
 
-static void handle_enterlike(tree_t *t) {
-   irnode_t *n, *p1;
+static void handle_enterlike(irdump_ctx_t *ictx) {
+   irnode_t *p1;
 
-   n = tree_dat(t);
-   p1 = tree_chdat(t, 0);
+   p1 = tree_chdat(ictx->t, 0);
 
-   if (debug) emit_debug_data(n);
+   if (ictx->of->dbg) emit_debug_data(ictx);
    safe_vfprintf(
-      fp,
+      ictx->fp,
       "%s%s %d\n",
       INDENT,
-      resolve_opcode(n->dat.ui),
+      resolve_opcode(ictx->n->dat.ui),
       p1->dat.ui
    );
 }
 
-static void handle_pushlike(tree_t *t) {
-   irnode_t *n, *p1;
+static void handle_pushlike(irdump_ctx_t *ictx) {
+   irnode_t *p1;
 
-   n = tree_dat(t);
-   p1 = tree_chdat(t, 0);
+   p1 = tree_chdat(ictx->t, 0);
 
-   if (debug) emit_debug_data(n);
+   if (ictx->of->dbg) emit_debug_data(ictx);
    safe_vfprintf(
-      fp,
+      ictx->fp,
       "%s%s %s\n",
       INDENT,
-      resolve_opcode(n->dat.ui),
+      resolve_opcode(ictx->n->dat.ui),
       resolve_var(p1->dat.ui)
    );
 }
 
-static void handle_goto(tree_t *t) {
-   irnode_t *n, *p1, *p2, *act_dat;
+static void handle_goto(irdump_ctx_t *ictx) {
+   irnode_t *p1, *p2, *act_dat;
    tree_t *act;
 
-   n = tree_dat(t);
-   p1 = tree_chdat(t, 0);
-   p2 = tree_chdat(t, 1);
+   p1 = tree_chdat(ictx->t, 0);
+   p2 = tree_chdat(ictx->t, 1);
 
-   if (debug) emit_debug_data(n);
+   if (ictx->of->dbg) emit_debug_data(ictx);
 
    if (p1->dat.ui == NODEKIND_ACT) {
       safe_vfprintf(
-         fp,
+         ictx->fp,
          "%s%s Act_%s_Scene_I\n",  // fixme: use KEYWRD_ACT _SCENE
          INDENT,
-         resolve_opcode(n->dat.ui),
+         resolve_opcode(ictx->n->dat.ui),
          p2->dat.s.run
       );
       return;
    }
 
    /* NODEKIND_SCENE */
-   act = tree_parent(tree_parent(t));
+   act = tree_parent(tree_parent(tree_parent(ictx->t)));
    act_dat = tree_dat(act);
 
    safe_vfprintf(
-      fp,
+      ictx->fp,
       "%s%s Act_%s_Scene_%s\n",  // fixme: use KEYWRD_ACT _SCENE
       INDENT,
-      resolve_opcode(n->dat.ui),
+      resolve_opcode(ictx->n->dat.ui),
       act_dat->dat.s.run,
       p2->dat.s.run
    );
 }
 
-static void handle_jumplike(tree_t *t) {
-   irnode_t *n, *p1;
+static void handle_jumplike(irdump_ctx_t *ictx) {
+   irnode_t *p1;
 
-   n = tree_dat(t);
-   p1 = tree_chdat(t, 0);
+   p1 = tree_chdat(ictx->t, 0);
 
-   if (debug) emit_debug_data(n);
+   if (ictx->of->dbg) emit_debug_data(ictx);
    safe_vfprintf(
-      fp,
+      ictx->fp,
       "%s%s .L%d\n",
       INDENT,
-      resolve_opcode(n->dat.ui),
+      resolve_opcode(ictx->n->dat.ui),
       p1->dat.ui
    );
 }
 
-static void handle_binary_op(tree_t *t) {
-   irnode_t *n, *p1, *p2, *p3;
+static void handle_binary_op(irdump_ctx_t *ictx) {
+   irnode_t *p1, *p2, *p3;
 
-   n = tree_dat(t);
-   p1 = tree_chdat(t, 0);
-   p2 = tree_chdat(t, 1);
-   p3 = tree_chdat(t, 2);
+   p1 = tree_chdat(ictx->t, 0);
+   p2 = tree_chdat(ictx->t, 1);
+   p3 = tree_chdat(ictx->t, 2);
 
-   if (debug) emit_debug_data(n);
+   if (ictx->of->dbg) emit_debug_data(ictx);
    safe_vfprintf(
-      fp,
+      ictx->fp,
       "%s%s %s %s %s\n",
       INDENT,
-      resolve_opcode(n->dat.ui),
+      resolve_opcode(ictx->n->dat.ui),
       resolve_var(p1->dat.ui),
       resolve_var(p2->dat.ui),
       resolve_var(p3->dat.ui)
    );
 }
 
-static void handle_unary_op(tree_t *t) {
-   irnode_t *n, *p1, *p2;
+static void handle_unary_op(irdump_ctx_t *ictx) {
+   irnode_t *p1, *p2;
 
-   n = tree_dat(t);
-   p1 = tree_chdat(t, 0);
-   p2 = tree_chdat(t, 1);
+   p1 = tree_chdat(ictx->t, 0);
+   p2 = tree_chdat(ictx->t, 1);
 
-   if (debug) emit_debug_data(n);
+   if (ictx->of->dbg) emit_debug_data(ictx);
    safe_vfprintf(
-      fp,
+      ictx->fp,
       "%s%s %s %s\n",
       INDENT,
-      resolve_opcode(n->dat.ui),
+      resolve_opcode(ictx->n->dat.ui),
       resolve_var(p1->dat.ui),
       resolve_var(p2->dat.ui)
    );
 }
 
-static void handle_paramless_opcode(tree_t *t) {
-   irnode_t *n = tree_dat(t);
-   if (debug) emit_debug_data(n);
+static void handle_paramless_opcode(irdump_ctx_t *ictx) {
+   if (ictx->of->dbg) emit_debug_data(ictx);
    safe_vfprintf(
-      fp,
+      ictx->fp,
       "%s%s\n",
       INDENT,
-      resolve_opcode(n->dat.ui)
+      resolve_opcode(ictx->n->dat.ui)
    );
 }
 
 // fixme: 명령어의 윗줄이 아니라 명령어의 맨 끝에 위치하도록 변경하자
-static inline void emit_debug_data(irnode_t *n) {
-   safe_vfprintf(fp, "; %d:%d\n", n->lnum, n->lpos);
+static inline void emit_debug_data(irdump_ctx_t *ictx) {
+   safe_vfprintf(ictx->fp, "; %d:%d\n", ictx->n->lnum, ictx->n->lpos);
 }
 
 static const char *resolve_opcode(iropcode_t opcode) {
@@ -350,6 +338,7 @@ extern void debug_print_irnode(tree_t *t, int lv, void *ctx) {
    int cnt, total;
 
    (void) ctx;
+
    n = tree_dat(t);
    cnt = sprintf(buf, "%d", lv);
    buf[cnt] = '\0';
