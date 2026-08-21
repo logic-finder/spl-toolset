@@ -47,55 +47,27 @@ cleanup:
    return lctx.toks;
 }
 
-static inline void save_state(lex_ctx_t *lctx) {
-   /* actual lnum and lpos starts from the number 1 */
-   lctx->real_lnum = lctx->lnum + 1;
-   lctx->real_lpos = lctx->lpos + 1;
-}
+static inline void iterate_lines(lex_ctx_t *lctx, processor_t *process, ...) {
+   va_list ap;
+   int ret;
 
-static void store_token(lex_ctx_t *lctx) {
-   if (lctx->idx == 0)
-      return;
-   store_string(lctx, TOKKIND_TOK);
-}
+   while (lctx->lnum < lctx->lc) {
+      while (lctx->lpos < lctx->l->len) {
+         va_start(ap, process);
+         ret = (*process)(lctx, &ap);
+         va_end(ap);
+         if (!ret) {
+            goto end;
+         }
+      }
+      lctx->lnum++;
+      lctx->lpos = 0;
+      lctx->l = array_peek(ls, lctx->lnum);
+   }
+   lctx->eoe = true;
 
-static void store_punct(lex_ctx_t *lctx) {
-   if (isspace(lctx->buf[0]))
-      return;
-   store_string(lctx, TOKKIND_PNT);
-}
-
-static void store_string(lex_ctx_t *lctx, tokkind_t kind) {
-   token_t tok;
-   char *run;
-   size_t len;
-
-   lctx->buf[lctx->idx] = '\0';
-   len = lctx->idx + 1;
-   run = safe_malloc(len);
-   strcpy(run, lctx->buf); // fixme: consider memcpy
-
-   tok.run = run;
-   tok.len = len;
-   tok.kind = kind;
-   tok.lnum = lctx->real_lnum;
-   tok.lpos = lctx->real_lpos;
-
-   array_append(lctx->toks, &tok, sizeof tok);
-}
-
-static void skip_space(lex_ctx_t *lctx) {
-   iterate_lines(lctx, process_skip, check_space);
-}
-
-static void read_token(lex_ctx_t *lctx) {
-   lctx->idx = 0;
-   iterate_lines(lctx, process_read, check_token);
-}
-
-static void read_nchar(lex_ctx_t *lctx, size_t n) {
-   lctx->idx = 0;
-   iterate_lines(lctx, process_read, check_cntlessthan, n);
+end:
+   return;
 }
 
 static int process_skip(lex_ctx_t *lctx, va_list *ap) {
@@ -180,25 +152,53 @@ static int check_token(lex_ctx_t *lctx, va_list *ap) {
    return 0;
 }
 
-static inline void iterate_lines(lex_ctx_t *lctx, processor_t *process, ...) {
-   va_list ap;
-   int ret;
+static void skip_space(lex_ctx_t *lctx) {
+   iterate_lines(lctx, process_skip, check_space);
+}
 
-   while (lctx->lnum < lctx->lc) {
-      while (lctx->lpos < lctx->l->len) {
-         va_start(ap, process);
-         ret = (*process)(lctx, &ap);
-         va_end(ap);
-         if (!ret) {
-            goto end;
-         }
-      }
-      lctx->lnum++;
-      lctx->lpos = 0;
-      lctx->l = array_peek(ls, lctx->lnum);
-   }
-   lctx->eoe = true;
+static void read_token(lex_ctx_t *lctx) {
+   lctx->idx = 0;
+   iterate_lines(lctx, process_read, check_token);
+}
 
-end:
-   return;
+static void read_nchar(lex_ctx_t *lctx, size_t n) {
+   lctx->idx = 0;
+   iterate_lines(lctx, process_read, check_cntlessthan, n);
+}
+
+static inline void save_state(lex_ctx_t *lctx) {
+   /* actual lnum and lpos starts from the number 1 */
+   lctx->real_lnum = lctx->lnum + 1;
+   lctx->real_lpos = lctx->lpos + 1;
+}
+
+static void store_token(lex_ctx_t *lctx) {
+   if (lctx->idx == 0)
+      return;
+   store_string(lctx, TOKKIND_TOK);
+}
+
+static void store_punct(lex_ctx_t *lctx) {
+   if (isspace(lctx->buf[0]))
+      return;
+   store_string(lctx, TOKKIND_PNT);
+}
+
+static void store_string(lex_ctx_t *lctx, tokkind_t kind) {
+   token_t tok;
+   char *run;
+   size_t len;
+
+   lctx->buf[lctx->idx] = '\0';
+   len = lctx->idx + 1;
+   run = safe_malloc(len);
+   strcpy(run, lctx->buf); // fixme: consider memcpy
+
+   tok.run = run;
+   tok.len = len;
+   tok.kind = kind;
+   tok.lnum = lctx->real_lnum;
+   tok.lpos = lctx->real_lpos;
+
+   array_append(lctx->toks, &tok, sizeof tok);
 }
