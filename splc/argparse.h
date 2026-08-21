@@ -1,24 +1,8 @@
 #ifndef ARGPARSE_H
 #define ARGPARSE_H
 
-typedef struct optflg {
-   unsigned int
-      exe: 1,  // --exe
-      imd: 1,  // --keep-intermediate
-      dsc: 1,  // --describe
-      kwi: 1,  // --kawaii
-      lng: 1,  // --lang
-      ret: 1,  // --ret
-      opt: 1,  // -O
-      eoo: 1,  // --
-      hlp: 1,  // --help
-      vsn: 1;  // --version
-} optflg_t;
+#include "splc.h"
 
-typedef struct optval {
-   const char *ret, *lng, *src;
-} optval_t;
-
-void parse_args(const char **argv, optflg_t *of, optval_t *ov);
+void parse_args(compile_ctx_t *cctx);
 
 #endif

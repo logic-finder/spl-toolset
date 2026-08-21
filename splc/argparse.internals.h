@@ -33,6 +33,9 @@ static arghandler_t handle_kwiopt;
 static arghandler_t handle_lngopt;
 static arghandler_t handle_retopt;
 static arghandler_t handle_optopt;
+static arghandler_t handle_dbgopt;
+static arghandler_t handle_dmpopt;
+static arghandler_t handle_tgtopt;
 static arghandler_t handle_hlpopt;
 static arghandler_t handle_vsnopt;
 
