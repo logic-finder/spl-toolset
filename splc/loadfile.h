@@ -10,9 +10,10 @@ typedef struct line {
 
 array_t *loadfile(
    const char *filename,
-   int * restrict lc,
-   int * restrict wc
+   size_t * restrict lc,
+   size_t * restrict wc
 );
-void unloadfl(array_t *lines, int cnt);
+
+void unloadfl(array_t *lines, size_t lc);
 
 #endif

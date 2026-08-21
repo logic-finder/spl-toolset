@@ -38,7 +38,7 @@ typedef struct token {
 array_t *lex(
    optflg_t *of,
    optval_t *ov,
-   int lc
+   size_t lc
 );
 
 #endif

@@ -5,16 +5,16 @@
 
 extern array_t *loadfile(
    const char *filename,
-   int * restrict lc,
-   int * restrict wc
+   size_t * restrict lc,
+   size_t * restrict wc
 ) {
    FILE *fp;
    array_t *lines;
    line_t line;
-   char *run;  // the contents of a line
-   int rlen,   // the length of `run`
-       lcnt,   // line count
-       wcnt;   // word count
+   size_t rlen,   /* the length of `run` */
+          lcnt,   /* line count */
+          wcnt;   /* word count */
+   char *run;  /* the contents of a line */
 
    fp = safe_fopen(filename, "r");
    lcnt = wcnt = 0;
@@ -28,8 +28,9 @@ extern array_t *loadfile(
       array_append(lines, &line, sizeof line);
    }
 
-   if (lcnt == 0)
+   if (lcnt == 0) {
       ERR("empty source file");
+   }
 
    line_t *last = array_peek(lines, lcnt - 1);
    char *r = last->run;
@@ -44,14 +45,17 @@ extern array_t *loadfile(
 
    safe_fclose(fp);
 
-   // fixme: if (lc) *lc = lcnt... 식으로 변경
-   *lc = lcnt;
-   *wc = wcnt;
+   if (lc != NULL) *lc = lcnt;
+   if (wc != NULL) *wc = wcnt;
    return lines;
 }
 
-extern void unloadfl(array_t *lines, int lc) {
-   for (int i = 0; i < lc; i++)
-      free(((line_t *) array_peek(lines, i))->run);
+extern void unloadfl(array_t *lines, size_t lc) {
+   line_t *l;
+
+   for (int i = 0; i < lc; i++) {
+      l = array_peek(lines, i);
+      free(l->run);
+   }
    array_destroy(lines);
 }

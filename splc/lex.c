@@ -1,8 +1,9 @@
 #include "lex.h"
-#include "lex.internals.h"  // contains typedef & prototypes
+#include "lex.internals.h"  /* contains typedefs & prototypes */
 
-extern array_t *lex(optflg_t *of, optval_t *ov, int lc) {
+extern array_t *lex(optflg_t *of, optval_t *ov, size_t lc) {
    (void) of, (void) ov;
+
    // Initialize global variables
    lls = lc;
    p = q = 0;
