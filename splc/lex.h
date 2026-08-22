@@ -36,4 +36,6 @@ typedef struct token {
  */
 void lex(compile_ctx_t *cctx);
 
+void showtoks(compile_ctx_t *cctx);
+
 #endif

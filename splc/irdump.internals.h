@@ -38,4 +38,6 @@ static const char *resolve_opcode(iropcode_t opcode);
 static const char *resolve_var(irvar_t var);
 static const char *resolve_nodekind(irnodekind_t kind);
 
+static void showirnode(tree_t *t, int lv, void *ctx);
+
 #endif

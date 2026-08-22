@@ -334,7 +334,13 @@ static const char *resolve_var(irvar_t var) {
    }
 }
 
-extern void debug_print_irnode(tree_t *t, int lv, void *ctx) {
+/*** DEBUG ***/
+
+extern void showirt(compile_ctx_t *cctx) {
+   tree_pre_traverse(cctx->irt, showirnode, 0, NULL);
+}
+
+static void showirnode(tree_t *t, int lv, void *ctx) {
    static char buf[128];
    irnode_t *n;
    int cnt, total;
