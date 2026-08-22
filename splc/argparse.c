@@ -107,6 +107,7 @@ static void parse_longop(optflg_t *of, optval_t *ov, const char *arg) {
       { "target"            , handle_tgtopt },
       { "lang"              , handle_lngopt },
       { "ret"               , handle_retopt },
+      { "dry-run"           , handle_drnopt },
       { "help"              , handle_hlpopt },
       { "version"           , handle_vsnopt }
    };
