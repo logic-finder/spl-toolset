@@ -119,6 +119,7 @@ static void parse_longop(optflg_t *of, optval_t *ov, const char *arg) {
       { "direct"   , handle_drtopt },
       { "verbose"  , handle_vbsopt },
       { "dry-run"  , handle_drnopt },
+      { "j"        , handle_jobopt },
       { "o"        , handle_outopt },
       { "std"      , handle_stdopt },
       { "lang"     , handle_lngopt },
