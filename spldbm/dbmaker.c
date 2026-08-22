@@ -163,7 +163,7 @@ static void write_sect_type_A(
    record_A_t temp, *r;
 
    src = safe_fopen(ov.mak[sectkind], "rb");
-   records = array_create();
+   records = array_create(destruct_record_A);
    ecnt = 0;
 
    // Write header
@@ -203,9 +203,9 @@ static void write_sect_type_A(
       safe_fwrite(&r->len, dt_l_len, 1, fp);
       safe_fwrite(r->run, 1, r->len, fp);
       residual = dt_s_len - r->len;
-      for (int k = 0; k < residual; k++)
+      for (int k = 0; k < residual; k++) {
          safe_fputc(fp, '\0');  /* zero-padding */
-      free(r->run);  /* free ln */
+      }
    }
    array_destroy(records);
    safe_fgetpos(fp, &eos_pos);  /* end of section */
@@ -252,7 +252,7 @@ static void write_sect_type_B(
    record_B_t temp, *r;
 
    src = safe_fopen(ov.mak[sectkind], "rb");
-   records = array_create();
+   records = array_create(destruct_record_B);
    maxlen =
       dt_s_len     // 64
       + 1          // comma = 1 byte
@@ -314,9 +314,9 @@ static void write_sect_type_B(
       safe_fwrite(&r->len, dt_l_len, 1, fp);
       safe_fwrite(r->run, 1, r->len, fp);
       residual = dt_s_len - r->len;
-      for (int k = 0; k < residual; k++)
+      for (int k = 0; k < residual; k++) {
          safe_fputc(fp, '\0');
-      free(r->run);  /* free elems[0] */
+      }
    }
    array_destroy(records);
    safe_fgetpos(fp, &eos_pos);
@@ -415,4 +415,22 @@ static int compare_comp(
    const void *_rhs
 ) {
    return compare_rec_B(_lhs, _rhs, "comparative");
+}
+
+static void destruct_record_A(void *item, size_t idx) {
+   record_A_t *r;
+
+   (void) idx;
+
+   r = item;
+   free(r->run);
+}
+
+static void destruct_record_B(void *item, size_t idx) {
+   record_B_t *r;
+
+   (void) idx;
+
+   r = item;
+   free(r->run);
 }
