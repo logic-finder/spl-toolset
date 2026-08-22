@@ -46,6 +46,25 @@ EOE:;
    return;
 }
 
+extern void destroy_pt(compile_ctx_t *cctx) {
+   tree_post_traverse(cctx->pt, cleanup_node, 0, NULL);
+   tree_prune(cctx->pt);
+}
+
+static void cleanup_node(tree_t *t, int lv, void *ctx) {
+   node_t *n;
+
+   (void) lv, (void) ctx;
+
+   n = tree_dat(t);
+
+   if (n->datkind != DATKIND_STR) {
+      return;
+   }
+
+   free(n->dat.s.run);
+}
+
 static void cleanup_tokstream(void *tok, int idx) {
    token_t *t;
 

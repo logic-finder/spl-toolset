@@ -105,5 +105,6 @@ typedef struct node {
 } node_t;
 
 void parse(compile_ctx_t *cctx);
+void destroy_pt(compile_ctx_t *cctx);
 
 #endif
