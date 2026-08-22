@@ -22,10 +22,6 @@
 #include "iroptimize.h"
 #include "optprocessor.h"
 
-static size_t count_tree_node(tree_t *root);
-static size_t count_opcodes(tree_t *irt);
-static tree_callback_t opcode_counter;
-
 /* Miscellaneous */
 static array_iterator_t print_token;
 static tree_callback_t print_node;

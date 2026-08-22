@@ -54,6 +54,7 @@ typedef void operator_t(parse_ctx_t *pctx, tree_t *op);
  | FUNCTION PROTOTYPES |
  *=====================*/
 static tree_callback_t cleanup_node;
+static size_t count_tree_node(tree_t *root);
 
 /* Seekers */
 static void seek_stmt(parse_ctx_t *pctx);

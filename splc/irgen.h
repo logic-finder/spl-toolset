@@ -92,5 +92,6 @@ typedef enum iropcode {
 
 void irgenerate(compile_ctx_t *cctx);
 void destroy_irt(compile_ctx_t *cctx);
+size_t count_opcodes(tree_t *irt);
 
 #endif

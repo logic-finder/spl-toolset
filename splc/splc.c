@@ -85,40 +85,6 @@ static void print_node(tree_t *t, int lv, void *ctx) {
    }
 }
 
-static size_t count_tree_node(tree_t *root) {
-   size_t cnt, clen;
-
-   cnt = 0;
-   clen = tree_clen(root);
-
-   if (clen == 0)
-      return 1;
-
-   for (size_t i = 0; i < clen; i++)
-      cnt += count_tree_node(tree_child(root, i));
-
-   return cnt + 1;
-}
-
-static size_t count_opcodes(tree_t *irt) {
-   size_t counter = 0;
-   tree_pre_traverse(irt, opcode_counter, 0, &counter);
-   return counter;
-}
-
-static void opcode_counter(tree_t *t, int lv, void *ctx) {
-   irnode_t *n;
-   size_t *counter;
-
-   (void) lv;
-
-   n = tree_dat(t);
-   if (n->kind != IrnodekindBlock)
-      return;
-   counter = ctx;
-   *counter += tree_clen(t);
-}
-
 static const char *nodekind2str(nodekind_t kind) {
    switch (kind) {
       case NODEKIND_ROOT   : return "ROOT";

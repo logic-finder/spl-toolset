@@ -1790,3 +1790,18 @@ static tree_t *graft_tree_n(
 
    return tree_graft(base, sub);
 }
+
+static size_t count_tree_node(tree_t *root) {
+   size_t cnt, clen;
+
+   cnt = 0;
+   clen = tree_clen(root);
+
+   if (clen == 0)
+      return 1;
+
+   for (size_t i = 0; i < clen; i++)
+      cnt += count_tree_node(tree_child(root, i));
+
+   return cnt + 1;
+}

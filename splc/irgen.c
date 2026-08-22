@@ -752,3 +752,28 @@ static void add_block(irgen_ctx_t *ictx, size_t cnt) {
       IrnodekindBlock
    );
 }
+
+extern size_t count_opcodes(tree_t *irt) {
+   size_t counter;
+
+   counter = 0;
+   tree_pre_traverse(irt, opcode_counter, 0, &counter);
+
+   return counter;
+}
+
+static void opcode_counter(tree_t *t, int lv, void *ctx) {
+   irnode_t *n;
+   size_t *counter;
+
+   (void) lv;
+
+   n = tree_dat(t);
+
+   if (n->kind != IrnodekindBlock) {
+      return;
+   }
+
+   counter = ctx;
+   *counter += tree_clen(t);
+}

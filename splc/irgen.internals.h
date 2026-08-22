@@ -17,6 +17,7 @@ typedef struct {
 typedef void handler_t(irgen_ctx_t *ictx);
 
 static tree_callback_t cleanup_irnode;
+static tree_callback_t opcode_counter;
 
 static void set_dpsz(irgen_ctx_t *ictx);
 static tree_callback_t route;
