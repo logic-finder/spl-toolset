@@ -31,7 +31,7 @@ struct optval {
 
 void parse_args(compile_ctx_t *cctx);
 
-const char *stdopt_spl01 = "spl01";
-const char *stdopt_cor27 = "cor27";
+extern const char *stdopt_spl01;
+extern const char *stdopt_cor27;
 
 #endif

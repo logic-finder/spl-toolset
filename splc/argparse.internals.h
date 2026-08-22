@@ -47,4 +47,7 @@ static const char *warnmsg =
    "  * note: should this be a filename, specify '" Cbwhite "--" Creset "' first\n"
    "  * note: type " Cbmagenta "--help" Creset " to see the manual page";
 
+const char *stdopt_spl01 = "spl01";
+const char *stdopt_cor27 = "cor27";
+
 #endif
