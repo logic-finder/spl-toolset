@@ -16,7 +16,7 @@ extern array_t *loadfile(
 
    fp = safe_fopen(filename, "r");
    lcnt = wcnt = 0;
-   lines = array_create();
+   lines = array_create(destruct_line);
 
    while (!readln(fp, &run, &rlen)) {
       line.len = rlen;
@@ -37,12 +37,11 @@ extern array_t *loadfile(
    return lines;
 }
 
-extern void unloadfl(array_t *lines, size_t lc) {
+static void destruct_line(void *item, size_t idx) {
    line_t *l;
 
-   for (size_t i = 0; i < lc; i++) {
-      l = array_peek(lines, i);
-      free(l->run);
-   }
-   array_destroy(lines);
+   (void) idx;
+
+   l = item;
+   free(l->run);
 }

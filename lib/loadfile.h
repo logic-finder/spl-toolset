@@ -14,6 +14,4 @@ array_t *loadfile(
    size_t * restrict wc
 );
 
-void unloadfl(array_t *lines, size_t lc);
-
 #endif
