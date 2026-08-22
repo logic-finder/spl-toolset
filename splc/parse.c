@@ -9,9 +9,9 @@ extern void parse(compile_ctx_t *cctx) {
    pctx.ov = cctx->ov;
    pctx.ls = cctx->ls;
    pctx.toks = cctx->toks;
-   pctx.tok = array_peek(pctx.toks, 0);
    pctx.len = array_size(pctx.toks);
    pctx.idx = 0;
+   pctx.tok = array_peek(pctx.toks, pctx.idx);
    pctx.pt = plant_tree(NULL, 0, NODEKIND_ROOT, 0, 0);
 
    /* Constructs the parse tree
@@ -49,6 +49,7 @@ static void cleanup_tokstream(void *tok, int idx) {
    token_t *t;
 
    (void) idx;
+
    t = tok;
    free(t->run);
 }
@@ -58,6 +59,7 @@ static void parse_title(parse_ctx_t *pctx) {
 
    pctx->reason = msgs.err.syn.title.incomp;
    title = graft_tree_n(pctx->pt, 0, NODEKIND_TITLE, pctx->tok);
+   graft_tree_s(title, NODEKIND_DATA, pctx->tok);
    readtoks_until(pctx, ".!?", title);
 }
 

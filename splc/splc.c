@@ -35,7 +35,7 @@ int main(int argc, const char *argv[]) {
       "\t(total " Cbwhite "%zu" Creset " nodes)\n",
       count_tree_node(cctx.pt)
    );
-   tree_pre_traverse(cctx.pt, print_node, 0, NULL);
+   // tree_pre_traverse(cctx.pt, print_node, 0, NULL);
 
    safe_fputs(stdout, ENPREFIX "type-checking...");
    typecheck(&cctx);
