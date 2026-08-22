@@ -14,13 +14,14 @@ extern void parse_args(compile_ctx_t *cctx) {
          -v, --version
          -S, --dump
          -O, --optimize
-         --W
          --asm
          --disasm
          --direct
          --verbose
          --dry-run
          --pedantic
+         --j<slot>
+         --W<warning>
          --o=<name>
          --std=(spl01|cor27)
          --lang=(en|ko)
@@ -202,6 +203,21 @@ static void handle_drnopt(optflg_t *of, optval_t *ov, const char *arg) {
    (void) ov, (void) arg;
 
    of->drn = true;
+}
+
+static void handle_jobopt(optflg_t *of, optval_t *ov, const char *arg) {
+   static const char *jobopt = "job";
+
+   arg += strlen(jobopt);
+
+   if (arg[0] != '=') {
+      VERR("there is no '=' after '--%s'", jobopt);
+   }
+
+   arg++;  /* skips '=' */
+
+   of->job = true;
+   ov->job = arg;
 }
 
 static void handle_outopt(optflg_t *of, optval_t *ov, const char *arg) {

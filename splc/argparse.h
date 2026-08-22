@@ -15,6 +15,7 @@ struct optflg {
       drt: 1,  /* --direct */
       vbs: 1,  /* --verbose */
       drn: 1,  /* --dry-run */
+      job: 1,  /* --j */
       out: 1,  /* --o */
       std: 1,  /* --std */
       lng: 1,  /* --lang */
@@ -28,6 +29,7 @@ struct optflg {
 
 struct optval {
    const char *src;
+   const char *job;
    const char *out;
    const char *std;
    const char *lng;

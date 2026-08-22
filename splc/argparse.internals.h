@@ -35,6 +35,7 @@ static arghandler_t handle_optopt;
 static arghandler_t handle_drtopt;
 static arghandler_t handle_vbsopt;
 static arghandler_t handle_drnopt;
+static arghandler_t handle_jobopt;
 static arghandler_t handle_outopt;
 static arghandler_t handle_stdopt;
 static arghandler_t handle_lngopt;
