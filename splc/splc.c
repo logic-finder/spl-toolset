@@ -80,12 +80,18 @@ int main(int argc, const char *argv[]) {
    // safe_vprintf(" " Cgreen "done!" Creset "\n");
 
    /* Cleanup */
-   free(cctx.of);
-   free(cctx.ov);
+   tree_post_traverse(cctx.irt, cleanup_irnode, 0, NULL);
+   tree_prune(cctx.irt);
+
    tree_post_traverse(cctx.pt, cleanup_node, 0, NULL);
    tree_prune(cctx.pt);
-   unloadfl(cctx.ls, cctx.lc);
+
    dbunload();
+
+   unloadfl(cctx.ls, cctx.lc);
+
+   free(cctx.of);
+   free(cctx.ov);
 
    return 0;
 }
@@ -94,9 +100,27 @@ static void cleanup_node(tree_t *t, int lv, void *ctx) {
    node_t *n;
 
    (void) lv, (void) ctx;
+
    n = tree_dat(t);
-   if (n->datkind != DATKIND_STR)
+
+   if (n->datkind != DATKIND_STR) {
       return;
+   }
+
+   free(n->dat.s.run);
+}
+
+static void cleanup_irnode(tree_t *t, int lv, void *ctx) {
+   irnode_t *n;
+
+   (void) lv, (void) ctx;
+
+   n = tree_dat(t);
+
+   if (n->datkind != IrnodeDatkindStr) {
+      return;
+   }
+
    free(n->dat.s.run);
 }
 
