@@ -1,20 +1,24 @@
 #include "array.adt.h"
 #include "array.adt.internals.h"
 
-extern array_t *array_create(void) {
+extern array_t *array_create(array_destructer_t *destruct) {
    array_t *a;
 
    a = safe_malloc(sizeof *a);
    a->container = safe_malloc(INIT_MAX * ESIZ(a->container));
    a->len = 0;
    a->max = INIT_MAX;
+   a->destruct = destruct;
 
    return a;
 }
 
 extern void array_destroy(array_t *a) {
-   for (size_t i = 0; i < a->len; i++)
+   for (size_t i = 0; i < a->len; i++) {
+      if (a->destruct != NULL)
+         a->destruct(a->container[i], i);
       free(a->container[i]);
+   }
    free(a->container);
    free(a);
 }
