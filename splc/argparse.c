@@ -8,21 +8,20 @@ extern void parse_args(compile_ctx_t *cctx) {
          splc (-v | --version)
 
       OPTIONS
+         -g, --debug
+         -O, --optimize
+         -S, --dump
          -k, --kawaii
-         -h,
-         -v
-         -g,
-         -O,
-         -S,
-         --,
-         --verbose,
-         --target=c
-         --lang=(en|ko)
-         --o=<name>
+         -h, --help
+         -v, --version
+         --W
+         --std
+         --verbose
          --dry-run
          --pedantic
-         --std
-         --W  */
+         --o=<name>
+         --lang=(en|ko)
+         --target=<lang> */
 
    const char *arg;
 
@@ -115,6 +114,9 @@ static void parse_longop(optflg_t *of, optval_t *ov, const char *arg) {
       { "pedantic" , handle_pdtopt },
       { "W"        , handle_wrnopt },
       { "std"      , handle_stdopt },
+      { "debug"    , handle_dbgopt },
+      { "optimize" , handle_optopt },
+      { "dump"     , handle_dmpopt },
       { "help"     , handle_hlpopt },
       { "version"  , handle_vsnopt }
    };
@@ -147,14 +149,6 @@ static void handle_vbsopt(optflg_t *of, optval_t *ov, const char *arg) {
    if (of->hlp) ERR("-h with -d");
    if (of->vsn) ERR("-v with -d");
    of->vbs = true;
-}
-
-static void handle_kwiopt(optflg_t *of, optval_t *ov, const char *arg) {
-   (void) ov, (void) arg;
-   if (of->kwi) ERR("-k already seen");
-   if (of->hlp) ERR("-h with -k");
-   if (of->vsn) ERR("-v with -k");
-   of->kwi = true;
 }
 
 static void handle_lngopt(optflg_t *of, optval_t *ov, const char *arg) {
@@ -309,4 +303,12 @@ static void handle_vsnopt(optflg_t *of, optval_t *ov, const char *arg) {
    if (of->vsn) ERR("-v already seen");
 
    of->vsn = true;
+}
+
+static void handle_kwiopt(optflg_t *of, optval_t *ov, const char *arg) {
+   (void) ov, (void) arg;
+   if (of->kwi) ERR("-k already seen");
+   if (of->hlp) ERR("-h with -k");
+   if (of->vsn) ERR("-v with -k");
+   of->kwi = true;
 }
