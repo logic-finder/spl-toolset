@@ -5,30 +5,33 @@
 
 struct optflg {
    unsigned int
-      vbs: 1,  /* --verbose */
+      hlp: 1,  /* --help */
+      dbg: 1,  /* --debug */
       kwi: 1,  /* --kawaii */
-      lng: 1,  /* --lang */
+      vsn: 1,  /* --version */
+      dmp: 1,  /* --dump */
+      opt: 1,  /* --optimize */
+      drt: 1,  /* --direct */
+      vbs: 1,  /* --verbose */
+      drn: 1,  /* --dry-run */
       out: 1,  /* --o */
-      dbg: 1,  /* -g */
-      opt: 1,  /* -O */
-      dmp: 1,  /* -S */
+      std: 1,  /* --std */
+      lng: 1,  /* --lang */
+      tgt: 1,  /* --target */
       eoo: 1,  /* -- */
+      asmbly: 1, /* --asm */
+      disasm: 1, /* --disasm */
       pdt: 1,  /* --pedantic */
       w_bp: 1, /* --Wbe-predicate */
-      w_kc: 1, /* --Wkeyword-case */
-      tgt: 1,  /* --target */
-      drn: 1,  /* --dry-run */
-      std: 1,  /* --std */
-      hlp: 1,  /* --help */
-      vsn: 1;  /* --version */
+      w_kc: 1  /* --Wkeyword-case */
 };
 
 struct optval {
-   const char *lng;
    const char *src;
-   const char *tgt;
-   const char *std;
    const char *out;
+   const char *std;
+   const char *lng;
+   const char *tgt;
 };
 
 void parse_args(compile_ctx_t *cctx);

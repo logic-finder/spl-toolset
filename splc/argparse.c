@@ -8,18 +8,21 @@ extern void parse_args(compile_ctx_t *cctx) {
          splc (-v | --version)
 
       OPTIONS
-         -g, --debug
-         -O, --optimize
-         -S, --dump
-         -k, --kawaii
          -h, --help
+         -g, --debug
+         -k, --kawaii
          -v, --version
+         -S, --dump
+         -O, --optimize
          --W
-         --std
+         --asm
+         --disasm
+         --direct
          --verbose
          --dry-run
          --pedantic
          --o=<name>
+         --std=(spl01|cor27)
          --lang=(en|ko)
          --target=<lang> */
 
