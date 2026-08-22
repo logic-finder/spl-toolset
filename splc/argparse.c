@@ -55,6 +55,11 @@ extern void parse_args(compile_ctx_t *cctx) {
    }
 }
 
+extern void destroy_options(compile_ctx_t *cctx) {
+   free(cctx->of);
+   free(cctx->ov);
+}
+
 static void parse_endopt(optflg_t *of) {
    if (of->hlp) ERR("-h with --");
    if (of->vsn) ERR("-v with --");

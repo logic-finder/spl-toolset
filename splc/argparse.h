@@ -30,6 +30,7 @@ struct optval {
 };
 
 void parse_args(compile_ctx_t *cctx);
+void destroy_options(compile_ctx_t *cctx);
 
 extern const char *stdopt_spl01;
 extern const char *stdopt_cor27;
