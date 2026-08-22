@@ -45,7 +45,9 @@ extern void assemble(compile_ctx_t *cctx) {
 
    /* Writes the debug info & source file section */
    actx.s2p = actx.offset;
-   if (1) {
+   actx.s3p = 0;
+
+   if (cctx->of->dbg) {
       write_debug_info(&actx);
       actx.s3p = actx.offset;
       write_srcfile(&actx);
