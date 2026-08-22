@@ -8,7 +8,7 @@
 #include "colorcode.h"
 
 static void validate_argc(int argc);
-static void activate_pdtopt(optflg_t *of);
+static void handle_pdtopt(compile_ctx_t *cctx);
 static void default_stdopt(compile_ctx_t *cctx);
 
 #endif

@@ -10,26 +10,27 @@ extern void process_opts(compile_ctx_t *cctx) {
       ERR("no source file given; terminating");
    }
 
-   activate_pdtopt(cctx->of);
+   handle_pdtopt(cctx);
    default_stdopt(cctx);
 }
 
 static void validate_argc(int argc) {
-   if (argc != 1)
+   if (argc != 1) {
       return;
+   }
 
    ERR("executed with no argument!\n"
       "Suggestion. type " Cbcyan "-h" Creset " or "
       Cbcyan "--help" Creset " to see a manual page");
 }
 
-static void activate_pdtopt(optflg_t *of) {
-   if (!of->pdt) {
+static void handle_pdtopt(compile_ctx_t *cctx) {
+   if (!cctx->of->pdt) {
       return;
    }
 
-   of->w_kc = true;
-   of->w_bp = true;
+   cctx->of->w_kc = true;
+   cctx->of->w_bp = true;
 }
 
 static void default_stdopt(compile_ctx_t *cctx) {
