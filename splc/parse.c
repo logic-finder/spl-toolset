@@ -92,6 +92,11 @@ static int seek_act(parse_ctx_t *pctx) {
 }
 
 static void parse_act(parse_ctx_t *pctx) {
+   if (pctx->of->w_kc && strcmp(pctx->tok->run, KEYWRD_ACT)) {
+      pctx->reason = "this keyword should be 'Act'";
+      synwarn(pctx);
+   }
+
    pctx->act = graft_tree_n(
       pctx->nrtv, 0, NODEKIND_ACT, pctx->tok
    );
@@ -118,6 +123,11 @@ static int seek_scene(parse_ctx_t *pctx) {
 }
 
 static void parse_scene(parse_ctx_t *pctx) {
+   if (pctx->of->w_kc && strcmp(pctx->tok->run, KEYWRD_SCENE)) {
+      pctx->reason = "this keyword should be 'Scene'";
+      synwarn(pctx);
+   }
+
    pctx->scene = graft_tree_n(pctx->act, 0, NODEKIND_SCENE, pctx->tok);
    pctx->reason = msgs.err.syn.scene.incomp;
    gettok(pctx);
@@ -223,6 +233,11 @@ static int seek_enter(parse_ctx_t *pctx) {
 static void parse_enter(parse_ctx_t *pctx) {
    tree_t *enter;
 
+   if (pctx->of->w_kc && strcmp(pctx->tok->run, KEYWRD_ENTER)) {
+      pctx->reason = "this keyword should be 'Enter'";
+      synwarn(pctx);
+   }
+
    enter = graft_tree_n(pctx->scene, 0, NODEKIND_ENTER, pctx->tok);
    parse_namelist(pctx, enter);
    if (tree_clen(enter))
@@ -237,6 +252,11 @@ static int seek_exit(parse_ctx_t *pctx) {
 
 static void parse_exit(parse_ctx_t *pctx) {
    tree_t *exit;
+
+   if (pctx->of->w_kc && strcmp(pctx->tok->run, KEYWRD_EXIT)) {
+      pctx->reason = "this keyword should be 'Exit'";
+      synwarn(pctx);
+   }
 
    exit = graft_tree_n(pctx->scene, 0, NODEKIND_EXIT, pctx->tok);
    parse_namelist(pctx, exit);
@@ -254,6 +274,11 @@ static int seek_exeunt(parse_ctx_t *pctx) {
 
 static void parse_exeunt(parse_ctx_t *pctx) {
    tree_t *exeunt;
+
+   if (pctx->of->w_kc && strcmp(pctx->tok->run, KEYWRD_EXEUNT)) {
+      pctx->reason = "this keyword should be 'Exeunt'";
+      synwarn(pctx);
+   }
 
    exeunt = graft_tree_n(pctx->scene, 0, NODEKIND_EXEUNT, pctx->tok);
    parse_namelist(pctx, exeunt);
@@ -413,25 +438,6 @@ static int seek_asgn(parse_ctx_t *pctx) {
    return 0;
 }
 
-static int seek_out(parse_ctx_t *pctx) {
-   /* Speak your mind! */
-   if (!strcasecmp(pctx->tok->run, KEYWRD_SPEAK)) {
-      return 1;
-   }
-
-   /* Open your heart! */
-   if (!strcasecmp(pctx->tok->run, KEYWRD_OPEN)) {
-      gettokn(pctx, 2);  /* skips "your" */
-      if (strcasecmp(pctx->tok->run, KEYWRD_HEART)) {
-         return 0;
-      }
-      ungettokn(pctx, 2);
-      return 1;
-   }
-
-   return 0;
-}
-
 static void parse_asgn(parse_ctx_t *pctx) {
    /* TYPE 1: You A(.|!)
       TYPE 2: You be as adj as (B|C|D)(.|!)
@@ -512,6 +518,25 @@ static tree_t *parse_asgn_iii(parse_ctx_t *pctx, token_t *you) {
    }
 
    return graft_tree_s(pctx->line, NODEKIND_ASGN3, you);
+}
+
+static int seek_out(parse_ctx_t *pctx) {
+   /* Speak your mind! */
+   if (!strcasecmp(pctx->tok->run, KEYWRD_SPEAK)) {
+      return 1;
+   }
+
+   /* Open your heart! */
+   if (!strcasecmp(pctx->tok->run, KEYWRD_OPEN)) {
+      gettokn(pctx, 2);  /* skips "your" */
+      if (strcasecmp(pctx->tok->run, KEYWRD_HEART)) {
+         return 0;
+      }
+      ungettokn(pctx, 2);
+      return 1;
+   }
+
+   return 0;
 }
 
 static void parse_out(parse_ctx_t *pctx) {
@@ -1534,8 +1559,10 @@ static void check_cond_predicate(parse_ctx_t *pctx) {
       case 3 : if (match_str_case(pctx->tok->run, cond_subjs, cond_subjs_len) < cond_subjs_len)
                   goto hell; else break;
       hell: /* FLAMING HOT */
+         ungettok(pctx);
          pctx->reason = msgs.err.syn.cond.not_conj;
          synwarn(pctx);
+         gettok(pctx);
    }
 }
 
@@ -1545,8 +1572,10 @@ static void check_asgn_predicate(parse_ctx_t *pctx) {
       return;
    }
 
+   ungettok(pctx);
    pctx->reason = "be verb must be the second person in the assignment statement";
    synwarn(pctx);
+   gettok(pctx);
 }
 
 static void nexttok(parse_ctx_t *pctx) {
@@ -1653,8 +1682,6 @@ static void synwarn(parse_ctx_t *pctx) {
    size_t lnum, lpos;
    line_t *l;
 
-   ungettok(pctx);
-
    lnum = pctx->etok->lnum;
    lpos = pctx->etok->lpos;
    l = array_peek(pctx->ls, lnum - 1);
@@ -1667,8 +1694,6 @@ static void synwarn(parse_ctx_t *pctx) {
       pctx->ov->src, lnum, lpos,
       lnum, lpos - 1, l->run, &l->run[lpos - 1]
    );
-
-   gettok(pctx);
 }
 
 static void synerr(parse_ctx_t *pctx) {
