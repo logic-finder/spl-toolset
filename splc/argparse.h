@@ -5,7 +5,7 @@
 
 struct optflg {
    unsigned int
-      dsc: 1,  /* --describe */
+      vbs: 1,  /* --verbose */
       kwi: 1,  /* --kawaii */
       lng: 1,  /* --lang */
       out: 1,  /* --o */

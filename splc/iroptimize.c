@@ -62,7 +62,7 @@ extern void iroptimize(compile_ctx_t *cctx) {
    zctx.irt = cctx->irt;
    zctx.nrtv = tree_child(zctx.irt, 1);
 
-   safe_fputs(stdout, ENPREFIX "optimizing IR...");
+   if (cctx->of->vbs) safe_fputs(stdout, ENPREFIX "optimizing IR...");
 
    /* Note: the order fc -> pc -> ro & rc is intended */
    fold_const(&zctx);
@@ -73,7 +73,7 @@ extern void iroptimize(compile_ctx_t *cctx) {
    // reduce_ifstmt()
    // remove_contradict()
 
-   safe_vprintf(" " Cgreen "done!" Creset
+   if (cctx->of->vbs) safe_vprintf(" " Cgreen "done!" Creset
          "\t(total " Cbwhite "%zu" Creset " nodes)\n",
          count_opcodes(cctx->irt)
       );

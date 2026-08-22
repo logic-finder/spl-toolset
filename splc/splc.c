@@ -13,12 +13,12 @@ int main(int argc, const char *argv[]) {
    process_opts(&cctx);
 
    cctx.ls = loadfile(cctx.ov->src, &cctx.lc, &cctx.wc);
-   safe_vprintf(ENPREFIX
+   if (cctx.of->vbs) safe_vprintf(ENPREFIX
       "loaded the source file " Cbyellow "%s" Creset
       " (total " Cbwhite "%d" Creset " lines, " Cbwhite "%d" Creset " chars)\n",
       cctx.ov->src, cctx.lc, cctx.wc);
 
-   dbload();
+   dbload(&cctx);
 
    /* MAIN LOGIC */
    lex(&cctx);

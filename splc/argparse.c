@@ -8,7 +8,6 @@ extern void parse_args(compile_ctx_t *cctx) {
          splc (-v | --version)
 
       OPTIONS
-         -d, --describe // verbose?
          -k, --kawaii
          -h,
          -v
@@ -16,6 +15,7 @@ extern void parse_args(compile_ctx_t *cctx) {
          -O,
          -S,
          --,
+         --verbose,
          --target=c
          --lang=(en|ko)
          --o=<name>
@@ -74,7 +74,6 @@ static void parse_filenm(optval_t *ov, const char *arg) {
 static void parse_shrtop(optflg_t *of, optval_t *ov, const char *arg) {
    static const opt_t opts[] = {
    /*  .name    .handler   */
-      { "d" , handle_dscopt },
       { "k" , handle_kwiopt },
       { "g" , handle_dbgopt },
       { "O" , handle_optopt },
@@ -107,7 +106,7 @@ static void parse_shrtop(optflg_t *of, optval_t *ov, const char *arg) {
 
 static void parse_longop(optflg_t *of, optval_t *ov, const char *arg) {
    static const opt_t opts[] = {
-      { "describe" , handle_dscopt },
+      { "verbose"  , handle_vbsopt },
       { "kawaii"   , handle_kwiopt },
       { "target"   , handle_tgtopt },
       { "lang"     , handle_lngopt },
@@ -142,12 +141,12 @@ static void parse_longop(optflg_t *of, optval_t *ov, const char *arg) {
    }
 }
 
-static void handle_dscopt(optflg_t *of, optval_t *ov, const char *arg) {
+static void handle_vbsopt(optflg_t *of, optval_t *ov, const char *arg) {
    (void) ov, (void) arg;
-   if (of->dsc) ERR("-d already seen");
+   if (of->vbs) ERR("--verbose already seen");
    if (of->hlp) ERR("-h with -d");
    if (of->vsn) ERR("-v with -d");
-   of->dsc = true;
+   of->vbs = true;
 }
 
 static void handle_kwiopt(optflg_t *of, optval_t *ov, const char *arg) {
@@ -288,7 +287,7 @@ static void handle_hlpopt(optflg_t *of, optval_t *ov, const char *arg) {
    (void) ov, (void) arg;
 
    if (of->dmp) ERR("-S with -h");
-   if (of->dsc) ERR("-d with -h");
+   if (of->vbs) ERR("--verbose with -h");
    if (of->kwi) ERR("-k with -h");
    if (of->lng) ERR("--lang with -h");
    if (of->out) ERR("--ret with -h");
@@ -302,7 +301,7 @@ static void handle_vsnopt(optflg_t *of, optval_t *ov, const char *arg) {
    (void) ov, (void) arg;
 
    if (of->dmp) ERR("-S with -v");
-   if (of->dsc) ERR("-d with -v");
+   if (of->vbs) ERR("--verbose with -v");
    if (of->kwi) ERR("-k with -v");
    if (of->lng) ERR("--lang with -v");
    if (of->out) ERR("--ret with -v");

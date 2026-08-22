@@ -34,7 +34,9 @@ extern void assemble(compile_ctx_t *cctx) {
    destname = strdup(cctx->ov->out);
    actx.fp = safe_fopen(destname, "w");
 
-   safe_vprintf(ENPREFIX "generating object file " Cbyellow "\"%s\"" Creset "...", destname);
+   if (cctx->of->vbs) safe_vprintf(
+      ENPREFIX "generating object file " Cbyellow "\"%s\"" Creset "...", destname
+   );
 
    /* Fills opcode.offset field first */
    actx.offset = OBJFILE_HDSIZ;
@@ -58,7 +60,7 @@ extern void assemble(compile_ctx_t *cctx) {
    /* Finally, writes the header section */
    write_header(1, &actx);
 
-   safe_vprintf(
+   if (cctx->of->vbs) safe_vprintf(
       " " Cgreen "done!" Creset
       " (total " Cbwhite "%" SPL_UINT_FMTSPC Creset " bytes) \n",
       actx.offset

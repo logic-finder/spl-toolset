@@ -15,7 +15,7 @@ extern void lex(compile_ctx_t *cctx) {
    lctx.buf = safe_malloc(lctx.max);
    lctx.eoe = false;
 
-   safe_fputs(stdout, ENPREFIX "scanning...");
+   if (cctx->of->vbs) safe_fputs(stdout, ENPREFIX "scanning...");
 
    /* Constructs a stream of tokens */
    ret = setjmp(lctx.env);
@@ -44,7 +44,7 @@ tokenize:
 cleanup:
    free(lctx.buf);
 
-   safe_vprintf(" " Cgreen "done!" Creset
+   if (cctx->of->vbs) safe_vprintf(" " Cgreen "done!" Creset
       "\t(total " Cbwhite "%zu" Creset " tokens)\n",
       array_size(lctx.toks)
    );

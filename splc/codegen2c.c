@@ -17,7 +17,7 @@ extern void transpile2c(compile_ctx_t *cctx) {
    destname = make_destname(cctx->ov->src, C_EXTENSION);
    gctx.fp = safe_fopen(destname, "w");
 
-   safe_vprintf(
+   if (cctx->of->vbs) safe_vprintf(
       ENPREFIX "transpiling into the target language " Cbwhite "C" Creset "..."
    );
 
@@ -30,7 +30,7 @@ extern void transpile2c(compile_ctx_t *cctx) {
    safe_vfprintf(gctx.fp, "%sreturn 0;\n", indent);
    safe_fputs(gctx.fp, "}\n");
 
-   safe_vprintf(
+   if (cctx->of->vbs) safe_vprintf(
       " " Cgreen "done!" Creset "\t(output=" Cbyellow "%s" Creset ")\n",
       destname
    );

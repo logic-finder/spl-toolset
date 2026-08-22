@@ -13,9 +13,13 @@ extern void irdump(compile_ctx_t *cctx) {
    destname = make_destname("hello.spl", IR_EXTENSION);
    ictx.fp = safe_fopen(destname, "w");
 
-   safe_vprintf(ENPREFIX "dumping IR into " Cbyellow "\"%s\"" Creset "...", destname);
+   if (cctx->of->vbs) safe_vprintf(
+      ENPREFIX "dumping IR into " Cbyellow "\"%s\"" Creset "...", destname
+   );
+
    tree_pre_traverse(ictx.nrtv, route, 0, &ictx);
-   safe_vprintf(" " Cgreen "done!" Creset "\n");
+
+   if (cctx->of->vbs) safe_vprintf(" " Cgreen "done!" Creset "\n");
 
    safe_fclose(ictx.fp);
 

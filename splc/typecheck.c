@@ -13,7 +13,7 @@ extern void typecheck(compile_ctx_t *cctx) {
    tctx.ov = cctx->ov;
    tctx.ls = cctx->ls;
 
-   safe_fputs(stdout, ENPREFIX "type-checking...");
+   if (cctx->of->vbs) safe_fputs(stdout, ENPREFIX "type-checking...");
 
    /* Preprocesses */
    coalesce_title(&tctx);
@@ -23,7 +23,7 @@ extern void typecheck(compile_ctx_t *cctx) {
    /* Type-checks */
    tree_post_traverse(tctx.pt, typecheck_router, 0, &tctx);
 
-   safe_vprintf(" " Cgreen "done!" Creset "\n");
+   if (cctx->of->vbs) safe_vprintf(" " Cgreen "done!" Creset "\n");
 }
 
 static inline void coalesce_title(typecheck_ctx_t *tctx) {
