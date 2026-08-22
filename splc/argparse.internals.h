@@ -31,7 +31,7 @@ static arghandler_t handle_imdopt;
 static arghandler_t handle_dscopt;
 static arghandler_t handle_kwiopt;
 static arghandler_t handle_lngopt;
-static arghandler_t handle_retopt;
+static arghandler_t handle_outopt;
 static arghandler_t handle_optopt;
 static arghandler_t handle_dbgopt;
 static arghandler_t handle_dmpopt;
@@ -49,5 +49,7 @@ static const char *warnmsg =
 
 const char *stdopt_spl01 = "spl01";
 const char *stdopt_cor27 = "cor27";
+const char *stdopt = "std";
+const char *outopt = "o";
 
 #endif

@@ -12,6 +12,7 @@ extern void process_opts(compile_ctx_t *cctx) {
 
    handle_pdtopt(cctx);
    default_stdopt(cctx);
+   default_outopt(cctx);
 }
 
 static void validate_argc(int argc) {
@@ -38,6 +39,15 @@ static void default_stdopt(compile_ctx_t *cctx) {
       return;
    }
 
-   cctx->of->std = true;
    cctx->ov->std = stdopt_spl01;
+}
+
+static void default_outopt(compile_ctx_t *cctx) {
+   static const char *default_output = "a.out";
+
+   if (cctx->of->out) {
+      return;
+   }
+
+   cctx->ov->out = default_output;
 }

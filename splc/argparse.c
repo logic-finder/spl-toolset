@@ -20,7 +20,7 @@ extern void parse_args(compile_ctx_t *cctx) {
          --,
          --target=c
          --lang=(en|ko)
-         --ret=<name>  // -o로 대체
+         --o=<name>
          --dry-run
          --pedantic
          --std
@@ -28,7 +28,7 @@ extern void parse_args(compile_ctx_t *cctx) {
 
    const char *arg;
 
-   cctx->of = safe_calloc(1, sizeof *cctx->of);
+   cctx->of = safe_calloc(1, sizeof *cctx->of);  /* {0} */
    cctx->ov = safe_malloc(sizeof *cctx->ov);
 
    cctx->of->eoo = false;
@@ -117,7 +117,7 @@ static void parse_longop(optflg_t *of, optval_t *ov, const char *arg) {
       { "kawaii"            , handle_kwiopt },
       { "target"            , handle_tgtopt },
       { "lang"              , handle_lngopt },
-      { "ret"               , handle_retopt },
+      { "o"                 , handle_outopt },
       { "dry-run"           , handle_drnopt },
       { "pedantic"          , handle_pdtopt },
       { "W"                 , handle_wrnopt },
@@ -210,17 +210,21 @@ static void handle_lngopt(optflg_t *of, optval_t *ov, const char *arg) {
    ov->lng = arg;
 }
 
-static void handle_retopt(optflg_t *of, optval_t *ov, const char *arg) {
-   static const size_t retopt_len = 3;  /* strlen("ret") = 3 */
-
-   if (of->ret) ERR("--ret already seen");
+static void handle_outopt(optflg_t *of, optval_t *ov, const char *arg) {
+   if (of->out) ERR("--o already seen");
    if (of->hlp) ERR("-h with --ret");
    if (of->vsn) ERR("-v with --ret");
 
-   if (arg[retopt_len] != '=')
-      ERR("there is no '=' between --ret and its value");
+   arg += strlen(outopt);
 
-   ov->ret = arg + 4;
+   if (arg[0] != '=') {
+      VERR("there is no '=' after '--%s'", outopt);
+   }
+
+   arg++;  /* skips '=' */
+
+   of->out = true;
+   ov->out = arg;
 }
 
 static void handle_optopt(optflg_t *of, optval_t *ov, const char *arg) {
@@ -284,7 +288,7 @@ static void handle_stdopt(optflg_t *of, optval_t *ov, const char *arg) {
    arg += strlen("std");
 
    if (arg[0] != '=') {
-      ERR("there is no '=' after '--std'");
+      VERR("there is no '=' after '--%s'", stdopt);
    }
 
    arg++;  /* skips '=' */
@@ -306,7 +310,7 @@ static void handle_hlpopt(optflg_t *of, optval_t *ov, const char *arg) {
    if (of->dsc) ERR("-d with -h");
    if (of->kwi) ERR("-k with -h");
    if (of->lng) ERR("--lang with -h");
-   if (of->ret) ERR("--ret with -h");
+   if (of->out) ERR("--ret with -h");
    if (of->hlp) ERR("-h already seen");
    if (of->vsn) ERR("-v with -h");
 
@@ -321,7 +325,7 @@ static void handle_vsnopt(optflg_t *of, optval_t *ov, const char *arg) {
    if (of->dsc) ERR("-d with -v");
    if (of->kwi) ERR("-k with -v");
    if (of->lng) ERR("--lang with -v");
-   if (of->ret) ERR("--ret with -v");
+   if (of->out) ERR("--ret with -v");
    if (of->hlp) ERR("-h with -v");
    if (of->vsn) ERR("-v already seen");
 

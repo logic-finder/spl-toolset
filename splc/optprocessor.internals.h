@@ -10,5 +10,6 @@
 static void validate_argc(int argc);
 static void handle_pdtopt(compile_ctx_t *cctx);
 static void default_stdopt(compile_ctx_t *cctx);
+static void default_outopt(compile_ctx_t *cctx);
 
 #endif

@@ -10,7 +10,7 @@ struct optflg {
       dsc: 1,  /* --describe */
       kwi: 1,  /* --kawaii */
       lng: 1,  /* --lang */
-      ret: 1,  /* --ret */
+      out: 1,  /* --o */
       dbg: 1,  /* -g */
       opt: 1,  /* -O */
       dmp: 1,  /* -S */
@@ -26,7 +26,11 @@ struct optflg {
 };
 
 struct optval {
-   const char *ret, *lng, *src, *tgt, *std;
+   const char *lng;
+   const char *src;
+   const char *tgt;
+   const char *std;
+   const char *out;
 };
 
 void parse_args(compile_ctx_t *cctx);

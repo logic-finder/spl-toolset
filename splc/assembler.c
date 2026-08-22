@@ -31,7 +31,7 @@ extern void assemble(compile_ctx_t *cctx) {
    actx.nrtv = tree_child(cctx->irt, 1);
    actx.ls = cctx->ls;
 
-   destname = make_destname("hello.spl", OBJ_EXTENSION);
+   destname = strdup(cctx->ov->out);
    actx.fp = safe_fopen(destname, "w");
 
    safe_vprintf(ENPREFIX "generating object file " Cbyellow "\"%s\"" Creset "...", destname);
