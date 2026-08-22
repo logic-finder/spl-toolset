@@ -165,7 +165,6 @@ static void synwarn(parse_ctx_t *pctx);
 static void synerr(parse_ctx_t *pctx);
 
 /* Miscellnaeous */
-static array_iterator_t cleanup_tokstream;
 static tree_t *plant_tree(
    const char *run,
    size_t len,

@@ -38,10 +38,6 @@ extern void parse(compile_ctx_t *cctx) {
    }
 EOE:;
 
-   /* Cleanup */
-   array_foreach(pctx.toks, cleanup_tokstream);
-   array_destroy(pctx.toks);
-
    cctx->pt = pctx.pt;
    return;
 }
@@ -63,15 +59,6 @@ static void cleanup_node(tree_t *t, int lv, void *ctx) {
    }
 
    free(n->dat.s.run);
-}
-
-static void cleanup_tokstream(void *tok, int idx) {
-   token_t *t;
-
-   (void) idx;
-
-   t = tok;
-   free(t->run);
 }
 
 static void parse_title(parse_ctx_t *pctx) {
