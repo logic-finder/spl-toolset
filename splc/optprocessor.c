@@ -18,8 +18,8 @@ static void validate_argc(int argc) {
       return;
 
    ERR("executed with no argument!\n"
-      "\ttype" Cbwhite "-h" Creset " or "
-      Cbwhite "--help" Creset "to see a manual page");
+      "Suggestion. type " Cbcyan "-h" Creset " or "
+      Cbcyan "--help" Creset " to see a manual page");
 }
 
 static void activate_pdtopt(optflg_t *of) {
