@@ -10,12 +10,19 @@ extern void irgenerate(compile_ctx_t *cctx) {
    ictx.pt_dp = tree_child(cctx->pt, 1);
    ictx.pt_nrtv = tree_child(cctx->pt, 2);
 
+   safe_fputs(stdout, ENPREFIX "generating IR...");
+
    ictx.irt = plant_tree(NULL, 0, IrnodekindRoot, 0, 0);
    set_dpsz(&ictx);  /* appends the dp tree to irt */
    ictx.nrtv = graft_tree_i(ictx.irt, 0, IrnodekindNrtv);
    tree_pre_traverse(ictx.pt_nrtv, route, 0, &ictx);
    /* Marks the last node with END OF PROGRAM */
    graft_tree_i(ictx.curr_block, 0, IrnodekindEop);
+
+   safe_vprintf(" " Cgreen "done!" Creset
+      "\t(total " Cbwhite "%zu" Creset " nodes)\n",
+      count_opcodes(ictx.irt)
+   );
 
    cctx->irt = ictx.irt;
    return;

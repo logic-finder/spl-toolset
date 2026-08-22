@@ -11,7 +11,11 @@ extern void ctxcheck(compile_ctx_t *cctx) {
    octx.ov = cctx->ov;
    octx.nrtv = tree_child(cctx->pt, 2);
 
+   safe_fputs(stdout, ENPREFIX "context-checking...");
+
    tree_pre_traverse(octx.nrtv, ctxcheck_router, 0, &octx);
+
+   safe_vprintf(" " Cgreen "done!" Creset "\n");
 }
 
 static void ctxcheck_router(tree_t *t, int lv, void *ctx) {

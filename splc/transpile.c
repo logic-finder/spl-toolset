@@ -10,6 +10,8 @@ extern void transpile(compile_ctx_t *cctx) {
    nrtv  = tree_child(cctx->pt, 2);
    you_flag = false;
 
+   safe_fputs(stdout, ENPREFIX "transpiling...");
+
    gen_header();
    gen_title(title);
    safe_fputs(fp, "int main(void) {\n");
@@ -17,6 +19,8 @@ extern void transpile(compile_ctx_t *cctx) {
    tree_pre_traverse(nrtv, generate, 0, NULL);
    gen_cleanup();
    safe_fputs(fp, "\n" INDENT "return 0;\n}\n");
+
+   safe_vprintf(" " Cgreen "done!" Creset "\n");
 
    safe_fclose(fp);
 }

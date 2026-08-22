@@ -15,6 +15,8 @@ extern void parse(compile_ctx_t *cctx) {
    pctx.tok = array_peek(pctx.toks, pctx.idx);
    pctx.pt = plant_tree(NULL, 0, NODEKIND_ROOT, 0, 0);
 
+   safe_fputs(stdout, ENPREFIX "parsing...");
+
    /* Constructs the parse tree
          pt[0] = title
          pt[1] = dp
@@ -37,6 +39,11 @@ extern void parse(compile_ctx_t *cctx) {
    EOA:;
    }
 EOE:;
+
+   safe_vprintf(" " Cgreen "done!" Creset
+      "\t(total " Cbwhite "%zu" Creset " nodes)\n",
+      count_tree_node(pctx.pt)
+   );
 
    cctx->pt = pctx.pt;
    return;
