@@ -7,7 +7,7 @@
 #include "global.h"
 #include "wrappers.h"
 #include "dbhandler.h"
-#include "colorcode.h"
+#include "colorcodes.h"
 
 typedef struct {
    const char *reason;

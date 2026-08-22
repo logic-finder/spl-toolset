@@ -5,7 +5,7 @@
 
 #include "fatal.h"
 #include "global.h"
-#include "colorcode.h"
+#include "colorcodes.h"
 
 static void validate_argc(int argc);
 static void handle_pdtopt(compile_ctx_t *cctx);

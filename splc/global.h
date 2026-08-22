@@ -5,7 +5,7 @@
 #include "msg.h"
 #include "parse.h"
 #include "loadfile.h"
-#include "colorcode.h"
+#include "colorcodes.h"
 
 /**********
  * MACROS *

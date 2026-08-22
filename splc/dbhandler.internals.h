@@ -11,7 +11,7 @@
 #include "array.adt.h"
 #include "wrappers.h"
 #include "db.common.h"
-#include "colorcode.h"
+#include "colorcodes.h"
 
 typedef int comparer_t(const void *key, const void *elem);
 

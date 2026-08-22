@@ -12,7 +12,7 @@
 
 #include "fatal.h"
 #include "wrappers.h"
-#include "colorcode.h"
+#include "colorcodes.h"
 
 typedef void iohandler_template_t(
    rt_ctx_t *rctx,

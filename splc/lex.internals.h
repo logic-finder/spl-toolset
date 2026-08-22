@@ -9,7 +9,7 @@
 #include "global.h"
 #include "strutils.h"
 #include "wrappers.h"
-#include "colorcode.h"
+#include "colorcodes.h"
 
 /*==========*
  | TYPEDEFS |

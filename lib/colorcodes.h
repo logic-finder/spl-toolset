@@ -1,5 +1,5 @@
-#ifndef COLORCODE_H
-#define COLORCODE_H
+#ifndef COLORCODES_H
+#define COLORCODES_H
 
 #define Creset    "\033[0m"      /* color reset */
 

@@ -13,7 +13,7 @@
 #include "array.adt.h"
 #include "db.common.h"
 #include "readline.h"
-#include "colorcode.h"
+#include "colorcodes.h"
 
 #define SRCFILE(sectname, idx)      \
 safe_vprintf(                             \

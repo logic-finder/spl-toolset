@@ -16,7 +16,7 @@
 #include "dbhandler.h"
 #include "transpile.h"
 #include "typecheck.h"
-#include "colorcode.h"
+#include "colorcodes.h"
 #include "assembler.h"
 #include "codegen2c.h"
 #include "iroptimize.h"

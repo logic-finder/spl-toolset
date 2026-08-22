@@ -14,7 +14,7 @@
 #include "wrappers.h"
 #include "strutils.h"
 #include "tree.adt.h"
-#include "colorcode.h"
+#include "colorcodes.h"
 #include "dbhandler.h"
 
 /*==========*
