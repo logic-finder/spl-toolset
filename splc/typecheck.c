@@ -282,8 +282,8 @@ static void semerr_dupname(
 
 static void coalesce_childstr(tree_t *t) {
    node_t *dat, *chdat;
-   char *buf;
-   size_t clen, bufsiz;
+   char *buf, *run;
+   size_t clen, bufsiz, offset, runsiz;
 
    clen = tree_clen(t);
    bufsiz = 0;
@@ -296,13 +296,23 @@ static void coalesce_childstr(tree_t *t) {
 
    buf = safe_malloc(bufsiz + 1);  /* +1 for \0 */
 
-   buf[0] = '\0';
+   offset = 0;
    for (size_t i = 0; i < clen; i++) {
       chdat = tree_chdat(t, i);
-      strcat(buf, chdat->dat.s.run);
-      strcat(buf, " ");
+      run = chdat->dat.s.run;
+      runsiz = strlen(run);
+
+      memcpy(buf + offset, run, runsiz);
+      offset += runsiz;
+
+      if (i == clen - 1) {
+         buf[offset] = '\0';
+      }
+      else {
+         buf[offset] = ' ';
+      }
+      offset++;
    }
-   buf[bufsiz] = '\0';  /* overwrite the last ' ' */
 
    dat = tree_dat(t);
    setnds(dat, buf, bufsiz);
