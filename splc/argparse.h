@@ -24,7 +24,7 @@ struct optflg {
       disasm: 1, /* --disasm */
       pdt: 1,  /* --pedantic */
       w_bp: 1, /* --Wbe-predicate */
-      w_kc: 1  /* --Wkeyword-case */
+      w_kc: 1;  /* --Wkeyword-case */
 };
 
 struct optval {
