@@ -25,8 +25,6 @@
 static size_t count_tree_node(tree_t *root);
 static size_t count_opcodes(tree_t *irt);
 static tree_callback_t opcode_counter;
-static tree_callback_t cleanup_node;
-static tree_callback_t cleanup_irnode;
 
 /* Miscellaneous */
 static array_iterator_t print_token;
