@@ -8,7 +8,6 @@ extern void parse_args(compile_ctx_t *cctx) {
          splc (-v | --version)
 
       OPTIONS
-         -e, --exe
          -d, --describe // verbose?
          -k, --kawaii
          -h,
@@ -75,7 +74,6 @@ static void parse_filenm(optval_t *ov, const char *arg) {
 static void parse_shrtop(optflg_t *of, optval_t *ov, const char *arg) {
    static const opt_t opts[] = {
    /*  .name    .handler   */
-      { "e" , handle_exeopt },
       { "d" , handle_dscopt },
       { "k" , handle_kwiopt },
       { "g" , handle_dbgopt },
@@ -109,7 +107,6 @@ static void parse_shrtop(optflg_t *of, optval_t *ov, const char *arg) {
 
 static void parse_longop(optflg_t *of, optval_t *ov, const char *arg) {
    static const opt_t opts[] = {
-      { "exe"      , handle_exeopt },
       { "describe" , handle_dscopt },
       { "kawaii"   , handle_kwiopt },
       { "target"   , handle_tgtopt },
@@ -143,14 +140,6 @@ static void parse_longop(optflg_t *of, optval_t *ov, const char *arg) {
    if (i == opts_len) {
       VERR("unable to recognize this option: --%s\n%s", arg, warnmsg);
    }
-}
-
-static void handle_exeopt(optflg_t *of, optval_t *ov, const char *arg) {
-   (void) ov, (void) arg;  /* to suppress compiler warning message */
-   if (of->exe) ERR("-e already seen");
-   if (of->hlp) ERR("-h with -e");
-   if (of->vsn) ERR("-v with -e");
-   of->exe = true;
 }
 
 static void handle_dscopt(optflg_t *of, optval_t *ov, const char *arg) {
@@ -298,7 +287,6 @@ static void handle_stdopt(optflg_t *of, optval_t *ov, const char *arg) {
 static void handle_hlpopt(optflg_t *of, optval_t *ov, const char *arg) {
    (void) ov, (void) arg;
 
-   if (of->exe) ERR("-e with -h");
    if (of->dmp) ERR("-S with -h");
    if (of->dsc) ERR("-d with -h");
    if (of->kwi) ERR("-k with -h");
@@ -313,7 +301,6 @@ static void handle_hlpopt(optflg_t *of, optval_t *ov, const char *arg) {
 static void handle_vsnopt(optflg_t *of, optval_t *ov, const char *arg) {
    (void) ov, (void) arg;
 
-   if (of->exe) ERR("-e with -v");
    if (of->dmp) ERR("-S with -v");
    if (of->dsc) ERR("-d with -v");
    if (of->kwi) ERR("-k with -v");
