@@ -14,10 +14,12 @@ extern void transpile2c(compile_ctx_t *cctx) {
    gctx.title = tree_child(gctx.pt, 0);
    gctx.pt_dp = tree_child(gctx.pt, 1);
 
-   destname = make_destname("hello.spl", C_EXTENSION);
+   destname = make_destname(cctx->ov->src, C_EXTENSION);
    gctx.fp = safe_fopen(destname, "w");
 
-   safe_vprintf(ENPREFIX "transpiling into the target language " Cbwhite "C" Creset "...");
+   safe_vprintf(
+      ENPREFIX "transpiling into the target language " Cbwhite "C" Creset "..."
+   );
 
    safe_fputs(gctx.fp, "#include <splrt/splrt.h>\n");
    codegen_title(&gctx);
@@ -28,7 +30,10 @@ extern void transpile2c(compile_ctx_t *cctx) {
    safe_vfprintf(gctx.fp, "%sreturn 0;\n", indent);
    safe_fputs(gctx.fp, "}\n");
 
-   safe_vprintf(" " Cgreen "done!" Creset "\n");
+   safe_vprintf(
+      " " Cgreen "done!" Creset "\t(output=" Cbyellow "%s" Creset ")\n",
+      destname
+   );
 
    safe_fclose(gctx.fp);
 
