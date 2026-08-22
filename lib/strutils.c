@@ -253,3 +253,14 @@ extern char *tolower_str(const char *orig) {
 
    return dest;
 }
+
+extern char *strdup(const char *src) {
+   char *buf;
+   size_t siz;
+
+   siz = strlen(src);
+   buf = safe_malloc(siz + 1);  /* +1 or \0 */
+   memcpy(buf, src, siz + 1);  /* \0 copied */
+
+   return buf;
+}
