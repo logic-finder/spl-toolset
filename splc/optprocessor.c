@@ -10,7 +10,7 @@ extern void process_opts(compile_ctx_t *cctx) {
       ERR("no source file given; terminating");
    }
 
-   init_opt(cctx->ov);
+   activate_pdtopt(cctx->of);
 }
 
 static void validate_argc(int argc) {
@@ -22,7 +22,11 @@ static void validate_argc(int argc) {
       Cbwhite "--help" Creset "to see a manual page");
 }
 
-static void init_opt(optval_t *ov) {
-   (void) ov;
-   return;
+static void activate_pdtopt(optflg_t *of) {
+   if (!of->pdt) {
+      return;
+   }
+
+   of->w_kc = true;
+   of->w_bp = true;
 }

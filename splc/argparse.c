@@ -108,6 +108,8 @@ static void parse_longop(optflg_t *of, optval_t *ov, const char *arg) {
       { "lang"              , handle_lngopt },
       { "ret"               , handle_retopt },
       { "dry-run"           , handle_drnopt },
+      { "pedantic"          , handle_pdtopt },
+      { "W"                 , handle_wrnopt },
       { "help"              , handle_hlpopt },
       { "version"           , handle_vsnopt }
    };
@@ -237,6 +239,29 @@ static void handle_drnopt(optflg_t *of, optval_t *ov, const char *arg) {
    (void) ov, (void) arg;
 
    of->drn = true;
+}
+
+static void handle_pdtopt(optflg_t *of, optval_t *ov, const char *arg) {
+   (void) ov, (void) arg;
+
+   of->pdt = true;
+}
+
+static void handle_wrnopt(optflg_t *of, optval_t *ov, const char *arg) {
+   (void) ov, (void) arg;
+
+   // TODO: arg check
+
+   arg++;
+
+   if (!strcmp(arg, "keyword-case"))
+      of->w_kc = true;
+   else
+   if (!strcmp(arg, "be-predicate"))
+      of->w_bp = true;
+   else {
+      VERR("--W with a wrong value: %s", arg);
+   }
 }
 
 static void handle_hlpopt(optflg_t *of, optval_t *ov, const char *arg) {

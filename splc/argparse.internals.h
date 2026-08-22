@@ -37,6 +37,8 @@ static arghandler_t handle_dbgopt;
 static arghandler_t handle_dmpopt;
 static arghandler_t handle_tgtopt;
 static arghandler_t handle_drnopt;
+static arghandler_t handle_pdtopt;
+static arghandler_t handle_wrnopt;
 static arghandler_t handle_hlpopt;
 static arghandler_t handle_vsnopt;
 
