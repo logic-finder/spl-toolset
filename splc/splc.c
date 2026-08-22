@@ -80,6 +80,8 @@ int main(int argc, const char *argv[]) {
    // safe_vprintf(" " Cgreen "done!" Creset "\n");
 
    /* Cleanup */
+   free(cctx.of);
+   free(cctx.ov);
    tree_post_traverse(cctx.pt, cleanup_node, 0, NULL);
    tree_prune(cctx.pt);
    unloadfl(cctx.ls, cctx.lc);
