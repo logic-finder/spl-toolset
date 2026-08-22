@@ -51,7 +51,5 @@ static const char *warnmsg =
 
 const char *stdopt_spl01 = "spl01";
 const char *stdopt_cor27 = "cor27";
-const char *stdopt = "std";
-const char *outopt = "o";
 
 #endif

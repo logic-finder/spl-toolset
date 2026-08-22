@@ -153,14 +153,6 @@ static void parse_longop(optflg_t *of, optval_t *ov, const char *arg) {
 static void handle_hlpopt(optflg_t *of, optval_t *ov, const char *arg) {
    (void) ov, (void) arg;
 
-   if (of->dmp) ERR("-S with -h");
-   if (of->vbs) ERR("--verbose with -h");
-   if (of->kwi) ERR("-k with -h");
-   if (of->lng) ERR("--lang with -h");
-   if (of->out) ERR("--ret with -h");
-   if (of->hlp) ERR("-h already seen");
-   if (of->vsn) ERR("-v with -h");
-
    of->hlp = true;
 }
 
@@ -172,32 +164,18 @@ static void handle_dbgopt(optflg_t *of, optval_t *ov, const char *arg) {
 
 static void handle_kwiopt(optflg_t *of, optval_t *ov, const char *arg) {
    (void) ov, (void) arg;
-   if (of->kwi) ERR("-k already seen");
-   if (of->hlp) ERR("-h with -k");
-   if (of->vsn) ERR("-v with -k");
+
    of->kwi = true;
 }
 
 static void handle_vsnopt(optflg_t *of, optval_t *ov, const char *arg) {
    (void) ov, (void) arg;
 
-   if (of->dmp) ERR("-S with -v");
-   if (of->vbs) ERR("--verbose with -v");
-   if (of->kwi) ERR("-k with -v");
-   if (of->lng) ERR("--lang with -v");
-   if (of->out) ERR("--ret with -v");
-   if (of->hlp) ERR("-h with -v");
-   if (of->vsn) ERR("-v already seen");
-
    of->vsn = true;
 }
 
 static void handle_dmpopt(optflg_t *of, optval_t *ov, const char *arg) {
    (void) ov, (void) arg;
-
-   if (of->dmp) ERR("-S already seen");
-   if (of->hlp) ERR("-h with -i");
-   if (of->vsn) ERR("-v with -i");
 
    of->dmp = true;
 }
@@ -209,14 +187,14 @@ static void handle_optopt(optflg_t *of, optval_t *ov, const char *arg) {
 }
 
 static void handle_drtopt(optflg_t *of, optval_t *ov, const char *arg) {
+   (void) ov, (void) arg;
 
+   of->drt = true;
 }
 
 static void handle_vbsopt(optflg_t *of, optval_t *ov, const char *arg) {
    (void) ov, (void) arg;
-   if (of->vbs) ERR("--verbose already seen");
-   if (of->hlp) ERR("-h with -d");
-   if (of->vsn) ERR("-v with -d");
+
    of->vbs = true;
 }
 
@@ -227,9 +205,7 @@ static void handle_drnopt(optflg_t *of, optval_t *ov, const char *arg) {
 }
 
 static void handle_outopt(optflg_t *of, optval_t *ov, const char *arg) {
-   if (of->out) ERR("--o already seen");
-   if (of->hlp) ERR("-h with --ret");
-   if (of->vsn) ERR("-v with --ret");
+   static const char *outopt = "o";
 
    arg += strlen(outopt);
 
@@ -244,11 +220,9 @@ static void handle_outopt(optflg_t *of, optval_t *ov, const char *arg) {
 }
 
 static void handle_stdopt(optflg_t *of, optval_t *ov, const char *arg) {
-   (void) ov, (void) arg;
+   static const char *stdopt = "std";
 
-   // TODO: arg check
-
-   arg += strlen("std");
+   arg += strlen(stdopt);
 
    if (arg[0] != '=') {
       VERR("there is no '=' after '--%s'", stdopt);
@@ -266,7 +240,7 @@ static void handle_stdopt(optflg_t *of, optval_t *ov, const char *arg) {
 }
 
 static void handle_lngopt(optflg_t *of, optval_t *ov, const char *arg) {
-   static const size_t lngopt_len = 4;  /* strlen("lang") = 4 */
+   static const char *lngopt = "lang";
    static const char *langs[] = {
       "en", "ko"
    };
@@ -274,14 +248,14 @@ static void handle_lngopt(optflg_t *of, optval_t *ov, const char *arg) {
 
    size_t i;
 
-   if (of->lng) ERR("--lang already seen");
-   if (of->hlp) ERR("-h with --lang");
-   if (of->vsn) ERR("-v with --lang");
+   arg += strlen(lngopt);
 
-   if (arg[lngopt_len] != '=')
-      ERR("there is no '=' between --lang and its value");
+   if (arg[0] != '=') {
+      VERR("there is no '=' after --%s", lngopt);
+   }
 
-   arg += lngopt_len + 1;
+   arg++;  /* skips '=' */
+
    for (i = 0; i < len; i++) {
       if (!strcmp(arg, langs[i])) {
          break;
@@ -302,11 +276,15 @@ static void handle_tgtopt(optflg_t *of, optval_t *ov, const char *arg) {
 }
 
 static void handle_asmblyopt(optflg_t *of, optval_t *ov, const char *arg) {
+   (void) ov, (void) arg;
 
+   of->asmbly = true;
 }
 
 static void handle_disasmopt(optflg_t *of, optval_t *ov, const char *arg) {
+   (void) ov, (void) arg;
 
+   of->disasm = true;
 }
 
 static void handle_pdtopt(optflg_t *of, optval_t *ov, const char *arg) {
@@ -317,8 +295,6 @@ static void handle_pdtopt(optflg_t *of, optval_t *ov, const char *arg) {
 
 static void handle_wrnopt(optflg_t *of, optval_t *ov, const char *arg) {
    (void) ov, (void) arg;
-
-   // TODO: arg check
 
    arg++;  /* skips 'W' */
 
