@@ -373,8 +373,8 @@ static bool parse_line_as_conseq(parse_ctx_t *pctx) {
       pctx->tok->run[0] = toupper(pctx->tok->run[0]);
    }
 
-   /* 'if' statement can't have an 'if' statement as a consequent */
-   if (1) {
+   /* the standard says 'if' statement can't have an 'if' statement as a consequent */
+   if (!strcmp(pctx->ov->std, stdopt_spl01)) {
       table = &stmt_hdlrs[1];
       tsiz--;
    }

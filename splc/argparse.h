@@ -20,14 +20,18 @@ struct optflg {
       w_kc: 1, /* --Wkeyword-case */
       tgt: 1,  /* --target */
       drn: 1,  /* --dry-run */
+      std: 1,  /* --std */
       hlp: 1,  /* --help */
       vsn: 1;  /* --version */
 };
 
 struct optval {
-   const char *ret, *lng, *src;
+   const char *ret, *lng, *src, *tgt, *std;
 };
 
 void parse_args(compile_ctx_t *cctx);
+
+const char *stdopt_spl01 = "spl01";
+const char *stdopt_cor27 = "cor27";
 
 #endif

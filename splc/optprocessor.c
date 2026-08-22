@@ -11,6 +11,7 @@ extern void process_opts(compile_ctx_t *cctx) {
    }
 
    activate_pdtopt(cctx->of);
+   default_stdopt(cctx);
 }
 
 static void validate_argc(int argc) {
@@ -29,4 +30,13 @@ static void activate_pdtopt(optflg_t *of) {
 
    of->w_kc = true;
    of->w_bp = true;
+}
+
+static void default_stdopt(compile_ctx_t *cctx) {
+   if (cctx->of->std) {
+      return;
+   }
+
+   cctx->of->std = true;
+   cctx->ov->std = stdopt_spl01;
 }

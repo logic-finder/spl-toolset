@@ -9,16 +9,22 @@ extern void parse_args(compile_ctx_t *cctx) {
 
       OPTIONS
          -e, --exe
-         -i, --keep-intermediate
-         -d, --describe
+         -i, --keep-intermediate // replaced by -S
+         -d, --describe // verbose?
          -k, --kawaii
+         -h,
+         -v
          -g,
          -O,
          -S,
+         --,
          --target=c
          --lang=(en|ko)
-         --ret=<name>
-         --dry-run  */
+         --ret=<name>  // -o로 대체
+         --dry-run
+         --pedantic
+         --std
+         --W  */
 
    const char *arg;
 
@@ -252,7 +258,7 @@ static void handle_wrnopt(optflg_t *of, optval_t *ov, const char *arg) {
 
    // TODO: arg check
 
-   arg++;
+   arg++;  /* skips 'W' */
 
    if (!strcmp(arg, "keyword-case"))
       of->w_kc = true;
@@ -261,6 +267,28 @@ static void handle_wrnopt(optflg_t *of, optval_t *ov, const char *arg) {
       of->w_bp = true;
    else {
       VERR("--W with a wrong value: %s", arg);
+   }
+}
+
+static void handle_stdopt(optflg_t *of, optval_t *ov, const char *arg) {
+   (void) ov, (void) arg;
+
+   // TODO: arg check
+
+   arg += strlen("std");
+
+   if (arg[0] != '=') {
+      ERR("there is no '=' after '--std'");
+   }
+
+   arg++;  /* skips '=' */
+
+   if (!strcmp(arg, stdopt_spl01) || !strcmp(arg, stdopt_cor27)) {
+      of->std = true;
+      ov->std = arg;
+   }
+   else {
+      VERR("--std with a wrong value: %s", arg);
    }
 }
 
