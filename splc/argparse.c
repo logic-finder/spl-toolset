@@ -116,6 +116,7 @@ static void parse_longop(optflg_t *of, optval_t *ov, const char *arg) {
       { "dry-run"           , handle_drnopt },
       { "pedantic"          , handle_pdtopt },
       { "W"                 , handle_wrnopt },
+      { "std"               , handle_stdopt },
       { "help"              , handle_hlpopt },
       { "version"           , handle_vsnopt }
    };
