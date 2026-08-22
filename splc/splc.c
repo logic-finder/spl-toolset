@@ -27,7 +27,7 @@ int main(int argc, const char *argv[]) {
       "\t(total " Cbwhite "%zu" Creset " tokens)\n",
       array_size(cctx.toks)
    );
-   // array_foreach(toks, print_token);
+   // array_foreach(cctx.toks, print_token);
 
    safe_fputs(stdout, ENPREFIX "parsing...");
    parse(&cctx);
@@ -35,17 +35,17 @@ int main(int argc, const char *argv[]) {
       "\t(total " Cbwhite "%zu" Creset " nodes)\n",
       count_tree_node(cctx.pt)
    );
-   // tree_pre_traverse(pt, print_node, 0, NULL);
+   tree_pre_traverse(cctx.pt, print_node, 0, NULL);
 
    safe_fputs(stdout, ENPREFIX "type-checking...");
    typecheck(&cctx);
    safe_vprintf(" " Cgreen "done!" Creset "\n");
-   // tree_pre_traverse(pt, print_node, 0, NULL);
+   // tree_pre_traverse(cctx.pt, print_node, 0, NULL);
 
    safe_fputs(stdout, ENPREFIX "context-checking...");
    ctxcheck(&cctx);
    safe_vprintf(" " Cgreen "done!" Creset "\n");
-   // tree_pre_traverse(pt, print_node, 0, NULL);
+   // tree_pre_traverse(cctx.pt, print_node, 0, NULL);
 
    safe_fputs(stdout, ENPREFIX "generating IR...");
    irgenerate(&cctx);
@@ -53,7 +53,7 @@ int main(int argc, const char *argv[]) {
       "\t(total " Cbwhite "%zu" Creset " nodes)\n",
       count_opcodes(cctx.irt)
    );
-   // tree_pre_traverse(irt, debug_print_irnode, 0, NULL);
+   // tree_pre_traverse(cctx.irt, debug_print_irnode, 0, NULL);
 
    if (cctx.of->opt) {
       safe_fputs(stdout, ENPREFIX "optimizing IR...");
@@ -62,7 +62,7 @@ int main(int argc, const char *argv[]) {
          "\t(total " Cbwhite "%zu" Creset " nodes)\n",
          count_opcodes(cctx.irt)
       );
-      // tree_pre_traverse(irt, debug_print_irnode, 0, NULL);
+      // tree_pre_traverse(cctx.irt, debug_print_irnode, 0, NULL);
    }
 
    if (cctx.of->dmp) irdump(&cctx);
@@ -72,7 +72,7 @@ int main(int argc, const char *argv[]) {
    }
    else {
       assemble(&cctx);
-      // tree_pre_traverse(irt, debug_print_irnode, 0, NULL);
+      // tree_pre_traverse(cctx.irt, debug_print_irnode, 0, NULL);
    }
 
    // safe_fputs(stdout, ENPREFIX "transpiling...");
