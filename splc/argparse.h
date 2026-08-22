@@ -6,7 +6,6 @@
 struct optflg {
    unsigned int
       exe: 1,  /* --exe */
-      imd: 1,  /* --keep-intermediate */
       dsc: 1,  /* --describe */
       kwi: 1,  /* --kawaii */
       lng: 1,  /* --lang */

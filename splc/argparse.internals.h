@@ -27,7 +27,6 @@ static void parse_shrtop(optflg_t *of, optval_t *ov, const char *arg);
 static void parse_longop(optflg_t *of, optval_t *ov, const char *arg);
 
 static arghandler_t handle_exeopt;
-static arghandler_t handle_imdopt;
 static arghandler_t handle_dscopt;
 static arghandler_t handle_kwiopt;
 static arghandler_t handle_lngopt;

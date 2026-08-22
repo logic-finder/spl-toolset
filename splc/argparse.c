@@ -9,7 +9,6 @@ extern void parse_args(compile_ctx_t *cctx) {
 
       OPTIONS
          -e, --exe
-         -i, --keep-intermediate // replaced by -S
          -d, --describe // verbose?
          -k, --kawaii
          -h,
@@ -77,7 +76,6 @@ static void parse_shrtop(optflg_t *of, optval_t *ov, const char *arg) {
    static const opt_t opts[] = {
    /*  .name    .handler   */
       { "e" , handle_exeopt },
-      { "i" , handle_imdopt },
       { "d" , handle_dscopt },
       { "k" , handle_kwiopt },
       { "g" , handle_dbgopt },
@@ -111,19 +109,18 @@ static void parse_shrtop(optflg_t *of, optval_t *ov, const char *arg) {
 
 static void parse_longop(optflg_t *of, optval_t *ov, const char *arg) {
    static const opt_t opts[] = {
-      { "exe"               , handle_exeopt },
-      { "keep-intermediate" , handle_imdopt },
-      { "describe"          , handle_dscopt },
-      { "kawaii"            , handle_kwiopt },
-      { "target"            , handle_tgtopt },
-      { "lang"              , handle_lngopt },
-      { "o"                 , handle_outopt },
-      { "dry-run"           , handle_drnopt },
-      { "pedantic"          , handle_pdtopt },
-      { "W"                 , handle_wrnopt },
-      { "std"               , handle_stdopt },
-      { "help"              , handle_hlpopt },
-      { "version"           , handle_vsnopt }
+      { "exe"      , handle_exeopt },
+      { "describe" , handle_dscopt },
+      { "kawaii"   , handle_kwiopt },
+      { "target"   , handle_tgtopt },
+      { "lang"     , handle_lngopt },
+      { "o"        , handle_outopt },
+      { "dry-run"  , handle_drnopt },
+      { "pedantic" , handle_pdtopt },
+      { "W"        , handle_wrnopt },
+      { "std"      , handle_stdopt },
+      { "help"     , handle_hlpopt },
+      { "version"  , handle_vsnopt }
    };
    static const size_t opts_len = ARRLEN(opts);
 
@@ -154,14 +151,6 @@ static void handle_exeopt(optflg_t *of, optval_t *ov, const char *arg) {
    if (of->hlp) ERR("-h with -e");
    if (of->vsn) ERR("-v with -e");
    of->exe = true;
-}
-
-static void handle_imdopt(optflg_t *of, optval_t *ov, const char *arg) {
-   (void) ov, (void) arg;
-   if (of->imd) ERR("-i already seen");
-   if (of->hlp) ERR("-h with -i");
-   if (of->vsn) ERR("-v with -i");
-   of->imd = true;
 }
 
 static void handle_dscopt(optflg_t *of, optval_t *ov, const char *arg) {
@@ -242,6 +231,10 @@ static void handle_dbgopt(optflg_t *of, optval_t *ov, const char *arg) {
 static void handle_dmpopt(optflg_t *of, optval_t *ov, const char *arg) {
    (void) ov, (void) arg;
 
+   if (of->dmp) ERR("-S already seen");
+   if (of->hlp) ERR("-h with -i");
+   if (of->vsn) ERR("-v with -i");
+
    of->dmp = true;
 }
 
@@ -306,7 +299,7 @@ static void handle_hlpopt(optflg_t *of, optval_t *ov, const char *arg) {
    (void) ov, (void) arg;
 
    if (of->exe) ERR("-e with -h");
-   if (of->imd) ERR("-i with -h");
+   if (of->dmp) ERR("-S with -h");
    if (of->dsc) ERR("-d with -h");
    if (of->kwi) ERR("-k with -h");
    if (of->lng) ERR("--lang with -h");
@@ -321,7 +314,7 @@ static void handle_vsnopt(optflg_t *of, optval_t *ov, const char *arg) {
    (void) ov, (void) arg;
 
    if (of->exe) ERR("-e with -v");
-   if (of->imd) ERR("-i with -v");
+   if (of->dmp) ERR("-S with -v");
    if (of->dsc) ERR("-d with -v");
    if (of->kwi) ERR("-k with -v");
    if (of->lng) ERR("--lang with -v");
