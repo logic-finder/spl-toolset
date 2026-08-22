@@ -5,7 +5,7 @@ extern void lex(compile_ctx_t *cctx) {
    lex_ctx_t lctx;
    int ret;
 
-   lctx.toks = array_create();
+   lctx.toks = array_create(destruct_tok);
    lctx.ls = cctx->ls;
    lctx.lc = cctx->lc;
    lctx.lnum = 0;
@@ -44,6 +44,15 @@ cleanup:
 
    cctx->toks = lctx.toks;
    return;
+}
+
+static void destruct_tok(void *item, size_t idx) {
+   token_t *tok;
+
+   (void) idx;
+
+   tok = item;
+   free(tok->run);
 }
 
 static inline void iterate_lines(lex_ctx_t *lctx) {

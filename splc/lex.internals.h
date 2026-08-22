@@ -41,6 +41,7 @@ struct tag_lex_ctx_t {
 /*=====================*
  | FUNCTION PROTOTYPES |
  *=====================*/
+static void destruct_tok(void *item, size_t idx);
 
 /* Character Handling */
 static void skip_space(lex_ctx_t *lctx);
