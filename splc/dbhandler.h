@@ -14,4 +14,7 @@ querier_rec_A query_adj;
 querier_rec_B query_noun;
 querier_rec_B query_comp;
 
+querier_rec_A query_adj_lower;
+querier_rec_B query_comp_lower;
+
 #endif

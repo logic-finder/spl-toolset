@@ -85,7 +85,7 @@ static void parse_dp(parse_ctx_t *pctx) {
 }
 
 static int seek_act(parse_ctx_t *pctx) {
-   return strcmp(pctx->tok->run, KEYWRD_ACT) ? 0 : 1;
+   return strcasecmp(pctx->tok->run, KEYWRD_ACT) ? 0 : 1;
 }
 
 static void parse_act(parse_ctx_t *pctx) {
@@ -111,7 +111,7 @@ static void parse_act(parse_ctx_t *pctx) {
 }
 
 static int seek_scene(parse_ctx_t *pctx) {
-   return strcmp(pctx->tok->run, KEYWRD_SCENE) ? 0 : 1;
+   return strcasecmp(pctx->tok->run, KEYWRD_SCENE) ? 0 : 1;
 }
 
 static void parse_scene(parse_ctx_t *pctx) {
@@ -206,7 +206,7 @@ static int seek_enterlike(parse_ctx_t *pctx, const char *type) {
 
    gettok(pctx);
 
-   if (strcmp(pctx->tok->run, type)) {
+   if (strcasecmp(pctx->tok->run, type)) {
       return 0;
    }
 
@@ -355,7 +355,7 @@ static bool parse_line_as_conseq(parse_ctx_t *pctx) {
 }
 
 static int seek_if(parse_ctx_t *pctx) {
-   return strcmp(pctx->tok->run, KEYWRD_IF) ? 0 : 1;
+   return strcasecmp(pctx->tok->run, KEYWRD_IF) ? 0 : 1;
 }
 
 static void parse_if(parse_ctx_t *pctx) {
@@ -366,11 +366,11 @@ static void parse_if(parse_ctx_t *pctx) {
    pctx->reason = msgs.err.syn.ifstmt.incomp;
    gettok(pctx);
 
-   if (!strcmp(pctx->tok->run, KEYWRD_SO)) {
+   if (!strcasecmp(pctx->tok->run, KEYWRD_SO)) {
       graft_tree_n(ifstmt, 0, NODEKIND_AFFIRM, pctx->tok);
    }
    else
-   if (!strcmp(pctx->tok->run, KEYWRD_NOT)) {
+   if (!strcasecmp(pctx->tok->run, KEYWRD_NOT)) {
       graft_tree_n(ifstmt, 0, NODEKIND_NEGATE, pctx->tok);
    }
    else {
@@ -399,11 +399,11 @@ static void parse_if(parse_ctx_t *pctx) {
 }
 
 static int seek_asgn(parse_ctx_t *pctx) {
-   if (!strcmp(pctx->tok->run, KEYWRD_YOU)) {
+   if (!strcasecmp(pctx->tok->run, KEYWRD_YOU)) {
       return 1;
    }
 
-   if (!strcmp(pctx->tok->run, KEYWRD_THOU)) {
+   if (!strcasecmp(pctx->tok->run, KEYWRD_THOU)) {
       return 1;
    }
 
@@ -412,14 +412,14 @@ static int seek_asgn(parse_ctx_t *pctx) {
 
 static int seek_out(parse_ctx_t *pctx) {
    /* Speak your mind! */
-   if (!strcmp(pctx->tok->run, KEYWRD_SPEAK)) {
+   if (!strcasecmp(pctx->tok->run, KEYWRD_SPEAK)) {
       return 1;
    }
 
    /* Open your heart! */
-   if (!strcmp(pctx->tok->run, KEYWRD_OPEN)) {
+   if (!strcasecmp(pctx->tok->run, KEYWRD_OPEN)) {
       gettokn(pctx, 2);  /* skips "your" */
-      if (strcmp(pctx->tok->run, KEYWRD_HEART)) {
+      if (strcasecmp(pctx->tok->run, KEYWRD_HEART)) {
          return 0;
       }
       ungettokn(pctx, 2);
@@ -447,7 +447,7 @@ static void parse_asgn(parse_ctx_t *pctx) {
    if (is_be_conjs(pctx)) {  /* type 2 or 3 */
       gettok(pctx);
 
-      if (!strcmp(pctx->tok->run, "as")) {
+      if (!strcasecmp(pctx->tok->run, KEYWRD_AS)) {
          asgn = parse_asgn_ii(pctx, you);  /* type 2 */
       }
       else {
@@ -480,7 +480,7 @@ static tree_t *parse_asgn_ii(parse_ctx_t *pctx, token_t *you) {
    pctx->reason = msgs.err.syn.asgn.incomp;
    gettok(pctx);
 
-   if (!query_adj(pctx->tok->run)) {
+   if (!query_adj_lower(pctx->tok->run)) {
       pctx->reason = msgs.err.syn.asgn.not_adj;
       synerr(pctx);
    }
@@ -488,7 +488,7 @@ static tree_t *parse_asgn_ii(parse_ctx_t *pctx, token_t *you) {
    pctx->reason = msgs.err.syn.asgn.incomp;
    gettok(pctx);
 
-   if (strcmp(pctx->tok->run, "as")) {
+   if (strcasecmp(pctx->tok->run, KEYWRD_AS)) {
       pctx->reason = msgs.err.syn.asgn.not_as;
       synerr(pctx);
    }
@@ -505,7 +505,7 @@ static void parse_out(parse_ctx_t *pctx) {
    nodekind_t kind;
    bool test1, test2, test3;
 
-   if (!strcmp(pctx->tok->run, KEYWRD_OPEN)) {
+   if (!strcasecmp(pctx->tok->run, KEYWRD_OPEN)) {
       kind = NODEKIND_OUT_N;
    }
    else {  /* Speak */
@@ -517,10 +517,9 @@ static void parse_out(parse_ctx_t *pctx) {
    pctx->reason = msgs.err.syn.out.incomp;
    gettok(pctx);
 
-   test1 = !strcmp(pctx->tok->run, KEYWRD_YOUR)
-      || !strcmp(pctx->tok->run, KEYWRD_YOUR_U)
-      || !strcmp(pctx->tok->run, "thine")
-      || !strcmp(pctx->tok->run, KEYWRD_THY);
+   test1 = !strcasecmp(pctx->tok->run, KEYWRD_YOUR)
+      || !strcasecmp(pctx->tok->run, KEYWRD_THINE)
+      || !strcasecmp(pctx->tok->run, KEYWRD_THY);
 
    if (!test1) {
       pctx->reason = msgs.err.syn.out.badsyn;
@@ -529,8 +528,8 @@ static void parse_out(parse_ctx_t *pctx) {
 
    gettok(pctx);
 
-   test2 = (kind == NODEKIND_OUT_N) && (!strcmp(pctx->tok->run, KEYWRD_MIND));
-   test3 = (kind == NODEKIND_OUT_C) && (!strcmp(pctx->tok->run, KEYWRD_HEART));
+   test2 = (kind == NODEKIND_OUT_N) && (!strcasecmp(pctx->tok->run, KEYWRD_MIND));
+   test3 = (kind == NODEKIND_OUT_C) && (!strcasecmp(pctx->tok->run, KEYWRD_HEART));
 
    if (test2 || test3) {
       pctx->reason = msgs.err.syn.out.unmatched;
@@ -547,14 +546,14 @@ static void parse_out(parse_ctx_t *pctx) {
 
 static int seek_in(parse_ctx_t *pctx) {
    /* Listen to your heart! */
-   if (!strcmp(pctx->tok->run, "Listen")) {
+   if (!strcasecmp(pctx->tok->run, KEYWRD_LISTEN)) {
       return 1;
    }
 
    /* Open your mind! */
-   if (!strcmp(pctx->tok->run, "Open")) {
+   if (!strcasecmp(pctx->tok->run, KEYWRD_OPEN)) {
       gettokn(pctx, 2);  /* skips "your" */
-      if (strcmp(pctx->tok->run, "mind")) {
+      if (strcasecmp(pctx->tok->run, KEYWRD_MIND)) {
          return 0;
       }
       ungettokn(pctx, 2);
@@ -568,7 +567,7 @@ static void parse_in(parse_ctx_t *pctx) {
    nodekind_t kind;
    bool test1, test2, test3;
 
-   if (!strcmp(pctx->tok->run, KEYWRD_LISTEN)) {
+   if (!strcasecmp(pctx->tok->run, KEYWRD_LISTEN)) {
       kind = NODEKIND_IN_N;
    }
    else  { /* Open */
@@ -580,7 +579,7 @@ static void parse_in(parse_ctx_t *pctx) {
 
    if (kind == NODEKIND_IN_N) {
       gettok(pctx);
-      if (strcmp(pctx->tok->run, KEYWRD_TO)) {
+      if (strcasecmp(pctx->tok->run, KEYWRD_TO)) {
          pctx->reason = msgs.err.syn.in.badsyn;
          synerr(pctx);
       }
@@ -588,10 +587,9 @@ static void parse_in(parse_ctx_t *pctx) {
 
    gettok(pctx);
 
-   test1 = !strcmp(pctx->tok->run, KEYWRD_YOUR)
-      || !strcmp(pctx->tok->run, KEYWRD_YOUR_U)
-      || !strcmp(pctx->tok->run, "thine")
-      || !strcmp(pctx->tok->run, "thy");
+   test1 = !strcasecmp(pctx->tok->run, KEYWRD_YOUR)
+      || !strcasecmp(pctx->tok->run, KEYWRD_THINE)
+      || !strcasecmp(pctx->tok->run, KEYWRD_THY);
 
    if (!test1) {
       pctx->reason = msgs.err.syn.in.badsyn;
@@ -600,8 +598,8 @@ static void parse_in(parse_ctx_t *pctx) {
 
    gettok(pctx);
 
-   test2 = (kind == NODEKIND_OUT_N) && (!strcmp(pctx->tok->run, KEYWRD_MIND));
-   test3 = (kind == NODEKIND_OUT_C) && (!strcmp(pctx->tok->run, KEYWRD_HEART));
+   test2 = (kind == NODEKIND_OUT_N) && (!strcasecmp(pctx->tok->run, KEYWRD_MIND));
+   test3 = (kind == NODEKIND_OUT_C) && (!strcasecmp(pctx->tok->run, KEYWRD_HEART));
 
    if (test2 || test3) {
       pctx->reason = msgs.err.syn.in.unmatched;
@@ -617,7 +615,7 @@ static void parse_in(parse_ctx_t *pctx) {
 }
 
 static int seek_goto(parse_ctx_t *pctx) {
-   if (strcmp(pctx->tok->run, KEYWRD_LET) && strcmp(pctx->tok->run, KEYWRD_WE)) {
+   if (strcasecmp(pctx->tok->run, KEYWRD_LET) && strcasecmp(pctx->tok->run, KEYWRD_WE)) {
       return 0;
    }
    return 1;
@@ -629,7 +627,7 @@ static void parse_goto(parse_ctx_t *pctx) {
    bool test1, test2, test3, test4;
    tree_t *gt;
 
-   if (!strcmp(pctx->tok->run, KEYWRD_LET)) {
+   if (!strcasecmp(pctx->tok->run, KEYWRD_LET)) {
       type = GototypeLet;
    }
    else {  /* we */
@@ -639,9 +637,9 @@ static void parse_goto(parse_ctx_t *pctx) {
    pctx->reason = msgs.err.syn.gt.incomp;
    gettok(pctx);
 
-   test1 = !strcmp(pctx->tok->run, KEYWRD_US);
-   test2 = !strcmp(pctx->tok->run, KEYWRD_SHALL)
-           || !strcmp(pctx->tok->run, KEYWRD_MUST);
+   test1 = !strcasecmp(pctx->tok->run, KEYWRD_US);
+   test2 = !strcasecmp(pctx->tok->run, KEYWRD_SHALL)
+           || !strcasecmp(pctx->tok->run, KEYWRD_MUST);
 
    if (!test1 && !test2) {
       pctx->reason = msgs.err.syn.gt.badsyn;
@@ -658,8 +656,8 @@ static void parse_goto(parse_ctx_t *pctx) {
 
    gettok(pctx);
 
-   test3 = strcmp(pctx->tok->run, KEYWRD_RETURN);
-   test4 = strcmp(pctx->tok->run, KEYWRD_PROCED);
+   test3 = strcasecmp(pctx->tok->run, KEYWRD_RETURN);
+   test4 = strcasecmp(pctx->tok->run, KEYWRD_PROCED);
 
    if (test3 && test4) {
       pctx->reason = msgs.err.syn.gt.badsyn;
@@ -668,18 +666,18 @@ static void parse_goto(parse_ctx_t *pctx) {
 
    gettok(pctx);
 
-   if (strcmp(pctx->tok->run, KEYWRD_TO)) {
+   if (strcasecmp(pctx->tok->run, KEYWRD_TO)) {
       pctx->reason = msgs.err.syn.gt.badsyn;
       synerr(pctx);
    }
 
    gettok(pctx);
 
-   if (!strcmp(pctx->tok->run, KEYWRD_ACT_L)) {
+   if (!strcasecmp(pctx->tok->run, KEYWRD_ACT)) {
       dest = NODEKIND_ACT;
    }
    else
-   if (!strcmp(pctx->tok->run, KEYWRD_SCENE_L)) {
+   if (!strcasecmp(pctx->tok->run, KEYWRD_SCENE)) {
       dest = NODEKIND_SCENE;
    }
    else {
@@ -765,7 +763,7 @@ static void parse_cond(parse_ctx_t *pctx) {
          Art thou [not] more cunning than the Ghost? */
    }
 
-   if (!strcmp(pctx->tok->run, KEYWRD_NOT)) {
+   if (!strcasecmp(pctx->tok->run, KEYWRD_NOT)) {
       graft_tree_n(condition, 0, NODEKIND_NEGATE, pctx->tok);
       pctx->reason = msgs.err.syn.cond.incomp;
       gettok(pctx);
@@ -776,7 +774,7 @@ static void parse_cond(parse_ctx_t *pctx) {
    else
       graft_tree_n(condition, 0, NODEKIND_AFFIRM, pctx->tok);
 
-   if (!strcmp(pctx->tok->run, KEYWRD_AS)) {
+   if (!strcasecmp(pctx->tok->run, KEYWRD_AS)) {
       parse_cond_eq(pctx, condition);
       /* Is a tree not as good [as] a shiny tree? */
    }
@@ -809,14 +807,14 @@ static void parse_cond_eq(parse_ctx_t *pctx, tree_t *cond) {
    gettok(pctx);
    /* Is a tree not as good [as] a shiny tree? */
 
-   if (strcmp(pctx->tok->run, KEYWRD_AS)) {
+   if (strcasecmp(pctx->tok->run, KEYWRD_AS)) {
       pctx->reason = msgs.err.syn.cond.badsyn;
       synerr(pctx);
    }
 }
 
 static void parse_cond_ineq(parse_ctx_t *pctx, tree_t *cond) {
-   static const char *comps[2] = { "more", "less" };
+   static const char *comps[2] = { KEYWRD_MORE, KEYWRD_LESS };
    static const int comps_len = ARRLEN(comps);
 
    int ret;
@@ -825,7 +823,7 @@ static void parse_cond_ineq(parse_ctx_t *pctx, tree_t *cond) {
    /* Art thou not [more] cunning than the Ghost?
       Am I not [better] than yourself? */
 
-   ret = match_str(pctx->tok->run, comps, comps_len);
+   ret = match_str_case(pctx->tok->run, comps, comps_len);
 
    /* like "more beautiful" or "less interesting" */
    if (ret < comps_len) {
@@ -857,14 +855,14 @@ static void parse_cond_ineq(parse_ctx_t *pctx, tree_t *cond) {
    /* Am I not better [than] yourself?
       Art thou not more cunning [than] the Ghost? */
 
-   if (strcmp(pctx->tok->run, KEYWRD_THAN)) {
+   if (strcasecmp(pctx->tok->run, KEYWRD_THAN)) {
       pctx->reason = msgs.err.syn.cond.badsyn;
       synerr(pctx);
    }
 }
 
 static int seek_push(parse_ctx_t *pctx) {
-   return strcmp(pctx->tok->run, KEYWRD_REMEMB) ? 0 : 1;
+   return strcasecmp(pctx->tok->run, KEYWRD_REMEMB) ? 0 : 1;
 }
 
 static void parse_push(parse_ctx_t *pctx) {
@@ -891,7 +889,7 @@ static void parse_push(parse_ctx_t *pctx) {
 }
 
 static int seek_pop(parse_ctx_t *pctx) {
-   return strcmp(pctx->tok->run, KEYWRD_RECALL) ? 0 : 1;
+   return strcasecmp(pctx->tok->run, KEYWRD_RECALL) ? 0 : 1;
 }
 
 static void parse_pop(parse_ctx_t *pctx) {
@@ -926,14 +924,14 @@ static void parse_namelist(parse_ctx_t *pctx, tree_t *t) {
       gettok(pctx);
       if (pctx->tok->run[0] == ']')
          return;
-      if (!strcmp(pctx->tok->run, "and"))
+      if (!strcasecmp(pctx->tok->run, KEYWRD_AND))
          break;
       if (pctx->tok->run[0] != ',') {
          pctx->reason = ", expected here";
          synerr(pctx);
       }
       gettok(pctx);
-      if (!strcmp(pctx->tok->run, "and"))
+      if (!strcasecmp(pctx->tok->run, KEYWRD_AND))
          break;
       ungettok(pctx);
    } while (true);
@@ -1046,7 +1044,7 @@ static void parse_const(parse_ctx_t *pctx, tree_t *stmt) {
 
    /* Consumes adjectives first */
    for (;;) {
-      if (!query_adj(pctx->tok->run))
+      if (!query_adj_lower(pctx->tok->run))
          break;
       graft_tree_s(cnst, NODEKIND_ADJ, pctx->tok);
       gettok(pctx);
@@ -1141,11 +1139,11 @@ static nodekind_t seek_op(parse_ctx_t *pctx) {
    nodekind_t k;
 
    /* twice operator? */
-   if (!strcmp(pctx->tok->run, "twice"))
+   if (!strcasecmp(pctx->tok->run, KEYWRD_2X))
       return NODEKIND_2X;
 
    /* not begins with "the"? then it's not an operator */
-   if (strcmp(pctx->tok->run, "the"))
+   if (strcasecmp(pctx->tok->run, KEYWRD_THE))
       return NODEKIND__NAO;
 
    pctx->reason = msgs.err.syn.cnst.incomp;
@@ -1153,7 +1151,7 @@ static nodekind_t seek_op(parse_ctx_t *pctx) {
 
    k = NODEKIND__NAO;
    for (size_t i = 0; i < ops_len; i++)
-      if (!strcmp(pctx->tok->run, ops[i].name)) {
+      if (!strcasecmp(pctx->tok->run, ops[i].name)) {
          k = ops[i].kind;
          break;
       }
@@ -1171,7 +1169,7 @@ static nodekind_t seek_op(parse_ctx_t *pctx) {
 
    /* to be a square or to be a square root? that's the question */
    gettok(pctx);
-   if (!strcmp(pctx->tok->run, KEYWRD_ROOT))
+   if (!strcasecmp(pctx->tok->run, KEYWRD_ROOT))
       k = NODEKIND_SQRT;
    else ungettok(pctx);
 
@@ -1213,7 +1211,7 @@ static void parse_op_unary(
    pctx->reason = msgs.err.syn.op.incomp;
    gettok(pctx);
 
-   if (strcmp(pctx->tok->run, "of")) {
+   if (strcasecmp(pctx->tok->run, KEYWRD_OF)) {
       pctx->reason = err;
       synerr(pctx);
    }
@@ -1238,7 +1236,7 @@ static void parse_op_binary(
       the quotient BETWEEN L and R
       the remainder OF the quotient BETWEEN L and R */
 
-   if (strcmp(pctx->tok->run, type)) {
+   if (strcasecmp(pctx->tok->run, type)) {
       pctx->reason = err;
       synerr(pctx);
    }
@@ -1246,7 +1244,7 @@ static void parse_op_binary(
    lefthand = graft_tree_n(op, 0, NODEKIND_LHS, pctx->tok);
    parse_const(pctx, lefthand);
 
-   if (strcmp(pctx->tok->run, KEYWRD_AND)) {
+   if (strcasecmp(pctx->tok->run, KEYWRD_AND)) {
       pctx->reason = msgs.err.syn.op.no_and;
       synerr(pctx);
    }
@@ -1278,21 +1276,21 @@ static inline void parse_op_rem(parse_ctx_t *pctx, tree_t *op) {
    pctx->reason = msgs.err.syn.op.incomp;
    gettok(pctx);
 
-   if (strcmp(pctx->tok->run, KEYWRD_OF)) {
+   if (strcasecmp(pctx->tok->run, KEYWRD_OF)) {
       pctx->reason = msgs.err.syn.op.rem;
       synerr(pctx);
    }
 
    gettok(pctx);
 
-   if (strcmp(pctx->tok->run, KEYWRD_THE)) {
+   if (strcasecmp(pctx->tok->run, KEYWRD_THE)) {
       pctx->reason = msgs.err.syn.op.rem_quot_1;
       synerr(pctx);
    }
 
    gettok(pctx);
 
-   if (strcmp(pctx->tok->run, KEYWRD_QUOT)) {
+   if (strcasecmp(pctx->tok->run, KEYWRD_QUOT)) {
       pctx->reason = msgs.err.syn.op.rem_quot_2;
       synerr(pctx);
    }
@@ -1320,69 +1318,70 @@ static inline void parse_op_fact(parse_ctx_t *pctx, tree_t *op) {
    parse_op_unary(pctx, op, msgs.err.syn.op.fact);
 }
 
-// TODO: refactor is_xxx: (1) use macro (2) use lowercase
 static bool is_pronoun(const char *str) {
    static const char *pronouns[] = {
-      "I", "me", "thee", "thou", "you", NULL
+      KEYWRD_I, KEYWRD_ME, KEYWRD_THEE, KEYWRD_THOU, KEYWRD_YOU, NULL
    };
 
    for (size_t i = 0; pronouns[i]; i++)
-      if (!strcmp(str, pronouns[i]))
+      if (!strcasecmp(str, pronouns[i]))
          return true;
    return false;
 }
 
 static bool is_reflexive(const char *str) {
    static const char *reflexives[] = {
-      "myself", "thyself", "yourself", NULL
+      KEYWRD_MYSELF, KEYWRD_TYSELF, KEYWRD_YRSELF, NULL
    };
 
    for (size_t i = 0; reflexives[i]; i++)
-      if (!strcmp(str, reflexives[i]))
+      if (!strcasecmp(str, reflexives[i]))
          return true;
    return false;
 }
 
 static bool is_nil(const char *str) {
    static const char *nils[] = {
-      "nothing", "zero", NULL
+      KEYWRD_NOTHING, KEYWRD_ZERO, NULL
    };
 
    for (size_t i = 0; nils[i]; i++)
-      if (!strcmp(str, nils[i]))
+      if (!strcasecmp(str, nils[i]))
          return true;
    return false;
 }
 
 static bool is_article(const char *str) {
    static const char *articles[] = {
-      "a", "an", "the", NULL
+      KEYWRD_A, KEYWRD_AN, KEYWRD_THE, NULL
    };
 
    for (size_t i = 0; articles[i]; i++)
-      if (!strcmp(str, articles[i]))
+      if (!strcasecmp(str, articles[i]))
          return true;
    return false;
 }
 
 static bool is_possessive(const char *str) {
    static const char *possessives[] = {
-      "mine", "my", "thine", "thy", "your", "his", "her", "its", "theirs", NULL
+      KEYWRD_MINE, KEYWRD_MY,
+      KEYWRD_THINE, KEYWRD_THY, KEYWRD_YOUR,
+      KEYWRD_HIS, KEYWRD_HER, KEYWRD_ITS, KEYWRD_THEIR, NULL
    };
 
    for (size_t i = 0; possessives[i]; i++)
-      if (!strcmp(str, possessives[i]))
+      if (!strcasecmp(str, possessives[i]))
          return true;
    return false;
 }
 
 static nodekind_t what_pronoun(const char *str) {
-   if (!strcmp(str, "I") || !strcmp(str, "me"))
+   if (!strcasecmp(str, KEYWRD_I) || !strcasecmp(str, KEYWRD_ME))
       return NODEKIND_P1;
 
-   if (!strcmp(str, "thee")
-      || !strcmp(str, "thou")
-      || !strcmp(str, "you"))
+   if (!strcasecmp(str, KEYWRD_THEE)
+      || !strcasecmp(str, KEYWRD_THOU)
+      || !strcasecmp(str, KEYWRD_YOU))
       return NODEKIND_P2;
 
    /* control never reaches here */
@@ -1390,10 +1389,10 @@ static nodekind_t what_pronoun(const char *str) {
 }
 
 static nodekind_t what_reflexive(const char *str) {
-   if (!strcmp(str, "myself"))
+   if (!strcasecmp(str, KEYWRD_MYSELF))
       return NODEKIND_P1;
 
-   if (!strcmp(str, "thyself") || !strcmp(str, "yourself"))
+   if (!strcasecmp(str, KEYWRD_TYSELF) || !strcasecmp(str, KEYWRD_YRSELF))
       return NODEKIND_P2;
 
    /* control never reaches here */
@@ -1405,12 +1404,12 @@ static void check_const_end(parse_ctx_t *pctx) {
    gettok(pctx);
 
    if (strchr(".!?", pctx->tok->run[0])
-      || !strcmp(pctx->tok->run, "not")
-      || !strcmp(pctx->tok->run, "as")
-      || !strcmp(pctx->tok->run, "more")
-      || !strcmp(pctx->tok->run, "less")
-      || !strcmp(pctx->tok->run, "and")
-      || query_comp(pctx->tok->run, NULL))
+      || !strcasecmp(pctx->tok->run, KEYWRD_NOT)
+      || !strcasecmp(pctx->tok->run, KEYWRD_AS)
+      || !strcasecmp(pctx->tok->run, KEYWRD_MORE)
+      || !strcasecmp(pctx->tok->run, KEYWRD_LESS)
+      || !strcasecmp(pctx->tok->run, KEYWRD_AND)
+      || query_comp_lower(pctx->tok->run, NULL))
    {
       return;
    }
@@ -1498,26 +1497,26 @@ static bool is_be_conjs(parse_ctx_t *pctx) {  /* conjs = conjugations */
    };
    static const size_t conjs_len = ARRLEN(conjs);
 
-   pctx->be_kind = match_str(pctx->tok->run, conjs, conjs_len);
+   pctx->be_kind = match_str_case(pctx->tok->run, conjs, conjs_len);
 
    return (pctx->be_kind < conjs_len) ? true : false;
 }
 
 static void check_predicate(parse_ctx_t *pctx) {
    static const char *cond_subjs[] = {
-      KEYWRD_I, KEYWRD_YOU_L, KEYWRD_THOU_L
+      KEYWRD_I, KEYWRD_YOU, KEYWRD_THOU
    };
    static const size_t cond_subjs_len = ARRLEN(cond_subjs);
 
    switch (pctx->be_kind) {
-      case 0 : if (strcmp(pctx->tok->run, KEYWRD_I))
+      case 0 : if (strcasecmp(pctx->tok->run, KEYWRD_I))
                   goto hell; else break;
-      case 1 : if (strcmp(pctx->tok->run, KEYWRD_YOU_L))
+      case 1 : if (strcasecmp(pctx->tok->run, KEYWRD_YOU))
                   goto hell; else break;
-      case 2 : if (strcmp(pctx->tok->run, KEYWRD_THOU_L))
+      case 2 : if (strcasecmp(pctx->tok->run, KEYWRD_THOU))
                   goto hell; else break;
       /* i.e. check if "Is (I, you, thou)" */
-      case 3 : if (match_str(pctx->tok->run, cond_subjs, cond_subjs_len) < cond_subjs_len)
+      case 3 : if (match_str_case(pctx->tok->run, cond_subjs, cond_subjs_len) < cond_subjs_len)
                   goto hell; else break;
       hell: /* FLAMING HOT */
          pctx->reason = msgs.err.syn.cond.not_conj;

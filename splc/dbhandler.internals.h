@@ -7,6 +7,7 @@
 #include "fatal.h"
 #include "common.h"
 #include "global.h"
+#include "strutils.h"
 #include "array.adt.h"
 #include "wrappers.h"
 #include "db.common.h"

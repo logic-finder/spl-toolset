@@ -24,29 +24,37 @@ extern void dbunload(void) {
 }
 
 extern bool query_name(const char *key) {
-   void *record = bsearch(
+   void *record;
+
+   record = bsearch(
       key,
       sects[SECTKIND_NAME],
       ecnts[SECTKIND_NAME],
       NAME_DTSIZ,
       compare_rec_A
    );
+
    return record ? true : false;
 }
 
 extern bool query_adj(const char *key) {
-   void *record = bsearch(
+   void *record;
+
+   record = bsearch(
       key,
       sects[SECTKIND_ADJ],
       ecnts[SECTKIND_ADJ],
       ADJ_DTSIZ,
       compare_rec_A
    );
+
    return record ? true : false;
 }
 
 extern bool query_noun(const char *key, int *ret) {
-   void *record = bsearch(
+   void *record;
+
+   record = bsearch(
       key,
       sects[SECTKIND_NOUN],
       ecnts[SECTKIND_NOUN],
@@ -63,7 +71,9 @@ extern bool query_noun(const char *key, int *ret) {
 }
 
 extern bool query_comp(const char *key, int *ret) {
-   void *record = bsearch(
+   void *record;
+
+   record = bsearch(
       key,
       sects[SECTKIND_COMP],
       ecnts[SECTKIND_COMP],
@@ -77,6 +87,28 @@ extern bool query_comp(const char *key, int *ret) {
    if (ret)
       *ret = ((char *) record)[0];
    return true;
+}
+
+extern bool query_adj_lower(const char *key) {
+   char *tmp;
+   bool query_status;
+
+   tmp = tolower_str(key);
+   query_status = query_adj(tmp);
+   free(tmp);
+
+   return query_status;
+}
+
+extern bool query_comp_lower(const char *key, int *ret) {
+   char *tmp;
+   bool query_status;
+
+   tmp = tolower_str(key);
+   query_status = query_comp(tmp, ret);
+   free(tmp);
+
+   return query_status;
 }
 
 static void dbcheck(void) {

@@ -158,7 +158,7 @@ static int is_pronoun(const char *s) {
    static const char *prns[] = {
    /*  objective       reflexive  */
       KEYWRD_ME    , KEYWRD_MYSELF,
-      KEYWRD_YOU_L , KEYWRD_YRSELF,
+      KEYWRD_YOU   , KEYWRD_YRSELF,
       KEYWRD_THEE  , KEYWRD_TYSELF,
    };
    static const int prns_len = ARRLEN(prns);
