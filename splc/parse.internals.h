@@ -21,6 +21,7 @@
  | TYPEDEFS |
  *==========*/
 typedef struct {
+   optflg_t *of;  /* option flags */
    optval_t *ov;  /* option values */
    array_t *ls;  /* array of line_t */
    array_t *toks;  /* token stream */
@@ -152,13 +153,15 @@ static nodekind_t what_pronoun(const char *str);
 static nodekind_t what_reflexive(const char *str);
 
 static void check_const_end(parse_ctx_t *pctx);
-static void check_predicate(parse_ctx_t *pctx);
+static void check_cond_predicate(parse_ctx_t *pctx);
+static void check_asgn_predicate(parse_ctx_t *pctx);
 
 static inline void rewind_tokstate(parse_ctx_t *pctx, size_t orig_idx);
 static inline void check_eoe(parse_ctx_t *pctx);
 
 /* Error Handling */
-static inline void synerr(parse_ctx_t *pctx);
+static void synwarn(parse_ctx_t *pctx);
+static void synerr(parse_ctx_t *pctx);
 
 /* Miscellnaeous */
 static array_iterator_t cleanup_tokstream;

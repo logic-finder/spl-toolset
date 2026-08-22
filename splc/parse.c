@@ -6,6 +6,7 @@
 extern void parse(compile_ctx_t *cctx) {
    parse_ctx_t pctx;
 
+   pctx.of = cctx->of;
    pctx.ov = cctx->ov;
    pctx.ls = cctx->ls;
    pctx.toks = cctx->toks;
@@ -479,6 +480,11 @@ static tree_t *parse_asgn_i(parse_ctx_t *pctx, token_t *you) {
 
 static tree_t *parse_asgn_ii(parse_ctx_t *pctx, token_t *you) {
    /* TYPE 2: You be as adj as (B|C|D)(.|!) */
+
+   if (pctx->of->w_bp) {
+      check_asgn_predicate(pctx);
+   }
+
    pctx->reason = msgs.err.syn.asgn.incomp;
    gettok(pctx);
 
@@ -500,6 +506,11 @@ static tree_t *parse_asgn_ii(parse_ctx_t *pctx, token_t *you) {
 
 static tree_t *parse_asgn_iii(parse_ctx_t *pctx, token_t *you) {
    /* TYPE 3: You be (B|C|D)(.|!) */
+
+   if (pctx->of->w_bp) {
+      check_asgn_predicate(pctx);
+   }
+
    return graft_tree_s(pctx->line, NODEKIND_ASGN3, you);
 }
 
@@ -733,8 +744,10 @@ static void parse_cond(parse_ctx_t *pctx) {
       Art [thou] not more cunning than the Ghost?
       Is [a] tree not as good as a shiny tree? */
 
-   if (0) {  // TODO: --pedantic
-      check_predicate(pctx);
+   /* checks the relation between the subject and the be verb conjugation
+      only if --Wbe-predicate is activated */
+   if (pctx->of->w_bp) {
+      check_cond_predicate(pctx);
    }
 
    if (pctx->be_kind == 3) {
@@ -1504,7 +1517,7 @@ static bool is_be_conjs(parse_ctx_t *pctx) {  /* conjs = conjugations */
    return (pctx->be_kind < conjs_len) ? true : false;
 }
 
-static void check_predicate(parse_ctx_t *pctx) {
+static void check_cond_predicate(parse_ctx_t *pctx) {
    static const char *cond_subjs[] = {
       KEYWRD_I, KEYWRD_YOU, KEYWRD_THOU
    };
@@ -1522,8 +1535,18 @@ static void check_predicate(parse_ctx_t *pctx) {
                   goto hell; else break;
       hell: /* FLAMING HOT */
          pctx->reason = msgs.err.syn.cond.not_conj;
-         synerr(pctx);
+         synwarn(pctx);
    }
+}
+
+static void check_asgn_predicate(parse_ctx_t *pctx) {
+   /* are or art */
+   if (pctx->be_kind == 1 || pctx->be_kind == 2) {
+      return;
+   }
+
+   pctx->reason = "be verb must be the second person in the assignment statement";
+   synwarn(pctx);
 }
 
 static void nexttok(parse_ctx_t *pctx) {
@@ -1624,6 +1647,28 @@ static inline void check_eoe(parse_ctx_t *pctx) {
    if (pctx->idx == pctx->len - 1) {
       longjmp(pctx->env, NODEKIND__FINALE);
    }
+}
+
+static void synwarn(parse_ctx_t *pctx) {
+   size_t lnum, lpos;
+   line_t *l;
+
+   ungettok(pctx);
+
+   lnum = pctx->etok->lnum;
+   lpos = pctx->etok->lpos;
+   l = array_peek(pctx->ls, lnum - 1);
+
+   safe_vprintf(
+      Cyellow "\n<syntax warning>" Creset " %s\n"
+      "[%s:%zu:%zu] " Cbwhite "note:" Creset " problematic since here\n"
+      "%4d|%.*s" Cbblue "%s" Creset "\n",
+      pctx->reason,
+      pctx->ov->src, lnum, lpos,
+      lnum, lpos - 1, l->run, &l->run[lpos - 1]
+   );
+
+   gettok(pctx);
 }
 
 static void synerr(parse_ctx_t *pctx) {
