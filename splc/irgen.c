@@ -21,6 +21,25 @@ extern void irgenerate(compile_ctx_t *cctx) {
    return;
 }
 
+extern void destroy_irt(compile_ctx_t *cctx) {
+   tree_post_traverse(cctx->irt, cleanup_irnode, 0, NULL);
+   tree_prune(cctx->irt);
+}
+
+static void cleanup_irnode(tree_t *t, int lv, void *ctx) {
+   irnode_t *n;
+
+   (void) lv, (void) ctx;
+
+   n = tree_dat(t);
+
+   if (n->datkind != IrnodeDatkindStr) {
+      return;
+   }
+
+   free(n->dat.s.run);
+}
+
 static void set_dpsz(irgen_ctx_t *ictx) {
    tree_t *opcode;
    int dpsz;
