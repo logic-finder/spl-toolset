@@ -14,12 +14,14 @@ extern void irdump(compile_ctx_t *cctx) {
    ictx.fp = safe_fopen(destname, "w");
 
    safe_vprintf(ENPREFIX "dumping IR into " Cbyellow "\"%s\"" Creset "...", destname);
-
    tree_pre_traverse(ictx.nrtv, route, 0, &ictx);
-
    safe_vprintf(" " Cgreen "done!" Creset "\n");
 
    safe_fclose(ictx.fp);
+
+   if (cctx->of->drn)
+      safe_remove(destname);
+
    free(destname);
 }
 

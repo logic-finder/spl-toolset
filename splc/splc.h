@@ -17,6 +17,7 @@ typedef struct optflg {
       dmp: 1,  /* -S */
       eoo: 1,  /* -- */
       tgt: 1,  /* --target */
+      drn: 1,  /* --dry-run */
       hlp: 1,  /* --help */
       vsn: 1;  /* --version */
 } optflg_t;

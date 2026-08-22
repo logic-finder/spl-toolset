@@ -64,6 +64,10 @@ extern void assemble(compile_ctx_t *cctx) {
 
    /* Cleans up */
    safe_fclose(actx.fp);
+
+   if (cctx->of->drn)
+      safe_remove(destname);
+
    free(destname);
 }
 

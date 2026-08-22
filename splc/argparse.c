@@ -17,7 +17,8 @@ extern void parse_args(compile_ctx_t *cctx) {
          -S,
          --target=c
          --lang=(en|ko)
-         --ret=<name>  */
+         --ret=<name>
+         --dry-run  */
 
    const char *arg;
 
@@ -229,6 +230,12 @@ static void handle_tgtopt(optflg_t *of, optval_t *ov, const char *arg) {
    (void) ov, (void) arg;
 
    of->tgt = true;
+}
+
+static void handle_drnopt(optflg_t *of, optval_t *ov, const char *arg) {
+   (void) ov, (void) arg;
+
+   of->drn = true;
 }
 
 static void handle_hlpopt(optflg_t *of, optval_t *ov, const char *arg) {

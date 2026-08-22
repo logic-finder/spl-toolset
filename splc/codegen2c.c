@@ -31,6 +31,10 @@ extern void transpile2c(compile_ctx_t *cctx) {
    safe_vprintf(" " Cgreen "done!" Creset "\n");
 
    safe_fclose(gctx.fp);
+
+   if (cctx->of->drn)
+      safe_remove(destname);
+
    free(destname);
 }
 
