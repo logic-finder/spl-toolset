@@ -5,6 +5,7 @@
 
 struct optflg {
    unsigned int
+      eoo: 1,  /* -- */
       hlp: 1,  /* --help */
       dbg: 1,  /* --debug */
       kwi: 1,  /* --kawaii */
@@ -18,7 +19,6 @@ struct optflg {
       std: 1,  /* --std */
       lng: 1,  /* --lang */
       tgt: 1,  /* --target */
-      eoo: 1,  /* -- */
       asmbly: 1, /* --asm */
       disasm: 1, /* --disasm */
       pdt: 1,  /* --pedantic */

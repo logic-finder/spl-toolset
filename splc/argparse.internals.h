@@ -26,20 +26,24 @@ static void parse_filenm(optval_t *ov, const char *arg);
 static void parse_shrtop(optflg_t *of, optval_t *ov, const char *arg);
 static void parse_longop(optflg_t *of, optval_t *ov, const char *arg);
 
-static arghandler_t handle_vbsopt;
-static arghandler_t handle_kwiopt;
-static arghandler_t handle_lngopt;
-static arghandler_t handle_outopt;
-static arghandler_t handle_optopt;
+static arghandler_t handle_hlpopt;
 static arghandler_t handle_dbgopt;
+static arghandler_t handle_kwiopt;
+static arghandler_t handle_vsnopt;
 static arghandler_t handle_dmpopt;
-static arghandler_t handle_tgtopt;
+static arghandler_t handle_optopt;
+static arghandler_t handle_drtopt;
+static arghandler_t handle_vbsopt;
 static arghandler_t handle_drnopt;
+static arghandler_t handle_outopt;
+static arghandler_t handle_stdopt;
+static arghandler_t handle_lngopt;
+static arghandler_t handle_tgtopt;
+static arghandler_t handle_asmblyopt;
+static arghandler_t handle_disasmopt;
 static arghandler_t handle_pdtopt;
 static arghandler_t handle_wrnopt;
-static arghandler_t handle_stdopt;
-static arghandler_t handle_hlpopt;
-static arghandler_t handle_vsnopt;
+
 
 static const char *warnmsg =
    "  * note: should this be a filename, specify '" Cbwhite "--" Creset "' first\n"

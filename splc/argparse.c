@@ -50,8 +50,9 @@ extern void parse_args(compile_ctx_t *cctx) {
       else
       if (arg[0] == '-')
          VERR("unable to recognize this option: %s\n%s", arg, warnmsg);
-      else
+      else {
          parse_filenm(cctx->ov, arg);
+      }
    }
 }
 
@@ -76,12 +77,12 @@ static void parse_filenm(optval_t *ov, const char *arg) {
 static void parse_shrtop(optflg_t *of, optval_t *ov, const char *arg) {
    static const opt_t opts[] = {
    /*  .name    .handler   */
-      { "k" , handle_kwiopt },
-      { "g" , handle_dbgopt },
-      { "O" , handle_optopt },
-      { "S" , handle_dmpopt },
       { "h" , handle_hlpopt },
-      { "v" , handle_vsnopt }
+      { "g" , handle_dbgopt },
+      { "k" , handle_kwiopt },
+      { "v" , handle_vsnopt },
+      { "S" , handle_dmpopt },
+      { "O" , handle_optopt }
    };
    static const size_t opts_len = ARRLEN(opts);
 
@@ -108,20 +109,23 @@ static void parse_shrtop(optflg_t *of, optval_t *ov, const char *arg) {
 
 static void parse_longop(optflg_t *of, optval_t *ov, const char *arg) {
    static const opt_t opts[] = {
-      { "verbose"  , handle_vbsopt },
-      { "kawaii"   , handle_kwiopt },
-      { "target"   , handle_tgtopt },
-      { "lang"     , handle_lngopt },
-      { "o"        , handle_outopt },
-      { "dry-run"  , handle_drnopt },
-      { "pedantic" , handle_pdtopt },
-      { "W"        , handle_wrnopt },
-      { "std"      , handle_stdopt },
-      { "debug"    , handle_dbgopt },
-      { "optimize" , handle_optopt },
-      { "dump"     , handle_dmpopt },
       { "help"     , handle_hlpopt },
-      { "version"  , handle_vsnopt }
+      { "debug"    , handle_dbgopt },
+      { "kawaii"   , handle_kwiopt },
+      { "version"  , handle_vsnopt },
+      { "dump"     , handle_dmpopt },
+      { "optimize" , handle_optopt },
+      { "direct"   , handle_drtopt },
+      { "verbose"  , handle_vbsopt },
+      { "dry-run"  , handle_drnopt },
+      { "o"        , handle_outopt },
+      { "std"      , handle_stdopt },
+      { "lang"     , handle_lngopt },
+      { "target"   , handle_tgtopt },
+      { "asm"      , handle_asmblyopt },
+      { "disasm"   , handle_disasmopt },
+      { "pedantic" , handle_pdtopt },
+      { "W"        , handle_wrnopt }
    };
    static const size_t opts_len = ARRLEN(opts);
 
@@ -146,12 +150,119 @@ static void parse_longop(optflg_t *of, optval_t *ov, const char *arg) {
    }
 }
 
+static void handle_hlpopt(optflg_t *of, optval_t *ov, const char *arg) {
+   (void) ov, (void) arg;
+
+   if (of->dmp) ERR("-S with -h");
+   if (of->vbs) ERR("--verbose with -h");
+   if (of->kwi) ERR("-k with -h");
+   if (of->lng) ERR("--lang with -h");
+   if (of->out) ERR("--ret with -h");
+   if (of->hlp) ERR("-h already seen");
+   if (of->vsn) ERR("-v with -h");
+
+   of->hlp = true;
+}
+
+static void handle_dbgopt(optflg_t *of, optval_t *ov, const char *arg) {
+   (void) ov, (void) arg;
+
+   of->dbg = true;
+}
+
+static void handle_kwiopt(optflg_t *of, optval_t *ov, const char *arg) {
+   (void) ov, (void) arg;
+   if (of->kwi) ERR("-k already seen");
+   if (of->hlp) ERR("-h with -k");
+   if (of->vsn) ERR("-v with -k");
+   of->kwi = true;
+}
+
+static void handle_vsnopt(optflg_t *of, optval_t *ov, const char *arg) {
+   (void) ov, (void) arg;
+
+   if (of->dmp) ERR("-S with -v");
+   if (of->vbs) ERR("--verbose with -v");
+   if (of->kwi) ERR("-k with -v");
+   if (of->lng) ERR("--lang with -v");
+   if (of->out) ERR("--ret with -v");
+   if (of->hlp) ERR("-h with -v");
+   if (of->vsn) ERR("-v already seen");
+
+   of->vsn = true;
+}
+
+static void handle_dmpopt(optflg_t *of, optval_t *ov, const char *arg) {
+   (void) ov, (void) arg;
+
+   if (of->dmp) ERR("-S already seen");
+   if (of->hlp) ERR("-h with -i");
+   if (of->vsn) ERR("-v with -i");
+
+   of->dmp = true;
+}
+
+static void handle_optopt(optflg_t *of, optval_t *ov, const char *arg) {
+   (void) ov, (void) arg;
+
+   of->opt = true;
+}
+
+static void handle_drtopt(optflg_t *of, optval_t *ov, const char *arg) {
+
+}
+
 static void handle_vbsopt(optflg_t *of, optval_t *ov, const char *arg) {
    (void) ov, (void) arg;
    if (of->vbs) ERR("--verbose already seen");
    if (of->hlp) ERR("-h with -d");
    if (of->vsn) ERR("-v with -d");
    of->vbs = true;
+}
+
+static void handle_drnopt(optflg_t *of, optval_t *ov, const char *arg) {
+   (void) ov, (void) arg;
+
+   of->drn = true;
+}
+
+static void handle_outopt(optflg_t *of, optval_t *ov, const char *arg) {
+   if (of->out) ERR("--o already seen");
+   if (of->hlp) ERR("-h with --ret");
+   if (of->vsn) ERR("-v with --ret");
+
+   arg += strlen(outopt);
+
+   if (arg[0] != '=') {
+      VERR("there is no '=' after '--%s'", outopt);
+   }
+
+   arg++;  /* skips '=' */
+
+   of->out = true;
+   ov->out = arg;
+}
+
+static void handle_stdopt(optflg_t *of, optval_t *ov, const char *arg) {
+   (void) ov, (void) arg;
+
+   // TODO: arg check
+
+   arg += strlen("std");
+
+   if (arg[0] != '=') {
+      VERR("there is no '=' after '--%s'", stdopt);
+   }
+
+   arg++;  /* skips '=' */
+
+   if (!strcmp(arg, stdopt_spl01) || !strcmp(arg, stdopt_cor27)) {
+      of->std = true;
+      ov->std = arg;
+   }
+   else {
+      VERR("--std with a wrong value: %s", arg);
+   }
 }
 
 static void handle_lngopt(optflg_t *of, optval_t *ov, const char *arg) {
@@ -184,55 +295,18 @@ static void handle_lngopt(optflg_t *of, optval_t *ov, const char *arg) {
    ov->lng = arg;
 }
 
-static void handle_outopt(optflg_t *of, optval_t *ov, const char *arg) {
-   if (of->out) ERR("--o already seen");
-   if (of->hlp) ERR("-h with --ret");
-   if (of->vsn) ERR("-v with --ret");
-
-   arg += strlen(outopt);
-
-   if (arg[0] != '=') {
-      VERR("there is no '=' after '--%s'", outopt);
-   }
-
-   arg++;  /* skips '=' */
-
-   of->out = true;
-   ov->out = arg;
-}
-
-static void handle_optopt(optflg_t *of, optval_t *ov, const char *arg) {
-   (void) ov, (void) arg;
-
-   of->opt = true;
-}
-
-static void handle_dbgopt(optflg_t *of, optval_t *ov, const char *arg) {
-   (void) ov, (void) arg;
-
-   of->dbg = true;
-}
-
-static void handle_dmpopt(optflg_t *of, optval_t *ov, const char *arg) {
-   (void) ov, (void) arg;
-
-   if (of->dmp) ERR("-S already seen");
-   if (of->hlp) ERR("-h with -i");
-   if (of->vsn) ERR("-v with -i");
-
-   of->dmp = true;
-}
-
 static void handle_tgtopt(optflg_t *of, optval_t *ov, const char *arg) {
    (void) ov, (void) arg;
 
    of->tgt = true;
 }
 
-static void handle_drnopt(optflg_t *of, optval_t *ov, const char *arg) {
-   (void) ov, (void) arg;
+static void handle_asmblyopt(optflg_t *of, optval_t *ov, const char *arg) {
 
-   of->drn = true;
+}
+
+static void handle_disasmopt(optflg_t *of, optval_t *ov, const char *arg) {
+
 }
 
 static void handle_pdtopt(optflg_t *of, optval_t *ov, const char *arg) {
@@ -256,62 +330,4 @@ static void handle_wrnopt(optflg_t *of, optval_t *ov, const char *arg) {
    else {
       VERR("--W with a wrong value: %s", arg);
    }
-}
-
-static void handle_stdopt(optflg_t *of, optval_t *ov, const char *arg) {
-   (void) ov, (void) arg;
-
-   // TODO: arg check
-
-   arg += strlen("std");
-
-   if (arg[0] != '=') {
-      VERR("there is no '=' after '--%s'", stdopt);
-   }
-
-   arg++;  /* skips '=' */
-
-   if (!strcmp(arg, stdopt_spl01) || !strcmp(arg, stdopt_cor27)) {
-      of->std = true;
-      ov->std = arg;
-   }
-   else {
-      VERR("--std with a wrong value: %s", arg);
-   }
-}
-
-static void handle_hlpopt(optflg_t *of, optval_t *ov, const char *arg) {
-   (void) ov, (void) arg;
-
-   if (of->dmp) ERR("-S with -h");
-   if (of->vbs) ERR("--verbose with -h");
-   if (of->kwi) ERR("-k with -h");
-   if (of->lng) ERR("--lang with -h");
-   if (of->out) ERR("--ret with -h");
-   if (of->hlp) ERR("-h already seen");
-   if (of->vsn) ERR("-v with -h");
-
-   of->hlp = true;
-}
-
-static void handle_vsnopt(optflg_t *of, optval_t *ov, const char *arg) {
-   (void) ov, (void) arg;
-
-   if (of->dmp) ERR("-S with -v");
-   if (of->vbs) ERR("--verbose with -v");
-   if (of->kwi) ERR("-k with -v");
-   if (of->lng) ERR("--lang with -v");
-   if (of->out) ERR("--ret with -v");
-   if (of->hlp) ERR("-h with -v");
-   if (of->vsn) ERR("-v already seen");
-
-   of->vsn = true;
-}
-
-static void handle_kwiopt(optflg_t *of, optval_t *ov, const char *arg) {
-   (void) ov, (void) arg;
-   if (of->kwi) ERR("-k already seen");
-   if (of->hlp) ERR("-h with -k");
-   if (of->vsn) ERR("-v with -k");
-   of->kwi = true;
 }
