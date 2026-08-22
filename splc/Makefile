@@ -42,6 +42,9 @@ clean:
 #  - copy the executable under /usr/local/bin
 #  - copy the manpage /usr/local/share/man/man1
 install: $(TARGET)
+	man ./splc.1 > splc.1.txt
+	install -d /usr/local/share/splc
+	install -m 644 splc.1.txt /usr/local/share/splc
 
 uninstall:
 
