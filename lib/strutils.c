@@ -218,6 +218,8 @@ extern char *make_destname(
    strcpy(buf, temp);
    strcat(buf, ext);
 
+   free(temp);
+
    return buf;
 }
 
