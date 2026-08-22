@@ -1150,6 +1150,8 @@ static void parse_noun_phrase(parse_ctx_t *pctx, tree_t *cnst) {
    tok.lpos = pctx->tok->lpos;
 
    graft_tree_s(cnst, kind, &tok);
+
+   free(buf);
 }
 
 static nodekind_t seek_op(parse_ctx_t *pctx) {
