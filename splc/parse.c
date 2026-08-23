@@ -190,18 +190,29 @@ static void parse_scene(parse_ctx_t *pctx) {
       synwarn(pctx);
    }
 
-   pctx->scene = graft_tree_n(pctx->act, 0, NODEKIND_SCENE, pctx->tok);
+   pctx->scene = graft_tree_n(
+      pctx->act, 0, NODEKIND_SCENE, pctx->tok
+   );
+
    pctx->reason = msgs.err.syn.scene.incomp;
    gettok(pctx);
-   // fixme: 실제로 로마 숫자인지 검사할 것
-   if (pctx->tok->kind == TOKKIND_PNT) {
+
+   if (!is_rnum(pctx->tok->run)) {
+      graft_tree_s(pctx->scene, NODEKIND__ERROR, pctx->tok);
       pctx->reason = msgs.err.syn.scene.nornum;
-      synerr(pctx);
+      regerr(pctx);
+      resync(pctx, ":");
    }
-   graft_tree_s(pctx->scene, NODEKIND_ROMNUM, pctx->tok);
-   gettok(pctx);
-   pctx->reason = msgs.err.syn.scene.nocolon;
-   neqtok(pctx, ':');
+   else {
+      graft_tree_s(pctx->scene, NODEKIND_ROMNUM, pctx->tok);
+      gettok(pctx);
+   }
+
+   if (pctx->tok->run[0] != ':') {
+      pctx->reason = msgs.err.syn.scene.nocolon;
+      regerr(pctx);
+   }
+
    pctx->reason = msgs.err.syn.scene.desc_incomp;
    skiptoks(pctx, ".!?");
 }
