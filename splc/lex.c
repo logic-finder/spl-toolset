@@ -206,14 +206,16 @@ static void store_string(lex_ctx_t *lctx, tokkind_t kind) {
 /*** DEBUG ***/
 
 extern void showtoks(compile_ctx_t *cctx) {
-   array_foreach(cctx->toks, showtok);
+   array_foreach(cctx->toks, showtok, NULL);
 }
 
-static void showtok(void *dat, int idx) {
+static void showtok(void *dat, size_t idx, void *ctx) {
    token_t *tok;
 
+   (void) ctx;
+
    tok = dat;
-   printf("idx = [%d], token = [%s]\n",
+   printf("idx = [%zu], token = [%s]\n",
       idx, tok->run
    );
 }
