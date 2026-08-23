@@ -37,9 +37,10 @@ extern void *array_peek(array_t *a, int idx) {
    return a->container[idx];
 }
 
-extern void array_foreach(array_t *a, array_iterator_t *iterate) {
-   for (size_t i = 0; i < a->len; i++)
-      (*iterate)(a->container[i], i);
+extern void array_foreach(array_t *a, array_iterator_t *iterate, void *ctx) {
+   for (size_t i = 0; i < a->len; i++) {
+      (*iterate)(a->container[i], i, ctx);
+   }
 }
 
 extern size_t array_size(array_t *a) {
