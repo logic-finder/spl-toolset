@@ -92,9 +92,11 @@ static void report_syntax_errors(parse_ctx_t *pctx) {
 static void parse_title(parse_ctx_t *pctx) {
    tree_t *title;
 
-   pctx->reason = msgs.err.syn.title.incomp;
    title = graft_tree_n(pctx->pt, 0, NODEKIND_TITLE, pctx->tok);
+
    graft_tree_s(title, NODEKIND_DATA, pctx->tok);
+
+   pctx->reason = msgs.err.syn.title.incomp;
    readtoks_until(pctx, ".!?", title);
 }
 
