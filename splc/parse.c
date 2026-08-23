@@ -1750,6 +1750,46 @@ static void resync(parse_ctx_t *pctx, const char *follow) {
    skiptoks(pctx, follow);
 }
 
+static void resyncbf(parse_ctx_t *pctx, unsigned int bf) {
+   typedef struct {
+      resync_bitfield_t v;
+      seeker_t *seek;
+      nodekind_t kind;
+   } resync_entry_t;
+
+   static const resync_entry_t entries[] = {
+      { ResyncAct    , seek_act    , NODEKIND_ACT    },
+      { ResyncScene  , seek_scene  , NODEKIND_SCENE  },
+      { ResyncEnter  , seek_enter  , NODEKIND_ENTER  },
+      { ResyncExit   , seek_exit   , NODEKIND_EXIT   },
+      { ResyncExeunt , seek_exeunt , NODEKIND_EXEUNT },
+      { ResyncLine   , seek_line   , NODEKIND_LINE   }
+   };
+   static const size_t entries_len = ARRLEN(entries);
+
+   /* Since backtracking can happen, we need to save the
+      current parsing state */
+   const size_t orig_idx = pctx->idx;
+
+   resync_entry_t *entry;
+
+   pctx->reason = "resync failed";
+
+   for (;;) {
+      gettok(pctx);
+      for (size_t i = 0; i < entries_len; i++) {
+         entry = &entries[i];
+         if (entry->v & bf == false) {
+            continue;
+         }
+         if ((*entry->seek)(pctx)) {
+            longjmp(pctx->env, entry->kind);
+         }
+         rewind_tokstate(pctx, orig_idx);
+      }
+   }
+}
+
 static inline void rewind_tokstate(parse_ctx_t *pctx, size_t orig_idx) {
    pctx->idx = orig_idx;
    pctx->tok = array_peek(pctx->toks, pctx->idx);

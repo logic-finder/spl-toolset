@@ -48,6 +48,15 @@ typedef struct {
    const char *reason;
 } synerr_t;
 
+typedef enum {
+   ResyncAct    = 0x01,
+   ResyncScene  = 0x02,
+   ResyncEnter  = 0x04,
+   ResyncExit   = 0x08,
+   ResyncExeunt = 0x10,
+   ResyncLine   = 0x20
+} resync_bitfield_t;
+
 typedef int seeker_t(parse_ctx_t *pctx);
 typedef void parser_t(parse_ctx_t *pctx);
 
@@ -171,6 +180,7 @@ static inline void check_eoe(parse_ctx_t *pctx);
 
 /* Error Handling */
 static void resync(parse_ctx_t *pctx, const char *follow);
+static void resyncbf(parse_ctx_t *pctx, unsigned int bf);
 static void regerr(parse_ctx_t *pctx);
 static array_iterator_t print_syntax_error;
 static void report_syntax_errors(parse_ctx_t *pctx);
