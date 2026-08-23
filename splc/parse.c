@@ -1782,7 +1782,7 @@ static void resyncbf(parse_ctx_t *pctx, unsigned int bf) {
       gettok(pctx);
       for (size_t i = 0; i < entries_len; i++) {
          entry = &entries[i];
-         if (entry->v & bf == false) {
+         if ((entry->v & bf) == false) {
             continue;
          }
          if ((*entry->seek)(pctx)) {
