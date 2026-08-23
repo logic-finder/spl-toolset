@@ -134,22 +134,32 @@ static void parse_act(parse_ctx_t *pctx) {
    pctx->act = graft_tree_n(
       pctx->nrtv, 0, NODEKIND_ACT, pctx->tok
    );
+
    pctx->reason = msgs.err.syn.act.incomp;
    gettok(pctx);
-   // fixme: 실제로 로마 숫자인지 검사할 것
-   if (pctx->tok->kind == TOKKIND_PNT) {
+
+   if (!is_rnum(pctx->tok->run)) {
+      graft_tree_s(pctx->act, NODEKIND__ERROR, pctx->tok);
       pctx->reason = msgs.err.syn.act.nornum;
-      synerr(pctx);
+      regerr(pctx);
+      resync(pctx, ":");
    }
-   graft_tree_s(pctx->act, NODEKIND_ROMNUM, pctx->tok);
-   gettok(pctx);
-   pctx->reason = msgs.err.syn.act.nocolon;
-   neqtok(pctx, ':');
+   else {
+      graft_tree_s(pctx->act, NODEKIND_ROMNUM, pctx->tok);
+      gettok(pctx);
+   }
+
+   if (pctx->tok->run[0] != ':') {
+      pctx->reason = msgs.err.syn.act.nocolon;
+      regerr(pctx);
+   }
+
    pctx->reason = msgs.err.syn.act.desc_incomp;
    skiptoks(pctx, ".!?");
 
    pctx->reason = msgs.err.syn.act.noscene;
    gettok(pctx);
+
    if (!seek_scene(pctx)) synerr(pctx);
 }
 
