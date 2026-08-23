@@ -96,14 +96,14 @@ static void typecheck_router(tree_t *t, int lv, void *ctx) {
 static void typecheck_name(typecheck_ctx_t *tctx) {
    if (query_name(tctx->n->dat.s.run))
       return;
-   reason = msgs.err.sem.bad_name;
+   tctx->reason = msgs.err.sem.bad_name;
    semerr_badword(tctx);
 }
 
 static void typecheck_adj(typecheck_ctx_t *tctx) {
    if (query_adj(tctx->n->dat.s.run))
       return;
-   reason = msgs.err.sem.bad_adj;
+   tctx->reason = msgs.err.sem.bad_adj;
    semerr_badword(tctx);
 }
 
@@ -128,7 +128,7 @@ static void typecheck_noun(typecheck_ctx_t *tctx) {
 handle_noun:
    ret = query_noun(tctx->n->dat.s.run, &val);
    if (!ret) {
-      reason = msgs.err.sem.bad_noun;
+      tctx->reason = msgs.err.sem.bad_noun;
       semerr_badword(tctx);
    }
 
@@ -143,7 +143,7 @@ static void typecheck_comp(typecheck_ctx_t *tctx) {
 
    ret = query_comp(tctx->n->dat.s.run, &val);
    if (!ret) {
-      reason = msgs.err.sem.bad_comp;
+      tctx->reason = msgs.err.sem.bad_comp;
       semerr_badword(tctx);
    }
 
@@ -154,7 +154,7 @@ static void typecheck_comp(typecheck_ctx_t *tctx) {
 static void typecheck_rnum(typecheck_ctx_t *tctx) {
    if (is_rnum(tctx->n->dat.s.run))
       return;
-   reason = msgs.err.sem.bad_rnum;
+   tctx->reason = msgs.err.sem.bad_rnum;
    semerr_badword(tctx);
 }
 
@@ -248,7 +248,7 @@ static void semerr_badword(typecheck_ctx_t *tctx) {
       "%s " Cbcyan "%s" Creset "\n"
       "[%s:%zu:%zu] " Cbwhite "note:" Creset " problematic at here\n"
       "%4d|%.*s" Cbblue "%s" Creset "%s\n",
-      reason, tctx->n->dat.s.run,
+      tctx->reason, tctx->n->dat.s.run,
       tctx->ov->src, lnum, lpos,
       lnum, lpos - 1, l->run,
       tctx->n->dat.s.run, &l->run[lpos - 1 + tctx->n->dat.s.len]

@@ -46,8 +46,6 @@ static void semerr_dupname(
    node_t * restrict prev
 );
 
-static const char *reason;  // error message
-
 static place_t ps[] = {  /* The order is intended */
    { "CM", "DCCC", "DCC", "DC", "D", "CD", "CCC", "CC", "C" }, /* 100 */
    { "XC", "LXXX", "LXX", "LX", "L", "XL", "XXX", "XX", "X" }, /*  10 */
