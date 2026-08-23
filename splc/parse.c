@@ -104,22 +104,37 @@ static void parse_dp(parse_ctx_t *pctx) {
    tree_t *dp, *character;
 
    dp = graft_tree_n(pctx->pt, 0, NODEKIND_DP, pctx->tok);
+
    for (;;) {
-      pctx->reason = msgs.err.syn.dp.incomp;
-      gettok(pctx);
-      pctx->reason = msgs.err.syn.dp.noname;
-      eqtok(pctx, ',');  // fixme: 삭제하고 char의 clen이 0인지 검사
       character = graft_tree_n(dp, 0, NODEKIND_CHDECL, pctx->tok);
-      ungettok(pctx);
+
       pctx->reason = msgs.err.syn.dp.chardecl_incomp;
       readtoks(pctx, ',', character);
-      // fixme: 셰익스피어 이름인지 검사 if (1)
+
+      if (tree_clen(character) == 0) {
+         pctx->reason = msgs.err.syn.dp.noname;
+         regerr(pctx);
+      }
+
       pctx->reason = msgs.err.syn.dp.desc_incomp;
       skiptoks(pctx, ".!?");
+
       pctx->reason = msgs.err.syn.dp.nonext;
       gettok(pctx);
-      if (seek_act(pctx)) break;
+      if (seek_act(pctx)) {
+         break;
+      }
       ungettok(pctx);
+
+      // fixme: here
+      // coalesce_name();
+      // if (!strcmp(pctx->ov->std, stdopt_cor27)) {
+      //    continue;
+      // }
+      // if (!is_shakespearean_name()) {
+      //    pctx->reason = "not an shakespearean name";
+      //    regerr(pctx);
+      // }
    }
 }
 
@@ -1535,7 +1550,7 @@ static bool is_name(parse_ctx_t *pctx) {
 
    for (i = 0; i < dpsiz; i++) {
       ch = tree_child(dp, i);
-      chsiz = tree_clen(ch);
+      chsiz = tree_clen(ch);  /* can't be zero. see parse_dp() */
 
       for (k = 0; k < chsiz; k++) {
          ch_subnode = tree_chdat(ch, k);
