@@ -1681,10 +1681,12 @@ static void neqtok(parse_ctx_t *pctx, char ch) {
 static void readtoks(parse_ctx_t *pctx, char sentinel, tree_t *base) {
    for (;;) {
       nexttok(pctx);
-      if (pctx->tok->run[0] == sentinel)
-         return;
+      if (pctx->tok->run[0] == sentinel) {
+         break;
+      }
       graft_tree_s(base, NODEKIND_DATA, pctx->tok);
    }
+
    pctx->etok = pctx->tok;
 }
 
@@ -1696,7 +1698,7 @@ static void readtoks_until(parse_ctx_t *pctx, char *scanset, tree_t *t) {
 
       while (scanset[i] != '\0') {
          if (pctx->tok->run[0] == scanset[i]) {
-            return;
+            break;
          }
          i++;
       }
@@ -1704,6 +1706,8 @@ static void readtoks_until(parse_ctx_t *pctx, char *scanset, tree_t *t) {
       graft_tree_s(t, NODEKIND_DATA, pctx->tok);
       i = 0;
    }
+
+   pctx->etok = pctx->tok;
 }
 
 static void resync(parse_ctx_t *pctx, const char *follow) {
