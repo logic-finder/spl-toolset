@@ -20,15 +20,15 @@ safe_vprintf(                             \
    "   " Cgreen "%s" Creset         \
    " for " #sectname " section\n",  \
       ov.mak[idx]                   \
-   );
-#
+   )
+
 #define DONE(idx, tabs)                              \
 safe_vprintf(                                              \
       #tabs Cbgreen "done!" Creset                   \
       " (total " Cbwhite "%d" Creset " entries)\n",  \
       ecnts[idx]                                     \
-   );
-#
+   )
+
 #define GENERIC_COMPARE(type)                         \
 static int compare_rec_##type(                        \
    const void *_lhs,                                  \
