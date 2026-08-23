@@ -12,7 +12,7 @@
 struct array {
    size_t len, max;
    void **container;
-   array_destructer_t *destruct;
+   array_destructor_t *destruct;
 };
 
 static inline bool array_full(array_t *a);

@@ -10,6 +10,6 @@
 
 #define INIT_SIZE 128
 
-static void destruct_line(void *item, size_t idx);
+static array_destructor_t destruct_line;
 
 #endif

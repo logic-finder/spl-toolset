@@ -6,9 +6,9 @@
 typedef struct array array_t;
 typedef void array_iterator_t(void *item, int idx);
 typedef int array_sorter_t(const void *d1, const void *d2);
-typedef void array_destructer_t(void *item, size_t idx);
+typedef void array_destructor_t(void *item, size_t idx);
 
-array_t *array_create(array_destructer_t *destruct);
+array_t *array_create(array_destructor_t *destruct);
 void array_destroy(array_t *a);
 void array_append(array_t *a, const void *item, size_t siz);
 void *array_peek(array_t *a, int idx);

@@ -1,7 +1,7 @@
 #include "array.adt.h"
 #include "array.adt.internals.h"
 
-extern array_t *array_create(array_destructer_t *destruct) {
+extern array_t *array_create(array_destructor_t *destruct) {
    array_t *a;
 
    a = safe_malloc(sizeof *a);

@@ -108,6 +108,9 @@ static array_sorter_t compare_comp;
 static void print_srcfiles(void);
 static void handle_dberr(void);
 
+static array_destructor_t destruct_record_A;
+static array_destructor_t destruct_record_B;
+
 static uint32_t ecnts[SECTNUM];
 static bool le, be;
 static bool dupflg;

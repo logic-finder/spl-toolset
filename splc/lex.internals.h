@@ -41,7 +41,7 @@ struct tag_lex_ctx_t {
 /*=====================*
  | FUNCTION PROTOTYPES |
  *=====================*/
-static void destruct_tok(void *item, size_t idx);
+static array_destructor_t destruct_tok;
 static array_iterator_t showtok;
 
 /* Character Handling */
