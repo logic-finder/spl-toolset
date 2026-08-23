@@ -142,7 +142,7 @@ static void gettok(parse_ctx_t *pctx);
 static void gettokn(parse_ctx_t *pctx, size_t n);
 static void ungettok(parse_ctx_t *pctx);
 static void ungettokn(parse_ctx_t *pctx, size_t n);
-static void skiptoks2(parse_ctx_t *pctx, const char *sentinels);
+static void skiptoks(parse_ctx_t *pctx, const char *sentinels);
 static void eqtok(parse_ctx_t *pctx, char ch);
 static void neqtok(parse_ctx_t *pctx, char ch);
 static void readtoks(parse_ctx_t *pctx, char sentinel, tree_t *base);

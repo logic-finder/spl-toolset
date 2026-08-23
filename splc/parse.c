@@ -113,7 +113,7 @@ static void parse_dp(parse_ctx_t *pctx) {
       readtoks(pctx, ',', character);
       // fixme: 셰익스피어 이름인지 검사 if (1)
       pctx->reason = msgs.err.syn.dp.desc_incomp;
-      skiptoks2(pctx, ".!?");
+      skiptoks(pctx, ".!?");
       pctx->reason = msgs.err.syn.dp.nonext;
       gettok(pctx);
       if (seek_act(pctx)) break;
@@ -146,7 +146,8 @@ static void parse_act(parse_ctx_t *pctx) {
    pctx->reason = msgs.err.syn.act.nocolon;
    neqtok(pctx, ':');
    pctx->reason = msgs.err.syn.act.desc_incomp;
-   skiptoks2(pctx, ".!?");
+   skiptoks(pctx, ".!?");
+
    pctx->reason = msgs.err.syn.act.noscene;
    gettok(pctx);
    if (!seek_scene(pctx)) synerr(pctx);
@@ -175,7 +176,7 @@ static void parse_scene(parse_ctx_t *pctx) {
    pctx->reason = msgs.err.syn.scene.nocolon;
    neqtok(pctx, ':');
    pctx->reason = msgs.err.syn.scene.desc_incomp;
-   skiptoks2(pctx, ".!?");
+   skiptoks(pctx, ".!?");
 }
 
 static void seek_stmt(parse_ctx_t *pctx) {
@@ -969,7 +970,7 @@ static int seek_pop(parse_ctx_t *pctx) {
 static void parse_pop(parse_ctx_t *pctx) {
    graft_tree_n(pctx->line, 0, NODEKIND_POP, pctx->tok);
    pctx->reason = msgs.err.syn.pop.incomp;
-   skiptoks2(pctx, ".!?");
+   skiptoks(pctx, ".!?");
 }
 
 static void parse_namelist(parse_ctx_t *pctx, tree_t *t) {
@@ -1652,7 +1653,7 @@ static void ungettokn(parse_ctx_t *pctx, size_t n) {
    pctx->etok = pctx->tok;
 }
 
-static void skiptoks2(parse_ctx_t *pctx, const char *sentinels) {
+static void skiptoks(parse_ctx_t *pctx, const char *sentinels) {
    for (;;) {
       nexttok(pctx);
       if (match(pctx->tok->run[0], sentinels)) {
@@ -1708,7 +1709,7 @@ static void readtoks_until(parse_ctx_t *pctx, char *scanset, tree_t *t) {
 
 static void resync(parse_ctx_t *pctx, const char *follow) {
    pctx->reason = "resync failed";
-   skiptoks2(pctx, follow);
+   skiptoks(pctx, follow);
 }
 
 static inline void rewind_tokstate(parse_ctx_t *pctx, size_t orig_idx) {
