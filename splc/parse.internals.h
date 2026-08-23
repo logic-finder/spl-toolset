@@ -38,7 +38,15 @@ typedef struct {
    jmp_buf env;     /* used in parse_stmt() */
    size_t charidx;  /* updated by is_name() */
    size_t be_kind;  /* updated by is_be_conjs() */
+   size_t errcnt;  /* syntax error count */
+   size_t errcnt_max;  /* max number of errcnt */
+   array_t *errs;  /* array of synerr_t */
 } parse_ctx_t;
+
+typedef struct {
+   token_t *etok;
+   const char *reason;
+} synerr_t;
 
 typedef int seeker_t(parse_ctx_t *pctx);
 typedef void parser_t(parse_ctx_t *pctx);
@@ -55,8 +63,6 @@ typedef void operator_t(parse_ctx_t *pctx, tree_t *op);
  *=====================*/
 static tree_callback_t cleanup_node;
 static size_t count_tree_node(tree_t *root);
-static tree_callback_t shownode;
-static const char *resolve_nodekind(nodekind_t kind);
 
 /* Seekers */
 static void seek_stmt(parse_ctx_t *pctx);
@@ -164,6 +170,11 @@ static inline void rewind_tokstate(parse_ctx_t *pctx, size_t orig_idx);
 static inline void check_eoe(parse_ctx_t *pctx);
 
 /* Error Handling */
+static void resync(parse_ctx_t *pctx, const char *follow);
+static void regerr(parse_ctx_t *pctx);
+static array_iterator_t print_syntax_error;
+static void report_syntax_errors(parse_ctx_t *pctx);
+
 static void synwarn(parse_ctx_t *pctx);
 static void synerr(parse_ctx_t *pctx);
 
@@ -186,6 +197,9 @@ static tree_t *graft_tree_n(
    nodekind_t kind,
    const token_t *tok
 );
+
+static tree_callback_t shownode;
+static const char *resolve_nodekind(nodekind_t kind);
 
 /*==================*
  | GLOBAL VARIABLES |

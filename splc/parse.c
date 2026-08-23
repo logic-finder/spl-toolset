@@ -14,6 +14,8 @@ extern void parse(compile_ctx_t *cctx) {
    pctx.idx = 0;
    pctx.tok = array_peek(pctx.toks, pctx.idx);
    pctx.pt = plant_tree(NULL, 0, NODEKIND_ROOT, 0, 0);
+   pctx.errcnt = 0;
+   pctx.errs = array_create(NULL);
 
    if (cctx->of->vbs) safe_fputs(stdout, ENPREFIX "parsing...");
 
@@ -39,6 +41,12 @@ extern void parse(compile_ctx_t *cctx) {
    EOA:;
    }
 EOE:;
+
+   /* Reports collected syntax errors, if any */
+   if (pctx.errcnt > 0) {
+      report_syntax_errors(&pctx);
+      exit(EXIT_FAILURE);
+   }
 
    if (cctx->of->vbs) safe_vprintf(" " Cgreen "done!" Creset
       "\t(total " Cbwhite "%zu" Creset " nodes)\n",
@@ -66,6 +74,19 @@ static void cleanup_node(tree_t *t, int lv, void *ctx) {
    }
 
    free(n->dat.s.run);
+}
+
+static void report_syntax_errors(parse_ctx_t *pctx) {
+   array_foreach(pctx->errs, print_syntax_error, pctx);
+
+   if (pctx->errcnt < pctx->errcnt_max) {
+      return;
+   }
+
+   safe_vprintf("too many syntax errors."
+      " Aborting parsing at [%s:%zu:%zu]\n",
+      pctx->ov->src, pctx->etok->lnum, pctx->etok->lpos
+   );
 }
 
 static void parse_title(parse_ctx_t *pctx) {
@@ -1595,8 +1616,10 @@ static void check_asgn_predicate(parse_ctx_t *pctx) {
 
 static void nexttok(parse_ctx_t *pctx) {
    if (pctx->idx == pctx->len - 1) {
-      synerr(pctx);
+      regerr(pctx);
+      longjmp(pctx->env, NODEKIND__FINALE);
    }
+
    pctx->idx++;
    pctx->tok = array_peek(pctx->toks, pctx->idx);
 }
@@ -1608,7 +1631,8 @@ static void gettok(parse_ctx_t *pctx) {
 
 static void gettokn(parse_ctx_t *pctx, size_t n) {
    if (pctx->idx + n >= pctx->len) {
-      synerr(pctx);
+      regerr(pctx);
+      longjmp(pctx->env, NODEKIND__FINALE);
    }
 
    pctx->idx += n;
@@ -1682,6 +1706,11 @@ static void readtoks_until(parse_ctx_t *pctx, char *scanset, tree_t *t) {
    }
 }
 
+static void resync(parse_ctx_t *pctx, const char *follow) {
+   pctx->reason = "resync failed";
+   skiptoks2(pctx, follow);
+}
+
 static inline void rewind_tokstate(parse_ctx_t *pctx, size_t orig_idx) {
    pctx->idx = orig_idx;
    pctx->tok = array_peek(pctx->toks, pctx->idx);
@@ -1691,6 +1720,44 @@ static inline void check_eoe(parse_ctx_t *pctx) {
    if (pctx->idx == pctx->len - 1) {
       longjmp(pctx->env, NODEKIND__FINALE);
    }
+}
+
+static void regerr(parse_ctx_t *pctx) {
+   synerr_t err;
+
+   err.etok = pctx->etok;
+   err.reason = pctx->reason;
+
+   array_append(pctx->errs, &err, sizeof err);
+
+   pctx->errcnt++;
+
+   if (pctx->errcnt == pctx->errcnt_max) {
+      longjmp(pctx->env, NODEKIND__FINALE);
+   }
+}
+
+static void print_syntax_error(void *item, size_t idx, void *ctx) {
+   synerr_t *err;
+   parse_ctx_t *pctx;
+   size_t lnum, lpos;
+   line_t *l;
+
+   err = item;
+   pctx = ctx;
+
+   lnum = err->etok->lnum;
+   lpos = err->etok->lpos;
+   l = array_peek(pctx->ls, lnum - 1);
+
+   safe_vprintf(
+      Cbred "\n<syntax error #%zu>" Creset " %s\n"
+      "[%s:%zu:%zu] " Cbwhite "note:" Creset " problematic since here\n"
+      "%4d|%.*s" Cbblue "%s" Creset "\n",
+      idx, err->reason,
+      pctx->ov->src, lnum, lpos,
+      lnum, lpos - 1, l->run, &l->run[lpos - 1]
+   );
 }
 
 static void synwarn(parse_ctx_t *pctx) {

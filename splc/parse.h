@@ -16,6 +16,7 @@ typedef enum nodekind {
    NODEKIND__NAO,
    NODEKIND__DEPEND,
    NODEKIND__UNKNOWN,
+   NODEKIND__ERROR,
 
    /* 100 General */
    NODEKIND_ROOT = 100,
