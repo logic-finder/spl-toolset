@@ -177,7 +177,10 @@ static void parse_act(parse_ctx_t *pctx) {
    pctx->reason = msgs.err.syn.act.noscene;
    gettok(pctx);
 
-   if (!seek_scene(pctx)) synerr(pctx);
+   if (!seek_scene(pctx)) {
+      regerr(pctx);
+      resyncbf(pctx, ResyncScene);
+   }
 }
 
 static int seek_scene(parse_ctx_t *pctx) {
