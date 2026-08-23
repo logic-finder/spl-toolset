@@ -1691,20 +1691,16 @@ static void readtoks(parse_ctx_t *pctx, char sentinel, tree_t *base) {
 }
 
 static void readtoks_until(parse_ctx_t *pctx, char *scanset, tree_t *t) {
-   size_t i = 0;
-
    for (;;) {
       nexttok(pctx);
 
-      while (scanset[i] != '\0') {
+      for (size_t i = 0; (scanset[i] != '\0'); i++) {
          if (pctx->tok->run[0] == scanset[i]) {
             break;
          }
-         i++;
       }
 
       graft_tree_s(t, NODEKIND_DATA, pctx->tok);
-      i = 0;
    }
 
    pctx->etok = pctx->tok;
