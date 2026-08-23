@@ -6,6 +6,7 @@
 #include "common.h"
 #include "global.h"
 #include "wrappers.h"
+#include "strutils.h"
 #include "dbhandler.h"
 #include "colorcodes.h"
 
@@ -19,7 +20,6 @@ typedef struct {
 } typecheck_ctx_t;
 
 typedef void typechecker_t(typecheck_ctx_t *tctx);
-typedef const char *place_t[9];
 
 static void coalesce_childstr(tree_t *t);
 static inline void coalesce_title(typecheck_ctx_t *tctx);
@@ -34,7 +34,6 @@ static typechecker_t typecheck_comp;
 static typechecker_t typecheck_rnum;
 
 static int is_pronoun(const char *s);
-static bool is_rnum(const char *rnum);
 
 static void setnds(node_t *n, char *s, int l);
 
@@ -45,12 +44,5 @@ static void semerr_dupname(
    node_t * restrict curr,
    node_t * restrict prev
 );
-
-static place_t ps[] = {  /* The order is intended */
-   { "CM", "DCCC", "DCC", "DC", "D", "CD", "CCC", "CC", "C" }, /* 100 */
-   { "XC", "LXXX", "LXX", "LX", "L", "XL", "XXX", "XX", "X" }, /*  10 */
-   { "IX", "VIII", "VII", "VI", "V", "IV", "III", "II", "I" }  /*   1 */
-};
-static const size_t ps_len = ARRLEN(ps);
 
 #endif

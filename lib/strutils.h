@@ -54,6 +54,10 @@ char *tolower_str(const char *orig);
 
 char *strdup(const char *src);
 
+bool is_rnum(const char *rnum);
+
+unsigned int interpret_romnum(const char *romnum);
+
 /* Inline Functions */
 inline char lastch(const char *line) {
    return line[strlen(line) - 1];

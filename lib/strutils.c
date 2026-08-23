@@ -264,3 +264,51 @@ extern char *strdup(const char *src) {
 
    return buf;
 }
+
+extern bool is_rnum(const char *rnum) {
+   size_t i, k, nlen;
+   place_t *p;
+   const char *dat;
+
+   for (i = 0; i < ps_len; i++) {
+      p = ps + i;
+      for (k = 0; k < 9; k++) {
+         dat = (*p)[k];
+         nlen = strlen(dat);
+         if (strncmp(rnum, dat, nlen))
+            continue;
+         rnum += nlen;
+         break;
+      }
+   }
+
+   return !strlen(rnum);
+}
+
+extern unsigned int interpret_romnum(const char *romnum) {
+   place_t *p;
+   const char *s;
+   unsigned int v, temp, len;
+
+   v = 0;
+   for (size_t i = 0; i < ps_len; i++) {
+      p = ps + i;
+      for (size_t j = 0; j < 9; j++) {
+         s = (*p)[j];
+         len = strlen(s);
+         if (strncmp(s, romnum, len))
+            continue;
+         temp = 9 - j;
+         switch (i) {
+            case 0: temp *= 100; break;
+            case 1: temp *=  10; break;
+            default: ;
+         }
+         v += temp;
+         romnum += len;
+         break;
+      }
+   }
+
+   return v;
+}
