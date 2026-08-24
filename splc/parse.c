@@ -1564,7 +1564,11 @@ static bool is_name(parse_ctx_t *pctx) {
 
    for (i = 0; i < dpsiz; i++) {
       ch = tree_child(dp, i);
-      chsiz = tree_clen(ch);  /* can't be zero. see parse_dp() */
+      chsiz = tree_clen(ch);
+
+      if (chsiz == 0) {  /* can be ZERO. see parse_dp() */
+         return false;
+      }
 
       for (k = 0; k < chsiz; k++) {
          ch_subnode = tree_chdat(ch, k);
