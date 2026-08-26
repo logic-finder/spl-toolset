@@ -787,6 +787,7 @@ static void parse_goto(parse_ctx_t *pctx) {
 
    gettok(pctx);
 
+   // TODO: support -Wkeyword-case
    if (!strcasecmp(pctx->tok->run, KEYWRD_ACT)) {
       dest = NODEKIND_ACT;
    }
