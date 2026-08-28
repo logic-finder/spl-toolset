@@ -47,6 +47,10 @@ extern size_t array_size(array_t *a) {
    return a->len;
 }
 
+extern void array_sort(array_t *a, array_sorter_t *compare) {
+   qsort(a->container, a->len, ESIZ(a->container), compare);
+}
+
 static inline bool array_full(array_t *a) {
    return a->len == a->max;
 }
@@ -57,8 +61,4 @@ static void array_enlarge(array_t *a) {
       &a->max,
       ESIZ(a->container)
    );
-}
-
-extern void array_sort(array_t *a, array_sorter_t *compare) {
-   qsort(a->container, a->len, ESIZ(a->container), compare);
 }
