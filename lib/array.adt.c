@@ -59,6 +59,6 @@ static void array_enlarge(array_t *a) {
    );
 }
 
-void array_sort(array_t *a, array_sorter_t *compare) {
+extern void array_sort(array_t *a, array_sorter_t *compare) {
    qsort(a->container, a->len, ESIZ(a->container), compare);
 }
