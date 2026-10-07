@@ -1772,7 +1772,7 @@ static void resync(parse_ctx_t *pctx, const char *follow) {
    skiptoks(pctx, follow);
 }
 
-static void resyncbf(parse_ctx_t *pctx, unsigned int bf) {
+static void resyncbf(parse_ctx_t *pctx, resync_bitfield_t bf) {
    typedef struct {
       resync_bitfield_t v;
       seeker_t *seek;

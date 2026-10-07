@@ -14,8 +14,8 @@
 #include "wrappers.h"
 #include "strutils.h"
 #include "tree.adt.h"
-#include "colorcodes.h"
 #include "dbhandler.h"
+#include "colorcodes.h"
 
 /*==========*
  | TYPEDEFS |
@@ -181,7 +181,7 @@ static inline void check_eoe(parse_ctx_t *pctx);
 
 /* Error Handling */
 static void resync(parse_ctx_t *pctx, const char *follow);
-static void resyncbf(parse_ctx_t *pctx, unsigned int bf);
+static void resyncbf(parse_ctx_t *pctx, resync_bitfield_t bf);
 static void regerr(parse_ctx_t *pctx);
 static array_iterator_t print_syntax_error;
 static void report_syntax_errors(parse_ctx_t *pctx);
