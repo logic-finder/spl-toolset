@@ -41,6 +41,7 @@ typedef struct {
    size_t errcnt;  /* syntax error count */
    size_t errcnt_max;  /* max number of errcnt */
    array_t *errs;  /* array of synerr_t */
+   jmp_buf env_parse;
 } parse_ctx_t;
 
 typedef struct {

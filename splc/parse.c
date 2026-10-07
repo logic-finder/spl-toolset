@@ -4,17 +4,23 @@
 // fixme: STREQL 매크로 정의해서 쓰기 (!strcmp 대체 프로젝트 전체적으로)
 
 extern void parse(compile_ctx_t *cctx) {
-   parse_ctx_t pctx;
+   parse_ctx_t pctx = {0};
+   int ret;
 
+   /* Initializes pctx struct */
    pctx.of = cctx->of;
    pctx.ov = cctx->ov;
    pctx.ls = cctx->ls;
    pctx.toks = cctx->toks;
    pctx.len = array_size(pctx.toks);
    pctx.idx = 0;
+   /* Note: toks has at least one element, otherwise the program
+      would have been terminated already in loadfile() by splc.c */
    pctx.tok = array_peek(pctx.toks, pctx.idx);
+   pctx.etok = pctx.tok;
    pctx.pt = plant_tree(NULL, 0, NODEKIND_ROOT, 0, 0);
    pctx.errcnt = 0;
+   pctx.errcnt_max = 5;
    pctx.errs = array_create(NULL);
 
    if (cctx->of->vbs) safe_fputs(stdout, ENPREFIX "parsing...");
@@ -23,6 +29,14 @@ extern void parse(compile_ctx_t *cctx) {
          pt[0] = title
          pt[1] = dp
          pt[2] = nrtv  */
+
+   ret = setjmp(pctx.env_parse);
+   if (ret == NODEKIND__FINALE) {
+      goto report_error;
+   }
+
+   // TODO: parse_stmt에서 setjmp/longjmp 하지않고 여기서 다 처리하도록
+   // 실행흐름 변경하기
 
    parse_title(&pctx);
    parse_dp(&pctx);
@@ -43,6 +57,7 @@ extern void parse(compile_ctx_t *cctx) {
 EOE:;
 
    /* Reports collected syntax errors, if any */
+report_error:
    if (pctx.errcnt > 0) {
       report_syntax_errors(&pctx);
       exit(EXIT_FAILURE);
@@ -1664,7 +1679,7 @@ static void check_asgn_predicate(parse_ctx_t *pctx) {
 static void nexttok(parse_ctx_t *pctx) {
    if (pctx->idx == pctx->len - 1) {
       regerr(pctx);
-      longjmp(pctx->env, NODEKIND__FINALE);
+      longjmp(pctx->env_parse, NODEKIND__FINALE);
    }
 
    pctx->idx++;
@@ -1739,17 +1754,16 @@ static void readtoks(parse_ctx_t *pctx, char sentinel, tree_t *base) {
 
 static void readtoks_until(parse_ctx_t *pctx, char *scanset, tree_t *t) {
    for (;;) {
-      nexttok(pctx);
-
       for (size_t i = 0; (scanset[i] != '\0'); i++) {
          if (pctx->tok->run[0] == scanset[i]) {
-            break;
+            goto done;
          }
       }
-
       graft_tree_s(t, NODEKIND_DATA, pctx->tok);
+      nexttok(pctx);
    }
 
+done:
    pctx->etok = pctx->tok;
 }
 
@@ -1779,7 +1793,7 @@ static void resyncbf(parse_ctx_t *pctx, unsigned int bf) {
       current parsing state */
    const size_t orig_idx = pctx->idx;
 
-   resync_entry_t *entry;
+   const resync_entry_t *entry;
 
    pctx->reason = "resync failed";
 
@@ -1820,7 +1834,7 @@ static void regerr(parse_ctx_t *pctx) {
    pctx->errcnt++;
 
    if (pctx->errcnt == pctx->errcnt_max) {
-      longjmp(pctx->env, NODEKIND__FINALE);
+      longjmp(pctx->env_parse, NODEKIND__FINALE);
    }
 }
 
