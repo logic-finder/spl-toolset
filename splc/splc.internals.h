@@ -1,5 +1,5 @@
-#ifndef SPLC_H
-#define SPLC_H
+#ifndef SPLC_INTERNALS_H
+#define SPLC_INTERNALS_H
 
 #include <ctype.h>
 #include <string.h>

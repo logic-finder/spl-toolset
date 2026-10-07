@@ -1,5 +1,5 @@
-#ifndef SPLC_INTERNALS_H
-#define SPLC_INTERNALS_H
+#ifndef SPLC_H
+#define SPLC_H
 
 #include "tree.adt.h"
 #include "array.adt.h"
