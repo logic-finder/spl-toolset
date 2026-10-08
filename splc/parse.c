@@ -391,7 +391,7 @@ static void parse_line(parse_ctx_t *pctx) {
 
    if (pctx->tok->run[0] != ':') {
       pctx->reason = "a colon expected after a character name to construct a line";
-      synerr(pctx);
+      regerr(pctx);
    }
 
    /* Note: charidx has been updated by is_name() in seek_line() */
@@ -403,16 +403,14 @@ static void parse_line(parse_ctx_t *pctx) {
    // Juliet: ...
    // 이런거는 일단 파싱할때는 받아들이기
 
-   bool found;
-
    pctx->reason = msgs.err.syn.line.incomp;
 
-   for (;;) {
+   for (bool found;;) {
       gettok(pctx);
       found = parse_line_router(pctx, stmt_hdlrs, ARRLEN(stmt_hdlrs));
       if (!found) {
          ungettok(pctx);
-         break;
+         return;  /* control returns to parse() */
       }
    }
 }
