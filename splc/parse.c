@@ -561,7 +561,7 @@ static void parse_asgn(parse_ctx_t *pctx) {
    }
 
    pctx->reason = msgs.err.syn.asgn.invalid_end_symbol;
-   synerr(pctx);
+   regerr(pctx);
 }
 
 static tree_t *parse_asgn_i(parse_ctx_t *pctx, token_t *you) {
