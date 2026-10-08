@@ -347,8 +347,8 @@ static void parse_exit(parse_ctx_t *pctx) {
    parse_namelist(pctx, exit);
 
    switch (tree_clen(exit)) {
-      case 1  : return;
       case 0  : pctx->reason = msgs.err.syn.exit.nochar; break;
+      case 1  : return;
       default : pctx->reason = msgs.err.syn.exit.exceed;
    }
 
@@ -368,14 +368,17 @@ static void parse_exeunt(parse_ctx_t *pctx) {
    }
 
    exeunt = graft_tree_n(pctx->scene, 0, NODEKIND_EXEUNT, pctx->tok);
+
    parse_namelist(pctx, exeunt);
+
    switch (tree_clen(exeunt)) {
       case 0  : return;
       case 1  : pctx->reason = msgs.err.syn.exeunt.onechar; break;
       case 2  : return;
       default : pctx->reason = msgs.err.syn.exeunt.exceed;
    }
-   synerr(pctx);
+
+   regerr(pctx);
 }
 
 static int seek_line(parse_ctx_t *pctx) {
