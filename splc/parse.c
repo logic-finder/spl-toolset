@@ -319,11 +319,15 @@ static void parse_enter(parse_ctx_t *pctx) {
    }
 
    enter = graft_tree_n(pctx->scene, 0, NODEKIND_ENTER, pctx->tok);
+
    parse_namelist(pctx, enter);
-   if (tree_clen(enter))
+
+   if (tree_clen(enter)) {
       return;
+   }
+
    pctx->reason = msgs.err.syn.enter.nochar;
-   synerr(pctx);
+   regerr(pctx);
 }
 
 static int seek_exit(parse_ctx_t *pctx) {
