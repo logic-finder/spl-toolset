@@ -18,10 +18,12 @@ extern void parse(compile_ctx_t *cctx) {
       would have been terminated already in loadfile() by splc.c */
    pctx.tok = array_peek(pctx.toks, pctx.idx);
    pctx.etok = pctx.tok;
+   pctx.reason = "none";
    pctx.pt = plant_tree(NULL, 0, NODEKIND_ROOT, 0, 0);
    pctx.errcnt = 0;
    pctx.errcnt_max = 5;
    pctx.errs = array_create(NULL);
+   pctx.recovery_point = NODEKIND__UNKNOWN;
 
    if (cctx->of->vbs) safe_fputs(stdout, ENPREFIX "parsing...");
 
@@ -35,9 +37,6 @@ extern void parse(compile_ctx_t *cctx) {
       goto report_error;
    }
 
-   // TODO: parse_stmt에서 setjmp/longjmp 하지않고 여기서 다 처리하도록
-   // 실행흐름 변경하기
-
    parse_title(&pctx);
    parse_dp(&pctx);
    pctx.nrtv = graft_tree_n(pctx.pt, 0, NODEKIND_NRTV, pctx.tok);
@@ -45,16 +44,23 @@ extern void parse(compile_ctx_t *cctx) {
       parse_act(&pctx);
       for (;;) {
          parse_scene(&pctx);
-         switch (parse_stmt(&pctx)) {
-            case NODEKIND_SCENE   : goto EOS;
-            case NODEKIND_ACT     : goto EOA;
-            case NODEKIND__FINALE : goto EOE;
+         for (;;) {
+            switch (seek_direction(&pctx)) {
+               case NODEKIND_LINE   : parse_line  (&pctx); break;
+               case NODEKIND_ENTER  : parse_enter (&pctx); break;
+               case NODEKIND_EXIT   : parse_exit  (&pctx); break;
+               case NODEKIND_EXEUNT : parse_exeunt(&pctx); break;
+               case NODEKIND__FINALE : goto EOE;
+               case NODEKIND_ACT     : goto EOA;
+               case NODEKIND_SCENE   : goto EOS;
+               default: ;  /* control never reaches default */
+            }
          }
-      EOS:;
+      EOS: ;
       }
-   EOA:;
+   EOA: ;
    }
-EOE:;
+EOE: ;
 
    /* Reports collected syntax errors, if any */
 report_error:
@@ -89,6 +95,56 @@ static void cleanup_node(tree_t *t, int lv, void *ctx) {
    }
 
    free(n->dat.s.run);
+}
+
+static nodekind_t seek_direction(parse_ctx_t *pctx) {
+   typedef struct mapper {
+      seeker_t *seek;
+      nodekind_t kind;
+   } mapper_t;
+
+   static const mapper_t maps[] = {
+      { seek_line   , NODEKIND_LINE   },
+      { seek_enter  , NODEKIND_ENTER  },
+      { seek_exit   , NODEKIND_EXIT   },
+      { seek_scene  , NODEKIND_SCENE  },
+      { seek_act    , NODEKIND_ACT    },
+      { seek_exeunt , NODEKIND_EXEUNT }
+   };
+   static const size_t maps_len = ARRLEN(maps);
+   const mapper_t *map;
+
+   /* has recovery point been set? */
+   if (pctx->recovery_point != NODEKIND__UNKNOWN) {
+      nodekind_t temp = pctx->recovery_point;
+      pctx->recovery_point = NODEKIND__UNKNOWN;  /* reset */
+      return temp;
+   }
+
+   /* end of token stream? */
+   if (pctx->idx == pctx->len - 1) {
+      return NODEKIND__FINALE;
+   }
+
+   pctx->reason = msgs.err.syn.eot;
+   gettok(pctx);
+
+   /* Since backtracking can happen, we need to save the
+      current parsing state */
+   const size_t orig_idx = pctx->idx;
+
+   for (size_t i = 0; i < maps_len; i++) {
+      map = &maps[i];
+      if ((*map->seek)(pctx)) {
+         return map->kind;
+      }
+      rewind_tokstate(pctx, orig_idx);
+   }
+
+   pctx->reason = msgs.err.syn.incomprehensible;
+   regerr(pctx);
+   /* can't resync as there is no valid statement */
+   return NODEKIND__FINALE;
 }
 
 static void report_syntax_errors(parse_ctx_t *pctx) {
@@ -195,6 +251,7 @@ static void parse_act(parse_ctx_t *pctx) {
    if (!seek_scene(pctx)) {
       regerr(pctx);
       resyncbf(pctx, ResyncScene);
+      return;
    }
 }
 
@@ -233,74 +290,6 @@ static void parse_scene(parse_ctx_t *pctx) {
 
    pctx->reason = msgs.err.syn.scene.desc_incomp;
    skiptoks(pctx, ".!?");
-}
-
-static void seek_stmt(parse_ctx_t *pctx) {
-   check_eoe(pctx);
-
-   pctx->reason = msgs.err.syn.eot;
-   gettok(pctx);
-
-   seek_stmt_router(pctx);
-
-   pctx->reason = msgs.err.syn.incomprehensible;
-   synerr(pctx);
-}
-
-static void seek_stmt_router(parse_ctx_t *pctx) {
-   typedef struct jumper {
-      seeker_t *seek;
-      int retval;
-   } jumper_t;
-
-   static const jumper_t jps[] = {
-      { seek_line   , NODEKIND_LINE   },
-      { seek_enter  , NODEKIND_ENTER  },
-      { seek_exit   , NODEKIND_EXIT   },
-      { seek_scene  , NODEKIND_SCENE  },
-      { seek_act    , NODEKIND_ACT    },
-      { seek_exeunt , NODEKIND_EXEUNT }
-   };
-   static const size_t jps_len = ARRLEN(jps);
-   const jumper_t *jp;
-
-   /* Since backtracking can happen, we need to save the
-      current parsing state */
-   const size_t orig_idx = pctx->idx;
-
-   for (size_t i = 0; i < jps_len; i++) {
-      jp = &jps[i];
-      if ((*jp->seek)(pctx)) {
-         longjmp(pctx->env, jp->retval);
-      }
-      rewind_tokstate(pctx, orig_idx);
-   }
-}
-
-static int parse_stmt(parse_ctx_t *pctx) {
-   int ret;
-
-   /* seek_stmt proceeds to either
-         - seek_stmt_router => longjmp
-         - longjmp with NODEKIND__FINALE
-
-      parse_line => seek_stmt_router => longjmp */
-
-   ret = setjmp(pctx->env);
-   switch (ret) {
-      case NODEKIND_ENTER  : parse_enter (pctx); break;
-      case NODEKIND_EXIT   : parse_exit  (pctx); break;
-      case NODEKIND_EXEUNT : parse_exeunt(pctx); break;
-      case NODEKIND_LINE   : parse_line  (pctx); break;
-      case NODEKIND_SCENE   : /* fall-through */
-      case NODEKIND_ACT     : /* fall-through */
-      case NODEKIND__FINALE : return ret;
-      case NODEKIND__SETJMP : break;  /* first setjmp call */
-      default: ;  /* control never reaches default */
-   }
-   seek_stmt(pctx);
-
-   return 0;  /* control never reaches here */
 }
 
 static int seek_enterlike(parse_ctx_t *pctx, const char *type) {
@@ -395,33 +384,25 @@ static void parse_line(parse_ctx_t *pctx) {
       synerr(pctx);
    }
 
-   /* Note. charidx has been updated by is_name() in seek_line() */
+   /* Note: charidx has been updated by is_name() in seek_line() */
    pctx->line = graft_tree_n(pctx->scene, 0, NODEKIND_LINE, pctx->tok);
    graft_tree_n(pctx->line, pctx->charidx, NODEKIND_CHAR, pctx->tok);
 
-   /* Handles the first statement */
+   // TODO: 문이 비어있는지 아닌지는 나중에 체크
+   // Romeo:
+   // Juliet: ...
+   // 이런거는 일단 파싱할때는 받아들이기
+
+   bool found;
+
    pctx->reason = msgs.err.syn.line.incomp;
-   gettok(pctx);
 
-   if (parse_line_router(pctx, stmt_hdlrs, ARRLEN(stmt_hdlrs))) {
-      pctx->reason = msgs.err.syn.line.nostmt;
-      synerr(pctx);
-   }
-
-   /* Handles the rest */
    for (;;) {
-      check_eoe(pctx);
-
-      /* if this token is the beginning of another line,
-         then longjmp happens inside `seek_stmt_router` */
-      pctx->reason = msgs.err.syn.eot;
       gettok(pctx);
-
-      seek_stmt_router(pctx);
-
-      if (parse_line_router(pctx, stmt_hdlrs, ARRLEN(stmt_hdlrs))) {
-         pctx->reason = msgs.err.syn.line.nostmt;
-         synerr(pctx);
+      found = parse_line_router(pctx, stmt_hdlrs, ARRLEN(stmt_hdlrs));
+      if (!found) {
+         ungettok(pctx);
+         break;
       }
    }
 }
@@ -445,7 +426,7 @@ static bool parse_line_router(
       rewind_tokstate(pctx, orig_idx);
    }
 
-   return (i == tsiz) ? 1 : 0;
+   return (i == tsiz) ? false : true;
 }
 
 static bool parse_line_as_conseq(parse_ctx_t *pctx) {
@@ -509,7 +490,7 @@ static void parse_if(parse_ctx_t *pctx) {
    tline = pctx->line;
    pctx->line = consequent;
 
-   if (parse_line_as_conseq(pctx)) {
+   if (!parse_line_as_conseq(pctx)) {
       pctx->reason = msgs.err.syn.ifstmt.bad_conseq;
       synerr(pctx);
    }
@@ -1694,7 +1675,7 @@ static void gettok(parse_ctx_t *pctx) {
 static void gettokn(parse_ctx_t *pctx, size_t n) {
    if (pctx->idx + n >= pctx->len) {
       regerr(pctx);
-      longjmp(pctx->env, NODEKIND__FINALE);
+      longjmp(pctx->env_parse, NODEKIND__FINALE);
    }
 
    pctx->idx += n;
@@ -1779,9 +1760,12 @@ static void resyncbf(parse_ctx_t *pctx, resync_bitfield_t bf) {
       nodekind_t kind;
    } resync_entry_t;
 
+   /* Note: since parse_act() and parse_scene() is not routed
+      by switch(seek_direction()) in parse(), no need to set
+      recovery point */
    static const resync_entry_t entries[] = {
-      { ResyncAct    , seek_act    , NODEKIND_ACT    },
-      { ResyncScene  , seek_scene  , NODEKIND_SCENE  },
+      { ResyncAct    , seek_act    , NODEKIND__UNKNOWN },
+      { ResyncScene  , seek_scene  , NODEKIND__UNKNOWN },
       { ResyncEnter  , seek_enter  , NODEKIND_ENTER  },
       { ResyncExit   , seek_exit   , NODEKIND_EXIT   },
       { ResyncExeunt , seek_exeunt , NODEKIND_EXEUNT },
@@ -1789,23 +1773,25 @@ static void resyncbf(parse_ctx_t *pctx, resync_bitfield_t bf) {
    };
    static const size_t entries_len = ARRLEN(entries);
 
-   /* Since backtracking can happen, we need to save the
-      current parsing state */
-   const size_t orig_idx = pctx->idx;
-
    const resync_entry_t *entry;
 
    pctx->reason = "resync failed";
 
    for (;;) {
       gettok(pctx);
+
+      /* Since backtracking can happen, we need to save the
+         current parsing state */
+      const size_t orig_idx = pctx->idx;
+
       for (size_t i = 0; i < entries_len; i++) {
          entry = &entries[i];
          if ((entry->v & bf) == false) {
             continue;
          }
          if ((*entry->seek)(pctx)) {
-            longjmp(pctx->env, entry->kind);
+            pctx->recovery_point = entry->kind;
+            return;
          }
          rewind_tokstate(pctx, orig_idx);
       }
@@ -1815,12 +1801,6 @@ static void resyncbf(parse_ctx_t *pctx, resync_bitfield_t bf) {
 static inline void rewind_tokstate(parse_ctx_t *pctx, size_t orig_idx) {
    pctx->idx = orig_idx;
    pctx->tok = array_peek(pctx->toks, pctx->idx);
-}
-
-static inline void check_eoe(parse_ctx_t *pctx) {
-   if (pctx->idx == pctx->len - 1) {
-      longjmp(pctx->env, NODEKIND__FINALE);
-   }
 }
 
 static void regerr(parse_ctx_t *pctx) {

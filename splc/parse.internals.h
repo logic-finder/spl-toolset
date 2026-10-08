@@ -35,13 +35,13 @@ typedef struct {
    tree_t *scene;  /* current scene */
    tree_t *line;   /* current line */
    const char *reason;   /* the reason of a syntax error */
-   jmp_buf env;     /* used in parse_stmt() */
    size_t charidx;  /* updated by is_name() */
    size_t be_kind;  /* updated by is_be_conjs() */
    size_t errcnt;  /* syntax error count */
    size_t errcnt_max;  /* max number of errcnt */
    array_t *errs;  /* array of synerr_t */
    jmp_buf env_parse;
+   nodekind_t recovery_point;
 } parse_ctx_t;
 
 typedef struct {
@@ -75,8 +75,7 @@ static tree_callback_t cleanup_node;
 static size_t count_tree_node(tree_t *root);
 
 /* Seekers */
-static void seek_stmt(parse_ctx_t *pctx);
-static void seek_stmt_router(parse_ctx_t *pctx);
+static nodekind_t seek_direction(parse_ctx_t *pctx);
 static int seek_enterlike(parse_ctx_t *pctx, const char *type);
 static nodekind_t seek_op(parse_ctx_t *pctx);
 static seeker_t seek_act;
@@ -95,7 +94,6 @@ static seeker_t seek_push;
 static seeker_t seek_pop;
 
 /* Parsers */
-static int parse_stmt(parse_ctx_t *pctx);
 static void parse_namelist(parse_ctx_t *pctx, tree_t *t);
 static bool parse_line_as_conseq(parse_ctx_t *pctx);
 static void parse_const(parse_ctx_t *pctx, tree_t *stmt);
@@ -177,7 +175,6 @@ static void check_cond_predicate(parse_ctx_t *pctx);
 static void check_asgn_predicate(parse_ctx_t *pctx);
 
 static inline void rewind_tokstate(parse_ctx_t *pctx, size_t orig_idx);
-static inline void check_eoe(parse_ctx_t *pctx);
 
 /* Error Handling */
 static void resync(parse_ctx_t *pctx, const char *follow);
