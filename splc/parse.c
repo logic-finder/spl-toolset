@@ -470,7 +470,7 @@ static int seek_if(parse_ctx_t *pctx) {
 }
 
 static void parse_if(parse_ctx_t *pctx) {
-   tree_t *ifstmt, *consequent, *tline;
+   tree_t *ifstmt, *consequent, *temp_line;
 
    ifstmt = graft_tree_n(pctx->line, 0, NODEKIND_IF, pctx->tok);
 
@@ -486,27 +486,28 @@ static void parse_if(parse_ctx_t *pctx) {
    }
    else {
       pctx->reason = msgs.err.syn.ifstmt.badsyn;
-      synerr(pctx);
+      regerr(pctx);
    }
 
    gettok(pctx);
 
    if (pctx->tok->run[0] != ',') {
       pctx->reason = msgs.err.syn.ifstmt.badsyn;
-      synerr(pctx);
+      regerr(pctx);
    }
 
    /* Parses the consequent */
    consequent = graft_tree_n(ifstmt, 0, NODEKIND_CONSEQ, pctx->tok);
-   tline = pctx->line;
+   temp_line = pctx->line;
    pctx->line = consequent;
 
    if (!parse_line_as_conseq(pctx)) {
       pctx->reason = msgs.err.syn.ifstmt.bad_conseq;
-      synerr(pctx);
+      regerr(pctx);
+      resync(pctx, ".!?");
    }
 
-   pctx->line = tline;
+   pctx->line = temp_line;
 }
 
 static int seek_asgn(parse_ctx_t *pctx) {
