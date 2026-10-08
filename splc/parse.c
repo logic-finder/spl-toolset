@@ -416,7 +416,9 @@ static void parse_line(parse_ctx_t *pctx) {
 }
 
 static bool parse_line_router(
-   parse_ctx_t *pctx, const stmthandler_t *table, size_t tsiz
+   parse_ctx_t *pctx,
+   const stmthandler_t *table,
+   size_t tsiz
 ) {
    const stmthandler_t *handler;
    size_t i;
@@ -444,9 +446,10 @@ static bool parse_line_as_conseq(parse_ctx_t *pctx) {
    pctx->reason = msgs.err.syn.ifstmt.conseq_incomp;
    gettok(pctx);
 
+   // TODO: 대소문자 구별 필요없을듯?
    if (isupper(pctx->tok->run[0])) {
       pctx->reason = msgs.err.syn.ifstmt.conseq_cap;
-      synerr(pctx);
+      regerr(pctx);
    }
    else
    if (islower(pctx->tok->run[0])) {
