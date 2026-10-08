@@ -53,6 +53,7 @@ extern void parse(compile_ctx_t *cctx) {
                case NODEKIND__FINALE : goto EOE;
                case NODEKIND_ACT     : goto EOA;
                case NODEKIND_SCENE   : goto EOS;
+               case NODEKIND__UNKNOWN : break;  /* only after resync */
                default: ;  /* control never reaches default */
             }
          }
@@ -143,8 +144,8 @@ static nodekind_t seek_direction(parse_ctx_t *pctx) {
 
    pctx->reason = msgs.err.syn.incomprehensible;
    regerr(pctx);
-   /* can't resync as there is no valid statement */
-   return NODEKIND__FINALE;
+   resync(pctx, ".!?");
+   return NODEKIND__UNKNOWN;
 }
 
 static void report_syntax_errors(parse_ctx_t *pctx) {
