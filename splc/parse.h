@@ -11,7 +11,6 @@
 
 typedef enum nodekind {
    /* 000 Misc. */
-   NODEKIND__SETJMP = 0,  /* this MUST be 0 */
    NODEKIND__FINALE,
    NODEKIND__NAO,
    NODEKIND__DEPEND,
