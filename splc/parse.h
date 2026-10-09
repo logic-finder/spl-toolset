@@ -11,7 +11,7 @@
 
 typedef enum nodekind {
    /* 000 Misc. */
-   NODEKIND__FINALE,
+   NODEKIND__FINALE = 0,
    NODEKIND__NAO,
    NODEKIND__DEPEND,
    NODEKIND__UNKNOWN,
