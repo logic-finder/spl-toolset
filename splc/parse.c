@@ -149,6 +149,7 @@ static nodekind_t seek_direction(parse_ctx_t *pctx) {
 }
 
 static void report_syntax_errors(parse_ctx_t *pctx) {
+   safe_fputc(stdout, '\n');
    array_foreach(pctx->errs, print_syntax_error, pctx);
 
    if (pctx->errcnt < pctx->errcnt_max) {
@@ -1844,13 +1845,30 @@ static void print_syntax_error(void *item, size_t idx, void *ctx) {
    lpos = err->etok->lpos;
    l = array_peek(pctx->ls, lnum - 1);
 
+   /* " hero and thyself?" <- line
+             ^^^           <- token to be highlighted
+       123456789012345678  <- lpos
+       012345678901234567  <- idx */
+
    safe_vprintf(
-      Cbred "\n<syntax error #%zu>" Creset " %s\n"
-      "[%s:%zu:%zu] " Cbwhite "note:" Creset " problematic since here\n"
-      "%4d|%.*s" Cbblue "%s" Creset "\n",
-      idx, err->reason,
-      pctx->ov->src, lnum, lpos,
-      lnum, lpos - 1, l->run, &l->run[lpos - 1]
+      Cbred "<SYNTAX ERROR #%zu>" Creset " %s\n",
+      idx + 1, err->reason
+   );
+   safe_vprintf(
+      "[%s:%zu:%zu] " Cbwhite "note:" Creset " found here\n",
+      pctx->ov->src, lnum, lpos
+   );
+   safe_vprintf(  /* " hero " */
+      "%4d|%.*s",
+      lnum, lpos - 1, l->run
+   );
+   safe_vprintf(  /* "and" */
+      Cbblue "%s" Creset,
+      err->etok->run
+   );
+   safe_vprintf(  /* "thyself?" */
+      "%s\n",
+      &l->run[lpos - 1 + err->etok->len]
    );
 }
 
