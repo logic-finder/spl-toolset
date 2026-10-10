@@ -4,7 +4,7 @@
 // fixme: STREQL 매크로 정의해서 쓰기 (!strcmp 대체 프로젝트 전체적으로)
 
 extern void parse(compile_ctx_t *cctx) {
-   parse_ctx_t pctx = {0};
+   volatile parse_ctx_t pctx = {0};
    int ret;
 
    /* Initializes pctx struct */

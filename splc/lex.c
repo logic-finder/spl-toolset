@@ -2,7 +2,7 @@
 #include "lex.internals.h"  /* contains typedefs & prototypes */
 
 extern void lex(compile_ctx_t *cctx) {
-   lex_ctx_t lctx;
+   volatile lex_ctx_t lctx = {0};
    int ret;
 
    lctx.toks = array_create(destruct_tok);
