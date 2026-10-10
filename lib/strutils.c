@@ -259,7 +259,7 @@ extern char *strdup(const char *src) {
    size_t siz;
 
    siz = strlen(src);
-   buf = safe_malloc(siz + 1);  /* +1 or \0 */
+   buf = safe_malloc(siz + 1);  /* +1 for \0 */
    memcpy(buf, src, siz + 1);  /* \0 copied */
 
    return buf;
