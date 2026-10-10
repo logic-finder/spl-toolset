@@ -20,9 +20,9 @@ extern void parse_args(compile_ctx_t *cctx) {
          --verbose
          --dry-run
          --pedantic
-         --j<slot>
          --W<warning>
          --o=<name>
+         --j=<slot>
          --std=(spl01|cor27)
          --lang=(en|ko)
          --target=<lang> */
