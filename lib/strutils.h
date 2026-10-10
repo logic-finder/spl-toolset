@@ -53,6 +53,7 @@ int strcasecmp(const char *s1, const char *s2);
 char *tolower_str(const char *orig);
 
 char *strdup(const char *src);
+char *strndup(const char *src, size_t n);
 
 bool is_rnum(const char *rnum);
 

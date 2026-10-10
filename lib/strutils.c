@@ -265,6 +265,21 @@ extern char *strdup(const char *src) {
    return buf;
 }
 
+extern char *strndup(const char *src, size_t n) {
+   size_t i;
+   char *buf;
+
+   buf = safe_malloc(n);
+   for (i = 0; i < n; i++) {
+      buf[i] = src[i];
+   }
+   for ( ; i < n; i++) {
+      buf[i] = '\0';
+   }
+
+   return buf;
+}
+
 extern bool is_rnum(const char *rnum) {
    size_t i, k, nlen;
    place_t *p;
