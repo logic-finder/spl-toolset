@@ -266,16 +266,23 @@ extern char *strdup(const char *src) {
 }
 
 extern char *strndup(const char *src, size_t n) {
-   size_t i;
    char *buf;
+   size_t i;
 
-   buf = safe_malloc(n);
+   buf = safe_malloc(n + 1);  /* +1 for \0 */
+
+   /* copies at most n bytes */
    for (i = 0; (i < n && src[i] != '\0'); i++) {
       buf[i] = src[i];
    }
+
+   /* populates the remaining space with \0, if exists */
    for (/* empty */; i < n; i++) {
       buf[i] = '\0';
    }
+
+   /* null-terminates buf */
+   buf[n + 1] = '\0';
 
    return buf;
 }
