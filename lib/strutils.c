@@ -273,7 +273,7 @@ extern char *strndup(const char *src, size_t n) {
    for (i = 0; (i < n && src[i] != '\0'); i++) {
       buf[i] = src[i];
    }
-   for ( ; i < n; i++) {
+   for (/* empty */; i < n; i++) {
       buf[i] = '\0';
    }
 
