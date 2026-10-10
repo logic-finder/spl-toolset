@@ -270,7 +270,7 @@ extern char *strndup(const char *src, size_t n) {
    char *buf;
 
    buf = safe_malloc(n);
-   for (i = 0; i < n; i++) {
+   for (i = 0; (i < n && src[i] != '\0'); i++) {
       buf[i] = src[i];
    }
    for ( ; i < n; i++) {
