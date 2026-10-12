@@ -39,9 +39,9 @@ extern void destroy_config(void) {
 }
 
 static void init_config(void) {
-   cfg.source_files = array_create(destruct_sourcefile);
+   cfg.source_files = array_create(NULL);
    cfg.job = 1;
-   cfg.out = "a.out";
+   cfg.out = NULL;
    cfg.std = StdoptSpl01;
    cfg.lng = LngoptEn;
 }
@@ -587,15 +587,6 @@ static void handle_warning(argp_ctx_t *actx) {
    }
 
    issue_err(actx, "-W: unrecognized value '%s'", actx->tok->value);
-}
-
-static void destruct_sourcefile(void *item, size_t idx) {
-   char *filename;
-
-   (void) idx;
-
-   filename = item;
-   free(filename);
 }
 
 static void destruct_argtok(void *item, size_t idx) {
