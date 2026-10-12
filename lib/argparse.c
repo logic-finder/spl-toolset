@@ -26,7 +26,7 @@ extern void parse_argv(
       .table = table,
       .table_len = table_len,
       .sourcefiles = sourcefiles,
-      .err_infos = array_create(NULL)
+      .err_infos = array_create(destruct_errinfo)
    };
    int ret;
 
@@ -495,6 +495,15 @@ static void destruct_argtok(void *item, size_t idx) {
    free(tok->field);
 }
 
+static void destruct_errinfo(void *item, size_t idx) {
+   errinfo_t *ei;
+
+   (void) idx;
+   ei = item;
+   free(ei->tok.field);
+   free(ei->tok.value);
+}
+
 extern void errhandle_default(argtok_t *tok, const char *reason) {
    /* Note: for short flag and long flag, whose tok is fully filled */
    safe_vprintf("%s: %s\n", tok->field, reason);
@@ -533,6 +542,9 @@ static void regerr(argp_ctx_t *actx, argtok_t *tok) {
       .err = actx->err
    };  /* structs copied */
 
+   if (tok->field != NULL) ei.tok.field = strdup(tok->field);
+   if (tok->value != NULL) ei.tok.value = strdup(tok->value);
+
    actx->errcnt++;
    array_append(actx->err_infos, &ei, sizeof ei);
 
@@ -557,9 +569,8 @@ static void report_errors(argp_ctx_t *actx) {
    }
 
    safe_vprintf("error count reached max."
-      " Last consumed token: %s."
-      " Aborting argv parsing.\n",
-      actx->tok->field
+      " Aborting argv parsing at idx = %zu.\n",
+      actx->idx
    );
 }
 

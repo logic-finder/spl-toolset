@@ -59,6 +59,7 @@ static bool preprocess_longflag(argp_ctx_t *actx);
 static bool lookahead(argp_ctx_t *actx);
 
 static array_destructor_t destruct_argtok;
+static array_destructor_t destruct_errinfo;
 
 static void errhandle_seen_multiple(argtok_t *tok, const char *reason);
 static void errhandle_unrecognized(argtok_t *tok, const char *reason);
