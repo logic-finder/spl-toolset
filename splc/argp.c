@@ -51,18 +51,12 @@ static void validate_schemas(void) {
    /* short flags */
    for (i = 0; i < optmds_len; i++) {
       subject = &optmds[i];
-
-      if (subject->sname == '\0') {
+      if (subject->sname == '\0')
          continue;
-      }
-
       for (j = i + 1; j < optmds_len; j++) {
          against = &optmds[j];
-
-         if (against->sname == '\0') {
+         if (against->sname == '\0')
             continue;
-         }
-
          if (subject->sname == against->sname) {
             safe_vprintf("md[%zu] has the same short name with md[%zu].\n", i, j);
             count_dup++;
@@ -73,18 +67,12 @@ static void validate_schemas(void) {
    /* long flags */
    for (i = 0; i < optmds_len; i++) {
       subject = &optmds[i];
-
-      if (subject->lname == NULL) {
+      if (subject->lname == NULL)
          continue;
-      }
-
       for (j = i + 1; j < optmds_len; j++) {
          against = &optmds[j];
-
-         if (against->lname == NULL) {
+         if (against->lname == NULL)
             continue;
-         }
-
          if (!strcmp(subject->lname, against->lname)) {
             safe_vprintf("md[%zu] has the same short name with md[%zu].\n", i, j);
             count_dup++;
@@ -92,9 +80,8 @@ static void validate_schemas(void) {
       }
    }
 
-   if (count_dup == 0) {
+   if (count_dup == 0)
       return;
-   }
 
    safe_fputs(stdout, "Currently the program has a problematic option table. Terminating.\n");
    exit(EXIT_FAILURE);
