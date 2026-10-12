@@ -596,10 +596,9 @@ static void destruct_argtok(void *item, size_t idx) {
    argtok_t *tok;
 
    (void) idx;
-
    tok = item;
-   free(tok->field);
    free(tok->value);
+   free(tok->field);
 }
 
 static void issue_err(argp_ctx_t *actx, const char *format, ...) {
