@@ -4,7 +4,7 @@
 // fixme: STREQL 매크로 정의해서 쓰기 (!strcmp 대체 프로젝트 전체적으로)
 
 extern void parse(compile_ctx_t *cctx) {
-   volatile parse_ctx_t pctx = {0};
+   parse_ctx_t pctx = {0};
    int ret;
 
    /* Initializes pctx struct */
@@ -75,6 +75,10 @@ report_error:
       count_tree_node(pctx.pt)
    );
 
+   /* cleanup */
+   array_destroy(pctx.errs);
+
+   /* done! */
    cctx->pt = pctx.pt;
    return;
 }
