@@ -325,17 +325,14 @@ static void ungettok(argp_ctx_t *actx) {
 }
 
 static void preprocess_shortflag(argp_ctx_t *actx) {
-   argtok_t *tok, *lookahead;
+   argtok_t *tok;
 
    tok = actx->tok;
 
    /* this option doesn't take a value */
    if (tok->md->reqv == false) {
-      /* error path! */
-      if (tok->value != NULL) {
-         issue_err(actx,
-            "-%s doesn't require a value but given one", tok->field);
-      }
+      /* Note: tok->value must be NULL in this case
+         due to the logic of populate_as_shortflag() */
       return;
    }
 
@@ -344,12 +341,8 @@ static void preprocess_shortflag(argp_ctx_t *actx) {
       return;
    }
 
-   lookahead = gettok(actx);
-
    /* e.g. -j 4 */
-   if (lookahead->kind == ArgtokPosArg) {
-      /* tok->value is NULL, so okay to overwrite */
-      tok->value = strdup(lookahead->field);
+   if (lookahead(actx)) {
       return;
    }
 
@@ -359,7 +352,7 @@ static void preprocess_shortflag(argp_ctx_t *actx) {
 }
 
 static void preprocess_longflag(argp_ctx_t *actx) {
-   argtok_t *tok, *lookahead;
+   argtok_t *tok;
 
    tok = actx->tok;
 
@@ -382,18 +375,28 @@ static void preprocess_longflag(argp_ctx_t *actx) {
       issue_err(actx, "value not given after --%s=", tok->field);
    }
 
-   lookahead = gettok(actx);
-
    /* e.g. --job 4 */
-   if (lookahead->kind == ArgtokPosArg) {
-      /* tok->value is NULL, thus okay to overwrite */
-      tok->value = strdup(lookahead->field);
+   if (lookahead(actx)) {
       return;
    }
 
    /* error path! */
    ungettok(actx);
    issue_err(actx, "no positional argument followed --%s", tok->field);
+}
+
+static bool lookahead(argp_ctx_t *actx) {
+   argtok_t *lookahead;
+
+   lookahead = gettok(actx);
+
+   if (lookahead->kind == ArgtokPosArg) {
+      /* tok->value is NULL, thus okay to overwrite */
+      actx->tok->value = strdup(lookahead->field);
+      return true;
+   }
+
+   return false;
 }
 
 static void handle_posarg(argp_ctx_t *actx) {
