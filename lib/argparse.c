@@ -53,12 +53,18 @@ report_error:
    array_destroy(actx.toks);
 }
 
-extern void usage(optmd_t table[], size_t table_len, const char *txt) {
+extern void usage(
+   optmd_t table[],
+   size_t table_len,
+   const char *argv0,
+   const char *txt
+) {
    safe_vprintf("%s\n\n", txt);
    safe_vprintf(
-      "usage: " Cbwhite "splc" Creset " [OPTIONS] [--] files...\n"
+      "usage: " Cbwhite "%s" Creset " [OPTIONS] [--] files...\n"
       "\n"
-      "OPTIONS\n"
+      "OPTIONS\n",
+      argv0
    );
 
    for (size_t i = 0; i < table_len; i++) {

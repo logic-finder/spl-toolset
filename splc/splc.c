@@ -2,7 +2,7 @@
 #include "splc.internals.h"
 
 int main(int argc, const char *argv[]) {
-   checkif_argc1(argc, optmds, optmds_len);
+   checkif_argc1(argc, argv[0], optmds, optmds_len);
 
    /* init */
    init_msg();
@@ -21,12 +21,17 @@ int main(int argc, const char *argv[]) {
    return 0;
 }
 
-static void checkif_argc1(int argc, optmd_t table[], size_t table_len) {
+static void checkif_argc1(
+   int argc,
+   const char *argv0,
+   optmd_t table[],
+   size_t table_len
+) {
    static const char *intro = Cbwhite EXECNAME Creset
       " - the Shakespeare Programming Language compiler";
 
    if (argc == 1) {
-      usage(table, table_len, intro);
+      usage(table, table_len, argv0, intro);
       exit(EXIT_SUCCESS);  /* early exit */
    }
 }

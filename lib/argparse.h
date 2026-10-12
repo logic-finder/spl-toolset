@@ -49,7 +49,12 @@ void parse_argv(
    array_t *sourcefiles
 );
 
-void usage(optmd_t table[], size_t table_len, const char *txt);
+void usage(
+   optmd_t table[],
+   size_t table_len,
+   const char *argv0,
+   const char *txt
+);
 
 opt_errhandler_t errhandle_default;
 
