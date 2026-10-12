@@ -120,7 +120,7 @@ static void validate_schemas(argp_ctx_t *actx) {
          if (against->lname == NULL)
             continue;
          if (!strcmp(subject->lname, against->lname)) {
-            safe_vprintf("md[%zu] has the same short name with md[%zu].\n", i, j);
+            safe_vprintf("md[%zu] has the same long name with md[%zu].\n", i, j);
             count_dup++;
          }
       }
@@ -220,7 +220,7 @@ static void parse_argtoks(argp_ctx_t *actx) {
          /* err has been filled by drive() */
          regerr(actx, tok);
       }
-   
+
    next:
       if (actx->idx == actx->toks_len - 1) {
          return;  /* end of token */
@@ -467,7 +467,7 @@ static bool preprocess_longflag(argp_ctx_t *actx) {
 
 static bool lookahead(argp_ctx_t *actx) {
    argtok_t *curr, *lookahead;
-   
+
    curr = actx->tok;
    lookahead = gettok(actx);
 
