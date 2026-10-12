@@ -68,6 +68,8 @@ void safe_vfprintf(FILE *stream, const char *format, ...);
  */
 void safe_vprintf(const char *format, ...);
 
+void safe_vprintf2(const char *format, va_list ap);
+
 /**
  *
  */

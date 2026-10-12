@@ -110,6 +110,15 @@ extern void safe_vprintf(const char *format, ...) {
    va_end(ap);
 }
 
+extern void safe_vprintf2(const char *format, va_list ap) {
+   int ret;
+
+   ret = vprintf(format, ap);
+   if (ret < 0) {
+      exit(EXIT_FAILURE);
+   }
+}
+
 extern void safe_fwrite(
    void *src,
    size_t siz,
