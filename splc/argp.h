@@ -43,6 +43,7 @@ typedef struct config {
 } config_t;
 
 void _parse_args(compile_ctx_t *cctx);
+void destroy_config(void);
 
 extern config_t cfg;
 

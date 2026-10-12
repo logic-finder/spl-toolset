@@ -33,6 +33,11 @@ showtoks(&actx, true);
    array_destroy(actx.toks);
 }
 
+extern void destroy_config(void) {
+   free(cfg.out);
+   array_destroy(cfg.source_files);
+}
+
 static void init_config(void) {
    cfg.source_files = array_create(destruct_sourcefile);
    cfg.job = 1;
