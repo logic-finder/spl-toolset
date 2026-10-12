@@ -515,7 +515,7 @@ static void errhandle_unrecognized(argtok_t *tok, const char *reason) {
    if (!once) {
       safe_vprintf(
          "  * Note: should this be a filename, specify '" Cbwhite "--" Creset "' first\n"
-         "  * Note: type " Cbmagenta "--help" Creset " to see the manual page"
+         "  * Note: type " Cbmagenta "--help" Creset " to see the manual page\n"
       );
       once = true;
    }
