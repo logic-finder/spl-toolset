@@ -679,17 +679,17 @@ static const char *resolve_argtok_kind(argtok_t *tok) {
 static void list_options(void) {
    size_t i;
 
-   puts("# SHORT FLAGS");
+   puts("## SHORT FLAGS ##");
    for (i = 0; i < optmds_len; i++) {
       if (optmds[i].sname == '\0')
          continue;
-      printf("   %c (%s)\n", optmds[i].sname, optmds[i].lname);
+      printf("\t%c\t(%s)\n", optmds[i].sname, optmds[i].lname);
    }
 
-   puts("\n# LONG FLAGS");
+   puts("\n## LONG FLAGS ##");
    for (i = 0; i <optmds_len; i++) {
       if (optmds[i].lname == NULL)
          continue;
-      printf("   %s\n", optmds[i].lname);
+      printf("\t%s\n", optmds[i].lname);
    }
 }
