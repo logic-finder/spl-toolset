@@ -14,11 +14,11 @@
 /*==========*
  | TYPEDEFS |
  *==========*/
-typedef struct tag_lex_ctx_t lex_ctx_t;
+typedef struct lex_ctx lex_ctx_t;
 typedef int processor_t(lex_ctx_t *lctx);
 typedef int checker_t(lex_ctx_t *lctx);
 
-struct tag_lex_ctx_t {
+struct lex_ctx {
    array_t *toks;  /* array of token_t */
    array_t *ls;    /* array of line_t */
    size_t lc;    /* length of ls */
