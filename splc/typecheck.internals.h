@@ -13,7 +13,8 @@
 typedef struct {
    const char *reason;
    tree_t *pt, *title, *dp;
-   optval_t *ov;
+   config_t *cfg;
+   const char *sourcefile;
    array_t *ls;
    tree_t *t;  /* temporary tree */
    node_t *n;  /* temporary tree.dat */

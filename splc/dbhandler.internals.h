@@ -8,8 +8,8 @@
 #include "common.h"
 #include "global.h"
 #include "strutils.h"
-#include "array.adt.h"
 #include "wrappers.h"
+#include "array.adt.h"
 #include "db.common.h"
 #include "colorcodes.h"
 

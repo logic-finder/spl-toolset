@@ -11,7 +11,7 @@
 
 typedef struct {
    FILE *fp;
-   optflg_t *of;
+   config_t *cfg;
    tree_t *irt, *nrtv;
    tree_t *t;
    irnode_t *n;

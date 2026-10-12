@@ -1,13 +1,13 @@
 #include "dbhandler.h"
 #include "dbhandler.internals.h"
 
-extern void dbload(compile_ctx_t *cctx) {
+extern void dbload(config_t *cfg) {
    dbcheck();
    load_section(SECTKIND_NAME, NAME_DTSIZ);
    load_section(SECTKIND_ADJ ,  ADJ_DTSIZ);
    load_section(SECTKIND_NOUN, NOUN_DTSIZ);
    load_section(SECTKIND_COMP, COMP_DTSIZ);
-   if (cctx->of->vbs) safe_vprintf(ENPREFIX
+   if (cfg->vbs) safe_vprintf(ENPREFIX
       "loaded the database " Cbyellow DBFILENAME Creset " ("
       Cbwhite "%d" Creset " names, " Cbwhite "%d" Creset " adjs, "
       Cbwhite "%d" Creset " nouns, " Cbwhite "%d" Creset " cmps)\n",

@@ -13,7 +13,8 @@ typedef struct {
    tree_t *t;  /* temporary tree */
    node_t *n;  /* temporary tree.dat */
    array_t *ls;
-   optval_t *ov;
+   config_t *cfg;
+   const char *sourcefile;
 } ctxcheck_ctx_t;
 
 typedef void ctxchecker_t(ctxcheck_ctx_t *octx);

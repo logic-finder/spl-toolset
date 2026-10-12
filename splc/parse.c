@@ -8,14 +8,16 @@ extern void parse(compile_ctx_t *cctx) {
    int ret;
 
    /* Initializes pctx struct */
-   pctx.of = cctx->of;
-   pctx.ov = cctx->ov;
+   pctx.cfg = cctx->cfg;
+   pctx.sourcefile = cctx->sourcefile;
    pctx.ls = cctx->ls;
    pctx.toks = cctx->toks;
    pctx.len = array_size(pctx.toks);
    pctx.idx = 0;
    /* Note: toks has at least one element, otherwise the program
       would have been terminated already in loadfile() by splc.c */
+   /* Note: didn't use gettok() on purpose since it advances
+      pctx.idx, causing an unmatch between current token and its idx */
    pctx.tok = array_peek(pctx.toks, pctx.idx);
    pctx.etok = pctx.tok;
    pctx.reason = "none";
@@ -25,13 +27,16 @@ extern void parse(compile_ctx_t *cctx) {
    pctx.errs = array_create(NULL);
    pctx.recovery_point = NODEKIND__UNKNOWN;
 
-   if (cctx->of->vbs) safe_fputs(stdout, ENPREFIX "parsing...");
+   if (cctx->cfg->vbs) safe_fputs(stdout, ENPREFIX "parsing...");
 
    /* Constructs the parse tree
          pt[0] = title
          pt[1] = dp
          pt[2] = nrtv  */
 
+   /* Note: errcnt is declared volatile in order to prevent
+      its value from being restored to the snapshotted value
+      after longjmp */
    ret = setjmp(pctx.env_parse);
    if (ret == NODEKIND__FINALE) {
       goto report_error;
@@ -70,7 +75,7 @@ report_error:
       exit(EXIT_FAILURE);
    }
 
-   if (cctx->of->vbs) safe_vprintf(" " Cgreen "done!" Creset
+   if (cctx->cfg->vbs) safe_vprintf(" " Cgreen "done!" Creset
       "\t(total " Cbwhite "%zu" Creset " nodes)\n",
       count_tree_node(pctx.pt)
    );
@@ -162,7 +167,7 @@ static void report_syntax_errors(parse_ctx_t *pctx) {
 
    safe_vprintf("too many syntax errors."
       " Aborting parsing at [%s:%zu:%zu]\n",
-      pctx->ov->src, pctx->etok->lnum, pctx->etok->lpos
+      pctx->sourcefile, pctx->etok->lnum, pctx->etok->lpos
    );
 }
 
@@ -220,7 +225,7 @@ static int seek_act(parse_ctx_t *pctx) {
 }
 
 static void parse_act(parse_ctx_t *pctx) {
-   if (pctx->of->w_kc && strcmp(pctx->tok->run, KEYWRD_ACT)) {
+   if (pctx->cfg->w_kc && strcmp(pctx->tok->run, KEYWRD_ACT)) {
       pctx->reason = "this keyword should be 'Act'";
       synwarn(pctx);
    }
@@ -266,7 +271,7 @@ static int seek_scene(parse_ctx_t *pctx) {
 }
 
 static void parse_scene(parse_ctx_t *pctx) {
-   if (pctx->of->w_kc && strcmp(pctx->tok->run, KEYWRD_SCENE)) {
+   if (pctx->cfg->w_kc && strcmp(pctx->tok->run, KEYWRD_SCENE)) {
       pctx->reason = "this keyword should be 'Scene'";
       synwarn(pctx);
    }
@@ -319,7 +324,7 @@ static int seek_enter(parse_ctx_t *pctx) {
 static void parse_enter(parse_ctx_t *pctx) {
    tree_t *enter;
 
-   if (pctx->of->w_kc && strcmp(pctx->tok->run, KEYWRD_ENTER)) {
+   if (pctx->cfg->w_kc && strcmp(pctx->tok->run, KEYWRD_ENTER)) {
       pctx->reason = "this keyword should be 'Enter'";
       synwarn(pctx);
    }
@@ -343,7 +348,7 @@ static int seek_exit(parse_ctx_t *pctx) {
 static void parse_exit(parse_ctx_t *pctx) {
    tree_t *exit;
 
-   if (pctx->of->w_kc && strcmp(pctx->tok->run, KEYWRD_EXIT)) {
+   if (pctx->cfg->w_kc && strcmp(pctx->tok->run, KEYWRD_EXIT)) {
       pctx->reason = "this keyword should be 'Exit'";
       synwarn(pctx);
    }
@@ -368,7 +373,7 @@ static int seek_exeunt(parse_ctx_t *pctx) {
 static void parse_exeunt(parse_ctx_t *pctx) {
    tree_t *exeunt;
 
-   if (pctx->of->w_kc && strcmp(pctx->tok->run, KEYWRD_EXEUNT)) {
+   if (pctx->cfg->w_kc && strcmp(pctx->tok->run, KEYWRD_EXEUNT)) {
       pctx->reason = "this keyword should be 'Exeunt'";
       synwarn(pctx);
    }
@@ -463,7 +468,7 @@ static bool parse_line_as_conseq(parse_ctx_t *pctx) {
    }
 
    /* the standard says 'if' statement can't have an 'if' statement as a consequent */
-   if (!strcmp(pctx->ov->std, stdopt_spl01)) {
+   if (pctx->cfg->std == StdoptSpl01) {
       table = &stmt_hdlrs[1];
       tsiz--;
    }
@@ -577,7 +582,7 @@ static tree_t *parse_asgn_i(parse_ctx_t *pctx, token_t *you) {
 static tree_t *parse_asgn_ii(parse_ctx_t *pctx, token_t *you) {
    /* TYPE 2: You be as adj as (B|C|D)(.|!) */
 
-   if (pctx->of->w_bp) {
+   if (pctx->cfg->w_bp) {
       check_asgn_predicate(pctx);
    }
 
@@ -603,7 +608,7 @@ static tree_t *parse_asgn_ii(parse_ctx_t *pctx, token_t *you) {
 static tree_t *parse_asgn_iii(parse_ctx_t *pctx, token_t *you) {
    /* TYPE 3: You be (B|C|D)(.|!) */
 
-   if (pctx->of->w_bp) {
+   if (pctx->cfg->w_bp) {
       check_asgn_predicate(pctx);
    }
 
@@ -862,7 +867,7 @@ static void parse_cond(parse_ctx_t *pctx) {
 
    /* checks the relation between the subject and the be verb conjugation
       only if --Wbe-predicate is activated */
-   if (pctx->of->w_bp) {
+   if (pctx->cfg->w_bp) {
       check_cond_predicate(pctx);
    }
 
@@ -1860,7 +1865,7 @@ static void print_syntax_error(void *item, size_t idx, void *ctx) {
    );
    safe_vprintf(
       "[%s:%zu:%zu] " Cbwhite "note:" Creset " found here\n",
-      pctx->ov->src, lnum, lpos
+      pctx->sourcefile, lnum, lpos
    );
    safe_vprintf(  /* " hero " */
       "%4d|%.*s",
@@ -1889,7 +1894,7 @@ static void synwarn(parse_ctx_t *pctx) {
       "[%s:%zu:%zu] " Cbwhite "note:" Creset " problematic since here\n"
       "%4d|%.*s" Cbblue "%s" Creset "\n",
       pctx->reason,
-      pctx->ov->src, lnum, lpos,
+      pctx->sourcefile, lnum, lpos,
       lnum, lpos - 1, l->run, &l->run[lpos - 1]
    );
 }
@@ -1907,7 +1912,7 @@ static void synerr(parse_ctx_t *pctx) {
       "[%s:%zu:%zu] " Cbwhite "note:" Creset " problematic since here\n"
       "%4d|%.*s" Cbblue "%s" Creset "\n",
       pctx->reason,
-      pctx->ov->src, lnum, lpos,
+      pctx->sourcefile, lnum, lpos,
       lnum, lpos - 1, l->run, &l->run[lpos - 1]
    );
    exit(EXIT_FAILURE);

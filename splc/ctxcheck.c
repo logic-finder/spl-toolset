@@ -8,14 +8,15 @@ extern void ctxcheck(compile_ctx_t *cctx) {
    ctxcheck_ctx_t octx;
 
    octx.ls = cctx->ls;
-   octx.ov = cctx->ov;
+   octx.cfg = cctx->cfg;
    octx.nrtv = tree_child(cctx->pt, 2);
+   octx.sourcefile = cctx->sourcefile;
 
-   if (cctx->of->vbs) safe_fputs(stdout, ENPREFIX "context-checking...");
+   if (cctx->cfg->vbs) safe_fputs(stdout, ENPREFIX "context-checking...");
 
    tree_pre_traverse(octx.nrtv, ctxcheck_router, 0, &octx);
 
-   if (cctx->of->vbs) safe_vprintf(" " Cgreen "done!" Creset "\n");
+   if (cctx->cfg->vbs) safe_vprintf(" " Cgreen "done!" Creset "\n");
 }
 
 static void ctxcheck_router(tree_t *t, int lv, void *ctx) {
@@ -92,7 +93,7 @@ static void print_err(ctxcheck_ctx_t *octx) {
    safe_vprintf(
       "\n[%s:%zu:%zu] " Cbwhite "note:" Creset " at this goto statement"
       "\n%4d|%s",
-      octx->ov->src, lnum, lpos,
+      octx->sourcefile, lnum, lpos,
       lnum, l->run
    );
 }
@@ -112,7 +113,7 @@ static void trace(ctxcheck_ctx_t *octx, tree_t *t, const char *type) {
       "\n[%s:%zu:%zu] " Cbwhite "note:" Creset
       " in the " Cbmagenta "%s %s" Creset
       "\n%4d|%s",
-      octx->ov->src, lnum, lpos,
+      octx->sourcefile, lnum, lpos,
       type, childnode->dat.s.run,
       lnum, l->run
    );

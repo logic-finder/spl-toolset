@@ -3,27 +3,26 @@
 
 extern void irdump(compile_ctx_t *cctx) {
    irdump_ctx_t ictx;
-
    char *destname;
 
-   ictx.of = cctx->of;
+   ictx.cfg = cctx->cfg;
    ictx.irt = cctx->irt;
    ictx.nrtv = tree_child(ictx.irt, 1);
 
    destname = make_destname("hello.spl", IR_EXTENSION);
    ictx.fp = safe_fopen(destname, "w");
 
-   if (cctx->of->vbs) safe_vprintf(
+   if (cctx->cfg->vbs) safe_vprintf(
       ENPREFIX "dumping IR into " Cbyellow "\"%s\"" Creset "...", destname
    );
 
    tree_pre_traverse(ictx.nrtv, route, 0, &ictx);
 
-   if (cctx->of->vbs) safe_vprintf(" " Cgreen "done!" Creset "\n");
+   if (cctx->cfg->vbs) safe_vprintf(" " Cgreen "done!" Creset "\n");
 
    safe_fclose(ictx.fp);
 
-   if (cctx->of->drn)
+   if (cctx->cfg->drn)
       safe_remove(destname);
 
    free(destname);
@@ -90,7 +89,7 @@ static void handle_act(irdump_ctx_t *ictx) {
 
 static void handle_scene(irdump_ctx_t *ictx) {
    safe_fputc(ictx->fp, '\n');
-   if (ictx->of->dbg) emit_debug_data(ictx);
+   if (ictx->cfg->dbg) emit_debug_data(ictx);
    safe_vfprintf(
       ictx->fp,
       "Act_%s_Scene_%s:\n", // fixme: use KEYWRD_ACT _SCENE
@@ -116,7 +115,7 @@ static void handle_setlike(irdump_ctx_t *ictx) {
    p1 = tree_chdat(ictx->t, 0);
    p2 = tree_chdat(ictx->t, 1);
 
-   if (ictx->of->dbg) emit_debug_data(ictx);
+   if (ictx->cfg->dbg) emit_debug_data(ictx);
 
    switch (p2->kind) {
       // fixme: 별도 함수로 빼고 return하기
@@ -164,7 +163,7 @@ static void handle_enterlike(irdump_ctx_t *ictx) {
 
    p1 = tree_chdat(ictx->t, 0);
 
-   if (ictx->of->dbg) emit_debug_data(ictx);
+   if (ictx->cfg->dbg) emit_debug_data(ictx);
    safe_vfprintf(
       ictx->fp,
       "%s%s %d\n",
@@ -179,7 +178,7 @@ static void handle_pushlike(irdump_ctx_t *ictx) {
 
    p1 = tree_chdat(ictx->t, 0);
 
-   if (ictx->of->dbg) emit_debug_data(ictx);
+   if (ictx->cfg->dbg) emit_debug_data(ictx);
    safe_vfprintf(
       ictx->fp,
       "%s%s %s\n",
@@ -196,7 +195,7 @@ static void handle_goto(irdump_ctx_t *ictx) {
    p1 = tree_chdat(ictx->t, 0);
    p2 = tree_chdat(ictx->t, 1);
 
-   if (ictx->of->dbg) emit_debug_data(ictx);
+   if (ictx->cfg->dbg) emit_debug_data(ictx);
 
    if (p1->dat.ui == NODEKIND_ACT) {
       safe_vfprintf(
@@ -228,7 +227,7 @@ static void handle_jumplike(irdump_ctx_t *ictx) {
 
    p1 = tree_chdat(ictx->t, 0);
 
-   if (ictx->of->dbg) emit_debug_data(ictx);
+   if (ictx->cfg->dbg) emit_debug_data(ictx);
    safe_vfprintf(
       ictx->fp,
       "%s%s .L%d\n",
@@ -245,7 +244,7 @@ static void handle_binary_op(irdump_ctx_t *ictx) {
    p2 = tree_chdat(ictx->t, 1);
    p3 = tree_chdat(ictx->t, 2);
 
-   if (ictx->of->dbg) emit_debug_data(ictx);
+   if (ictx->cfg->dbg) emit_debug_data(ictx);
    safe_vfprintf(
       ictx->fp,
       "%s%s %s %s %s\n",
@@ -263,7 +262,7 @@ static void handle_unary_op(irdump_ctx_t *ictx) {
    p1 = tree_chdat(ictx->t, 0);
    p2 = tree_chdat(ictx->t, 1);
 
-   if (ictx->of->dbg) emit_debug_data(ictx);
+   if (ictx->cfg->dbg) emit_debug_data(ictx);
    safe_vfprintf(
       ictx->fp,
       "%s%s %s %s\n",
@@ -275,7 +274,7 @@ static void handle_unary_op(irdump_ctx_t *ictx) {
 }
 
 static void handle_paramless_opcode(irdump_ctx_t *ictx) {
-   if (ictx->of->dbg) emit_debug_data(ictx);
+   if (ictx->cfg->dbg) emit_debug_data(ictx);
    safe_vfprintf(
       ictx->fp,
       "%s%s\n",

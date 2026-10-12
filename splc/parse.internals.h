@@ -21,8 +21,8 @@
  | TYPEDEFS |
  *==========*/
 typedef struct {
-   optflg_t *of;  /* option flags */
-   optval_t *ov;  /* option values */
+   config_t *cfg;
+   const char *sourcefile;
    array_t *ls;  /* array of line_t */
    array_t *toks;  /* token stream */
    token_t *tok;   /* toks[idx] */
@@ -37,7 +37,7 @@ typedef struct {
    const char *reason;   /* the reason of a syntax error */
    size_t charidx;  /* updated by is_name() */
    size_t be_kind;  /* updated by is_be_conjs() */
-   size_t errcnt;  /* syntax error count */
+   volatile size_t errcnt;  /* syntax error count */
    size_t errcnt_max;  /* max number of errcnt */
    array_t *errs;  /* array of synerr_t */
    jmp_buf env_parse;

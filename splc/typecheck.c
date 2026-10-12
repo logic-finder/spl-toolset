@@ -10,10 +10,11 @@ extern void typecheck(compile_ctx_t *cctx) {
    tctx.pt = cctx->pt;
    tctx.title = tree_child(tctx.pt, 0);
    tctx.dp = tree_child(tctx.pt, 1);
-   tctx.ov = cctx->ov;
+   tctx.cfg = cctx->cfg;
+   tctx.sourcefile = cctx->sourcefile;
    tctx.ls = cctx->ls;
 
-   if (cctx->of->vbs) safe_fputs(stdout, ENPREFIX "type-checking...");
+   if (cctx->cfg->vbs) safe_fputs(stdout, ENPREFIX "type-checking...");
 
    /* Preprocesses */
    coalesce_title(&tctx);
@@ -23,7 +24,7 @@ extern void typecheck(compile_ctx_t *cctx) {
    /* Type-checks */
    tree_post_traverse(tctx.pt, typecheck_router, 0, &tctx);
 
-   if (cctx->of->vbs) safe_vprintf(" " Cgreen "done!" Creset "\n");
+   if (cctx->cfg->vbs) safe_vprintf(" " Cgreen "done!" Creset "\n");
 }
 
 static inline void coalesce_title(typecheck_ctx_t *tctx) {
@@ -201,7 +202,7 @@ static void semerr_badword(typecheck_ctx_t *tctx) {
       "[%s:%zu:%zu] " Cbwhite "note:" Creset " problematic at here\n"
       "%4d|%.*s" Cbblue "%s" Creset "%s\n",
       tctx->reason, tctx->n->dat.s.run,
-      tctx->ov->src, lnum, lpos,
+      tctx->sourcefile, lnum, lpos,
       lnum, lpos - 1, l->run,
       tctx->n->dat.s.run, &l->run[lpos - 1 + tctx->n->dat.s.len]
    );
@@ -226,10 +227,10 @@ static void semerr_dupname(
       "[%s:%zu:%zu] " Cbwhite "note:" Creset " first declared at here\n"
       "%4d|%.*s" Cbblue "%s" Creset "%s",
       curr->dat.s.run,
-      tctx->ov->src, curr->lnum, curr->lpos,
+      tctx->sourcefile, curr->lnum, curr->lpos,
       curr->lnum, curr->lpos - 1, cl->run,
          curr->dat.s.run, &cl->run[curr->lpos - 1 + curr->dat.s.len],
-      tctx->ov->src, prev->lnum, prev->lpos,
+      tctx->sourcefile, prev->lnum, prev->lpos,
       prev->lnum, prev->lpos - 1, pl->run,
          prev->dat.s.run, &pl->run[prev->lpos - 1 + prev->dat.s.len]
    );

@@ -10,7 +10,8 @@
 typedef struct {
    tree_t *irt, *nrtv;
    array_t *ls;
-   optval_t *ov;
+   config_t *cfg;
+   const char *sourcefile;
 } iroptmiz_ctx_t;
 
 static void fold_const(iroptmiz_ctx_t *zctx);

@@ -58,11 +58,12 @@ extern void iroptimize(compile_ctx_t *cctx) {
    iroptmiz_ctx_t zctx;
 
    zctx.ls = cctx->ls;
-   zctx.ov = cctx->ov;
+   zctx.cfg = cctx->cfg;
    zctx.irt = cctx->irt;
    zctx.nrtv = tree_child(zctx.irt, 1);
+   zctx.sourcefile = cctx->sourcefile;
 
-   if (cctx->of->vbs) safe_fputs(stdout, ENPREFIX "optimizing IR...");
+   if (cctx->cfg->vbs) safe_fputs(stdout, ENPREFIX "optimizing IR...");
 
    /* Note: the order fc -> pc -> ro & rc is intended */
    fold_const(&zctx);
@@ -73,7 +74,7 @@ extern void iroptimize(compile_ctx_t *cctx) {
    // reduce_ifstmt()
    // remove_contradict()
 
-   if (cctx->of->vbs) safe_vprintf(" " Cgreen "done!" Creset
+   if (cctx->cfg->vbs) safe_vprintf(" " Cgreen "done!" Creset
          "\t(total " Cbwhite "%zu" Creset " nodes)\n",
          count_opcodes(cctx->irt)
       );
@@ -188,7 +189,7 @@ static void warn(iroptmiz_ctx_t *zctx, size_t lnum, size_t lpos) {
       "[%s:%zu:%zu] " Cbwhite "note:" Creset " problematic since here\n"
       "%4d|%.*s" Cbblue "%s" Creset "\n",
       msgs.warn.optimizer.flow,
-      zctx->ov->src, lnum, lpos,
+      zctx->sourcefile, lnum, lpos,
       lnum, lpos - 1, l->run, &l->run[lpos - 1]
    );
 }

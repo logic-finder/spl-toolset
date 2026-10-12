@@ -3,12 +3,12 @@
 
 #include <stdbool.h>
 
-#include "splc.h"
+#include "config.h"
 
 typedef bool querier_rec_A(const char *key);
 typedef bool querier_rec_B(const char *key, int *ret);
 
-void dbload(compile_ctx_t *cctx);
+void dbload(config_t *cfg);
 void dbunload(void);
 
 querier_rec_A query_name;

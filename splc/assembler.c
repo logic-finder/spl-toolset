@@ -31,10 +31,10 @@ extern void assemble(compile_ctx_t *cctx) {
    actx.nrtv = tree_child(cctx->irt, 1);
    actx.ls = cctx->ls;
 
-   destname = strdup(cctx->ov->out);
+   destname = strdup(cctx->cfg->out);
    actx.fp = safe_fopen(destname, "w");
 
-   if (cctx->of->vbs) safe_vprintf(
+   if (cctx->cfg->vbs) safe_vprintf(
       ENPREFIX "generating object file " Cbyellow "\"%s\"" Creset "...", destname
    );
 
@@ -49,7 +49,7 @@ extern void assemble(compile_ctx_t *cctx) {
    actx.s2p = actx.offset;
    actx.s3p = 0;
 
-   if (cctx->of->dbg) {
+   if (cctx->cfg->dbg) {
       write_debug_info(&actx);
       actx.s3p = actx.offset;
       write_srcfile(&actx);
@@ -60,7 +60,7 @@ extern void assemble(compile_ctx_t *cctx) {
    /* Finally, writes the header section */
    write_header(1, &actx);
 
-   if (cctx->of->vbs) safe_vprintf(
+   if (cctx->cfg->vbs) safe_vprintf(
       " " Cgreen "done!" Creset
       " (total " Cbwhite "%" SPL_UINT_FMTSPC Creset " bytes) \n",
       actx.offset
@@ -69,7 +69,7 @@ extern void assemble(compile_ctx_t *cctx) {
    /* Cleans up */
    safe_fclose(actx.fp);
 
-   if (cctx->of->drn)
+   if (cctx->cfg->drn)
       safe_remove(destname);
 
    free(destname);
