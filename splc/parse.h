@@ -10,8 +10,11 @@
 #define TREE_CHDAT(t,i) ((node_t *) tree_chdat((t),(i)))
 
 typedef enum nodekind {
+   /* Note: NODEKIND__FINALE is compared to the return
+      value of setjmp() in parse(). Thus, it can't be 0 */
+
    /* 000 Misc. */
-   NODEKIND__FINALE = 0,
+   NODEKIND__FINALE = 1,  /* MUST NOT BE ZERO! */
    NODEKIND__NAO,
    NODEKIND__DEPEND,
    NODEKIND__UNKNOWN,
