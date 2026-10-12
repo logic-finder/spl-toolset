@@ -3,6 +3,8 @@
 
 #define Creset    "\033[0m"      /* color reset */
 
+#define Cul       "\033[4m"      /* underline */
+
 #define Cbblack   "\033[0;90m"   /* bright black */
 #define Cbred     "\033[0;91m"   /* bright red */
 #define Cbgreen   "\033[0;92m"   /* bright green */
