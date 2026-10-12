@@ -282,7 +282,7 @@ extern char *strndup(const char *src, size_t n) {
    }
 
    /* null-terminates buf */
-   buf[n + 1] = '\0';
+   buf[n] = '\0';
 
    return buf;
 }
