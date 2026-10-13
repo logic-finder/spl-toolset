@@ -28,7 +28,6 @@ static void compile(config_t *cfg);
 static void loadfile_talkative(compile_ctx_t *cctx, const char *filename);
 static void checkif_argc1(
    int argc,
-   const char *argv0,
    optmd_t table[],
    size_t table_len
 );
