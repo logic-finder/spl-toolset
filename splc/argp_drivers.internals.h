@@ -32,7 +32,7 @@ static opt_driver_t drive_warning;
 static opt_errhandler_t errhandle_unrecognized;
 
 /*==================*
- | STATIC VARIABLES |
+ | EXTERN VARIABLES |
  *==================*/
 optmd_t optmds[] = {
    /* Note: .seen be initialized with 0 */
