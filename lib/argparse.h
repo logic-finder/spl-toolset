@@ -52,8 +52,7 @@ void parse_argv(
 void usage(
    optmd_t table[],
    size_t table_len,
-   const char *argv0,
-   const char *txt
+   const char *intro
 );
 
 opt_errhandler_t errhandle_default;

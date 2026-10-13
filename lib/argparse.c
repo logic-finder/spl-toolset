@@ -56,17 +56,11 @@ report_error:
 extern void usage(
    optmd_t table[],
    size_t table_len,
-   const char *argv0,
-   const char *txt
+   const char *intro
 ) {
-   safe_vprintf("%s\n\n", txt);
-   safe_vprintf(
-      "usage: " Cbwhite "%s" Creset " [OPTIONS] [--] files...\n"
-      "\n"
-      "OPTIONS\n",
-      argv0
-   );
+   safe_vprintf("%s\n\n", intro);
 
+   safe_vprintf("OPTIONS\n");
    for (size_t i = 0; i < table_len; i++) {
       safe_vprintf("\t" Cyellow);
       if (table[i].sname != '\0' && table[i].lname == NULL)
