@@ -84,11 +84,11 @@ extern void usage(
    safe_vprintf(
       "\n"
       "tip: short flags can be specified in a"
-         " row like " Ccyan "-gOS" Creset "\n"
-      "tip: " Ccyan "-f value" Creset " is"
-         " the same as " Ccyan "-fvalue" Creset "\n"
+         " row like " Ccyan "-xvf" Creset "\n"
       "tip: " Ccyan "--flag value" Creset
          " is the same as " Ccyan "--flag=value" Creset "\n"
+      "tip: " Ccyan "-f value" Creset " is"
+         " the same as " Ccyan "-fvalue" Creset "\n"
       "tip: use " Ccyan "--" Creset " to specify the end of option\n"
    );
 }
