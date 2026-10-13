@@ -36,7 +36,8 @@ static opt_errhandler_t errhandle_unrecognized;
  *==================*/
 optmd_t optmds[] = {
    /* Note: .seen be initialized with 0 */
-   /* Note: [0] must be "help" and [1] "version" */
+   /* Note: [0] must be "help" and [1] "version"
+      fixme? - this kind of implicit promise may be confusing */
    {
       .sname = 'h',
       .lname = "help",
