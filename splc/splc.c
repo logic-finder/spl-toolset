@@ -11,7 +11,6 @@ int main(int argc, const char *argv[]) {
    apply_config(&cfg);
    dbload(&cfg);
 
-   // process_opts(&cctx);
    compile(&cfg);
 
    /* cleanup */
