@@ -28,11 +28,13 @@ extern void apply_config(config_t *cfg) {
       ERR("no source file specified. Terminating.");
    }
 
+   /* --pedantic: enables all -W flags */
    if (cfg->pdt) {
       cfg->w_kc = true;
       cfg->w_bp = true;
    }
 
+   /* --output: the output file name defaults to a.out */
    if (!cfg->out) {
       cfg->out = strdup("a.out");
    }
