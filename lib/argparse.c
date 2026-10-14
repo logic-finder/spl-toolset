@@ -551,7 +551,7 @@ static void errhandle_unrecognized(argtok_t *tok, const char *reason, void *ctx)
 static void errhandle_out_of_tok(argtok_t *tok, const char *reason, void *ctx) {
    /* Note: can't use tok in this context */
    (void) tok, (void) reason, (void) ctx;
-   safe_vprintf("argp: no command line argument left\n");
+   safe_vprintf("argparse: ran out of command line arguments, having expected one\n");
 }
 
 static void regerr(argp_ctx_t *actx, argtok_t *tok, void *ctx, size_t ctxsiz) {
