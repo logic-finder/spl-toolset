@@ -205,6 +205,7 @@ static void store_string(lex_ctx_t *lctx, tokkind_t kind) {
 
 /*** DEBUG ***/
 
+[[maybe_unused]]
 extern void showtoks(compile_ctx_t *cctx) {
    array_foreach(cctx->toks, showtok, NULL);
 }

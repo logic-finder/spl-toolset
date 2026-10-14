@@ -339,6 +339,7 @@ static const char *resolve_var(irvar_t var) {
 
 /*** DEBUG ***/
 
+[[maybe_unused]]
 extern void showirt(compile_ctx_t *cctx) {
    tree_pre_traverse(cctx->irt, showirnode, 0, NULL);
 }

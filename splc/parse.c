@@ -1998,6 +1998,7 @@ static size_t count_tree_node(tree_t *root) {
 
 /*** DEBUG ***/
 
+[[maybe_unused]]
 extern void showpt(compile_ctx_t *cctx) {
    tree_pre_traverse(cctx->pt, shownode, 0, NULL);
 }
