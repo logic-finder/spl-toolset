@@ -108,6 +108,7 @@ static void typecheck_adj(typecheck_ctx_t *tctx) {
    semerr_badword(tctx);
 }
 
+[[maybe_unused]]
 static void typecheck_noun(typecheck_ctx_t *tctx) {
    bool ret;
    int ptype, val;

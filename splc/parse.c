@@ -1728,6 +1728,7 @@ static void skiptoks(parse_ctx_t *pctx, const char *sentinels) {
    pctx->etok = pctx->tok;
 }
 
+[[maybe_unused]]
 static void eqtok(parse_ctx_t *pctx, char ch) {
    if (pctx->tok->run[0] != ch) {
       return;
@@ -1736,6 +1737,7 @@ static void eqtok(parse_ctx_t *pctx, char ch) {
    synerr(pctx);
 }
 
+[[maybe_unused]]
 static void neqtok(parse_ctx_t *pctx, char ch) {
    if (pctx->tok->run[0] == ch) {
       return;

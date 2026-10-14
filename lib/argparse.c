@@ -591,6 +591,7 @@ static void report_errors(argp_ctx_t *actx) {
 
 /*** DEBUG ***/
 
+[[maybe_unused]]
 static void showargtoks(argp_ctx_t *actx, bool terse) {
    if (terse) {
       printf(Ccyan Cul "idx\tkind\thas_eq\tseen\tfield\t\tvalue\n" Creset);
@@ -653,6 +654,7 @@ static const char *resolve_argtok_kind(argtok_t *tok) {
    return NULL;
 }
 
+[[maybe_unused]]
 static void list_options(argp_ctx_t *actx) {
    size_t i;
 
