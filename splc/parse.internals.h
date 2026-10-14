@@ -37,11 +37,12 @@ typedef struct {
    const char *reason;   /* the reason of a syntax error */
    size_t charidx;  /* updated by is_name() */
    size_t be_kind;  /* updated by is_be_conjs() */
-   volatile size_t errcnt;  /* syntax error count */
    size_t errcnt_max;  /* max number of errcnt */
    array_t *errs;  /* array of synerr_t */
-   jmp_buf env_parse;
    nodekind_t recovery_point;
+   jmp_buf env_parse;
+   /* Needs to keep its value after longjmp */
+   volatile size_t errcnt;  /* syntax error count */
 } parse_ctx_t;
 
 typedef struct {

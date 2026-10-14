@@ -27,14 +27,15 @@ typedef struct {
    size_t toks_len;
    size_t idx;
    bool eoe;
-   volatile size_t errcnt;
    size_t errcnt_max;
    optmd_t *table;
    size_t table_len;
    array_t *sourcefiles;
-   jmp_buf env;
    argerr_t err;
    array_t *err_infos;
+   jmp_buf env;
+   /* Needs to keep its value after longjmp */
+   volatile size_t errcnt;
 } argp_ctx_t;
 
 static void validate_schemas(argp_ctx_t *actx);
