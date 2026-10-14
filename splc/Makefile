@@ -3,7 +3,7 @@ TARGET := splc
 LIBDIR := ../lib
 SHELL := /bin/sh
 
-CC := gcc
+CC := gcc --std=c2x
 CFLAGS := -Wall -W -pedantic
 CFLAGS += -O0 -g
 CFLAGS += -MMD -MP
