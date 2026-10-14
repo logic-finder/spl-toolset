@@ -171,7 +171,7 @@ static void parse_argtoks(argp_ctx_t *actx) {
       causing an unmatch between current token and its index */
    tok = actx->tok = array_peek(actx->toks, 0);
 
-   /* Note: toks has at least one element since argc > 1 */
+   /* Note: toks has at least one element since argc > 1 supposed */
    while (actx->idx < actx->toks_len) {
       /* end of option? */
       if (tok->kind == ArgtokOptionEnd) {
@@ -184,8 +184,15 @@ static void parse_argtoks(argp_ctx_t *actx) {
          goto next;
       }
 
-      /* Since it's neither -- nor posarg, it's either
-         a short or long flag, meaning tok->md must exist */
+      /* unrecognized option? */
+      if (tok->md == NULL) {
+         actx->err.errhandle = errhandle_unrecognized;
+         regerr(actx, tok, NULL, 0);
+         goto next;
+      }
+
+      /* Since it's neither -- nor posarg, it's either a
+         valid short or long flag, meaning tok->md must exist */
 
       /* specified multiple times? */
       if (tok->md->seen++ && tok->md->unique == true) {
@@ -273,14 +280,6 @@ static void populate_as_longflag(argp_ctx_t *actx) {
    tok.field = strndup(actx->arg, eq_pos);
    tok.md = query_by_longname(actx, tok.field);
 
-   if (tok.md == NULL) {
-      actx->err.errhandle = errhandle_unrecognized;
-      actx->err.reason = "unrecognized long flag";
-      regerr(actx, &tok, NULL, 0);
-      free(tok.field);
-      return;
-   }
-
    if (eq_pos < arg_len) {
       tok.has_eq = true;
       /* = exists but no value given */
@@ -314,21 +313,22 @@ static void populate_as_shortflag(argp_ctx_t *actx) {
       tok.field = strndup(actx->arg, 1);
       tok.md = query_by_shortname(actx, flag);
 
-      if (tok.md == NULL) {
-         actx->err.errhandle = errhandle_unrecognized;
-         actx->err.reason = "unrecognized short flag";
-         regerr(actx, &tok, NULL, 0);
-         free(tok.field);
-         continue;
-      }
-
-      if (tok.md->reqv && arg_len > 1) {
-         tok.value = strdup(&actx->arg[1]);
+      if (tok.md != NULL) {
+         if (tok.md->reqv && arg_len > 1) {
+            /* Treats the rest of 'arg' as this short flag's value.
+               For example:
+                  -abcoa.out
+                      ^~~~~~
+               since -o is a value-taking option */
+            tok.value = strdup(&actx->arg[1]);
+         }
       }
 
       array_append(actx->toks, &tok, sizeof tok);
 
-      if (tok.md->reqv) {
+      /* if this flag were a value-taking option, the rest of 'arg'
+         had been consumed as its value */
+      if (tok.md != NULL && tok.md->reqv) {
          return;
       }
    }
@@ -520,17 +520,26 @@ static void errhandle_seen_multiple(argtok_t *tok, const char *reason, void *ctx
 }
 
 static void errhandle_unrecognized(argtok_t *tok, const char *reason, void *ctx) {
-   /* Note: this function is used by populate_*(), where
-      tok is not fully filled. Only tok.field is available */
+   /* Note: only tok.field is available since this is not a valid option */
    static bool once = false;
+   static const char *err_short = "unrecognized short flag";
+   static const char *err_long  = "unrecognized long flag";
 
-   (void) ctx;
+   (void) reason, (void) ctx;
 
-   safe_vprintf("%s: %s\n", tok->field, reason);
+   safe_vprintf(
+      "%s: %s\n",
+      tok->field,
+      tok->kind == ArgtokShortFlag ? err_short : err_long
+   );
+
    if (!once) {
       safe_vprintf(
-         "  * Note: should this be a filename, specify '" Cbwhite "--" Creset "' first\n"
-         "  * Note: type " Cbmagenta "--help" Creset " to see the manual page\n"
+         "   * Note: should this be a filename, specify '"
+         Cbwhite "--" Creset "' first\n"
+         "   * Note: type "
+         Cbmagenta "-h" Creset " or "
+         Cbmagenta "--help" Creset " to see the manual page\n"
       );
       once = true;
    }
@@ -544,10 +553,9 @@ static void errhandle_out_of_tok(argtok_t *tok, const char *reason, void *ctx) {
 
 static void regerr(argp_ctx_t *actx, argtok_t *tok, void *ctx, size_t ctxsiz) {
    errinfo_t ei = {
-      .err = actx->err,  /* struct copied */
-      .ctx = NULL,
-      .tok.field = NULL,
-      .tok.value = NULL
+      .tok = *tok,
+      .err = actx->err,  /* structs are copied */
+      .ctx = NULL
    };
 
    /* Inits ei.tok */
