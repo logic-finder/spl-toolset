@@ -7,6 +7,7 @@
 
 #include "config.h"
 #include "common.h"
+#include "strutils.h"
 #include "wrappers.h"
 #include "argp_drivers.h"
 
