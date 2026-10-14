@@ -282,7 +282,7 @@ static void populate_as_longflag(argp_ctx_t *actx) {
 
    if (eq_pos < arg_len) {
       tok.has_eq = true;
-      /* = exists but no value given */
+      /* arg_len - eq_pos == 1 happens when no value given after = */
       if (arg_len - eq_pos > 1) {
          tok.value = strdup(&actx->arg[eq_pos + 1]);
       }
@@ -439,6 +439,7 @@ static bool preprocess_longflag(argp_ctx_t *actx) {
          actx->err.reason = "doesn't require a value but given one";
          regerr(actx, tok, NULL, 0);
       }
+      /* whether error or not, return true */
       return true;
    }
 
@@ -446,10 +447,12 @@ static bool preprocess_longflag(argp_ctx_t *actx) {
       /* error path! */
       if (tok->value == NULL) {
          actx->err.errhandle = errhandle_default;
-         actx->err.reason = "value not given after";
+         actx->err.reason = "value not given after '='";
          regerr(actx, tok, NULL, 0);
+         return false; /* e.g. --job= */
       }
-      return true;  /* e.g. --job=4 */
+      else
+         return true;  /* e.g. --job=4 */
    }
 
    /* e.g. --job 4 */
