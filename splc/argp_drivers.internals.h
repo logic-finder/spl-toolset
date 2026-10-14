@@ -30,7 +30,7 @@ static opt_driver_t drive_disasm;
 static opt_driver_t drive_pedantic;
 static opt_driver_t drive_warning;
 
-static opt_errhandler_t errhandle_unrecognized;
+static opt_errhandler_t errhandle_unrecognized_value;
 
 /*==================*
  | EXTERN VARIABLES |

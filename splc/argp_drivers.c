@@ -114,7 +114,7 @@ static bool drive_standard(argtok_t *tok, argerr_t *err) {
    }
 
    /* error path */
-   err->errhandle = errhandle_unrecognized;
+   err->errhandle = errhandle_unrecognized_value;
    return false;
 }
 
@@ -141,7 +141,7 @@ static bool drive_language(argtok_t *tok, argerr_t *err) {
    }
 
    /* error path */
-   err->errhandle = errhandle_unrecognized;
+   err->errhandle = errhandle_unrecognized_value;
    return false;
 }
 
@@ -171,7 +171,7 @@ static bool drive_target(argtok_t *tok, argerr_t *err) {
    }
 
    /* error path */
-   err->errhandle = errhandle_unrecognized;
+   err->errhandle = errhandle_unrecognized_value;
    return false;
 }
 
@@ -216,11 +216,11 @@ static bool drive_warning(argtok_t *tok, argerr_t *err) {
    }
 
    /* error path */
-   err->errhandle = errhandle_unrecognized;
+   err->errhandle = errhandle_unrecognized_value;
    return false;
 }
 
-static void errhandle_unrecognized(argtok_t *tok, const char *reason, void *ctx) {
+static void errhandle_unrecognized_value(argtok_t *tok, const char *reason, void *ctx) {
    (void) reason, (void) ctx;
    safe_vprintf("%s: unrecognized value '%s'\n", tok->field, tok->value);
 }
