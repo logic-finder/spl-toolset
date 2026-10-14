@@ -16,6 +16,7 @@
 typedef struct {
    argtok_t tok;
    argerr_t err;
+   void *ctx;
 } errinfo_t;
 
 typedef struct {
@@ -62,10 +63,10 @@ static bool lookahead(argp_ctx_t *actx);
 static array_destructor_t destruct_argtok;
 static array_destructor_t destruct_errinfo;
 
-static void errhandle_seen_multiple(argtok_t *tok, const char *reason);
-static void errhandle_unrecognized(argtok_t *tok, const char *reason);
-static void errhandle_out_of_tok(argtok_t *tok, const char *reason);
-static void regerr(argp_ctx_t *actx, argtok_t *tok);
+static opt_errhandler_t errhandle_seen_multiple;
+static opt_errhandler_t errhandle_unrecognized;
+static opt_errhandler_t errhandle_out_of_tok;
+static void regerr(argp_ctx_t *actx, argtok_t *tok, void *ctx, size_t ctxsiz);
 
 static void report_errors(argp_ctx_t *actx);
 

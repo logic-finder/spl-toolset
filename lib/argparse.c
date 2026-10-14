@@ -190,7 +190,7 @@ static void parse_argtoks(argp_ctx_t *actx) {
       /* specified multiple times? */
       if (tok->md->seen++ && tok->md->unique == true) {
          actx->err.errhandle = errhandle_seen_multiple;
-         regerr(actx, tok);
+         regerr(actx, tok, tok->md, sizeof *tok->md);
          goto next;
       }
 
@@ -218,7 +218,7 @@ static void parse_argtoks(argp_ctx_t *actx) {
       parse_result = (*tok->md->drive)(tok, &actx->err);
       if (parse_result == false) {
          /* err has been filled by drive() */
-         regerr(actx, tok);
+         regerr(actx, tok, NULL, 0);
       }
 
    next:
@@ -276,7 +276,7 @@ static void populate_as_longflag(argp_ctx_t *actx) {
    if (tok.md == NULL) {
       actx->err.errhandle = errhandle_unrecognized;
       actx->err.reason = "unrecognized long flag";
-      regerr(actx, &tok);
+      regerr(actx, &tok, NULL, 0);
       free(tok.field);
       return;
    }
@@ -317,7 +317,7 @@ static void populate_as_shortflag(argp_ctx_t *actx) {
       if (tok.md == NULL) {
          actx->err.errhandle = errhandle_unrecognized;
          actx->err.reason = "unrecognized short flag";
-         regerr(actx, &tok);
+         regerr(actx, &tok, NULL, 0);
          free(tok.field);
          continue;
       }
@@ -381,7 +381,7 @@ static optmd_t *query_by_longname(argp_ctx_t *actx, const char *flag) {
 static argtok_t *gettok(argp_ctx_t *actx) {
    if (actx->idx == actx->toks_len - 1) {
       actx->err.errhandle = errhandle_out_of_tok;
-      regerr(actx, actx->tok);  /* dummy tok */
+      regerr(actx, actx->tok, NULL, 0);  /* dummy tok */
       longjmp(actx->env, 1);
    }
 
@@ -422,7 +422,7 @@ static bool preprocess_shortflag(argp_ctx_t *actx) {
    ungettok(actx);
    actx->err.errhandle = errhandle_default;
    actx->err.reason = "no positional argument follows";
-   regerr(actx, actx->tok);
+   regerr(actx, actx->tok, NULL, 0);
    return false;
 }
 
@@ -437,7 +437,7 @@ static bool preprocess_longflag(argp_ctx_t *actx) {
       if (tok->value != NULL) {
          actx->err.errhandle = errhandle_default;
          actx->err.reason = "doesn't require a value but given one";
-         regerr(actx, tok);
+         regerr(actx, tok, NULL, 0);
       }
       return true;
    }
@@ -447,7 +447,7 @@ static bool preprocess_longflag(argp_ctx_t *actx) {
       if (tok->value == NULL) {
          actx->err.errhandle = errhandle_default;
          actx->err.reason = "value not given after";
-         regerr(actx, tok);
+         regerr(actx, tok, NULL, 0);
       }
       return true;  /* e.g. --job=4 */
    }
@@ -461,7 +461,7 @@ static bool preprocess_longflag(argp_ctx_t *actx) {
    ungettok(actx);
    actx->err.errhandle = errhandle_default;
    actx->err.reason = "no positional argument follows";
-   regerr(actx, actx->tok);
+   regerr(actx, actx->tok, NULL, 0);
    return false;
 }
 
@@ -496,24 +496,36 @@ static void destruct_errinfo(void *item, size_t idx) {
    ei = item;
    free(ei->tok.field);
    free(ei->tok.value);
+   free(ei->ctx);
 }
 
-extern void errhandle_default(argtok_t *tok, const char *reason) {
+extern void errhandle_default(argtok_t *tok, const char *reason, void *ctx) {
    /* Note: for short flag and long flag, whose tok is fully filled */
+   (void) ctx;
    safe_vprintf("%s: %s\n", tok->field, reason);
 }
 
-static void errhandle_seen_multiple(argtok_t *tok, const char *reason) {
+static void errhandle_seen_multiple(argtok_t *tok, const char *reason, void *ctx) {
    /* Note: for short flag and long flag, whose tok is fully filled */
+   optmd_t *md;
+
    (void) reason;
-   safe_vprintf("%s: already specified %zu times\n", tok->field, tok->md->seen);
+
+   md = ctx;
+   safe_vprintf(
+      "%s: already specified %zu times\n",
+      tok->field,
+      md->seen
+   );
 }
 
-static void errhandle_unrecognized(argtok_t *tok, const char *reason) {
-   static bool once = false;
-
+static void errhandle_unrecognized(argtok_t *tok, const char *reason, void *ctx) {
    /* Note: this function is used by populate_*(), where
       tok is not fully filled. Only tok.field is available */
+   static bool once = false;
+
+   (void) ctx;
+
    safe_vprintf("%s: %s\n", tok->field, reason);
    if (!once) {
       safe_vprintf(
@@ -524,20 +536,29 @@ static void errhandle_unrecognized(argtok_t *tok, const char *reason) {
    }
 }
 
-static void errhandle_out_of_tok(argtok_t *tok, const char *reason) {
+static void errhandle_out_of_tok(argtok_t *tok, const char *reason, void *ctx) {
    /* Note: can't use tok in this context */
-   (void) tok, (void) reason;
+   (void) tok, (void) reason, (void) ctx;
    safe_vprintf("argp: no command line argument left\n");
 }
 
-static void regerr(argp_ctx_t *actx, argtok_t *tok) {
+static void regerr(argp_ctx_t *actx, argtok_t *tok, void *ctx, size_t ctxsiz) {
    errinfo_t ei = {
-      .tok = *tok,
-      .err = actx->err
-   };  /* structs copied */
+      .err = actx->err,  /* struct copied */
+      .ctx = NULL,
+      .tok.field = NULL,
+      .tok.value = NULL
+   };
 
+   /* Inits ei.tok */
    if (tok->field != NULL) ei.tok.field = strdup(tok->field);
    if (tok->value != NULL) ei.tok.value = strdup(tok->value);
+
+   /* Inits ei.ctx */
+   if (ctx != NULL) {
+      ei.ctx = safe_malloc(ctxsiz);
+      memcpy(ei.ctx, ctx, ctxsiz);
+   }
 
    actx->errcnt++;
    array_append(actx->err_infos, &ei, sizeof ei);
@@ -555,7 +576,7 @@ static void report_errors(argp_ctx_t *actx) {
 
    for (size_t i = 0; i < len; i++) {
       ei = array_peek(actx->err_infos, i);
-      ei->err.errhandle(&ei->tok, ei->err.reason);
+      ei->err.errhandle(&ei->tok, ei->err.reason, ei->ctx);
    }
 
    if (actx->errcnt < actx->errcnt_max) {

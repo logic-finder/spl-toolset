@@ -9,7 +9,7 @@
 typedef struct argtok argtok_t;
 typedef struct argerr argerr_t;
 typedef bool opt_driver_t(argtok_t *tok, argerr_t *err);
-typedef void opt_errhandler_t(argtok_t *tok, const char *reason);
+typedef void opt_errhandler_t(argtok_t *tok, const char *reason, void *ctx);
 
 typedef struct {
    char sname;  /* short name */

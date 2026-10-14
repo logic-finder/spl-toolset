@@ -220,7 +220,7 @@ static bool drive_warning(argtok_t *tok, argerr_t *err) {
    return false;
 }
 
-static void errhandle_unrecognized(argtok_t *tok, const char *reason) {
-   (void) reason;
+static void errhandle_unrecognized(argtok_t *tok, const char *reason, void *ctx) {
+   (void) reason, (void) ctx;
    safe_vprintf("%s: unrecognized value '%s'\n", tok->field, tok->value);
 }
