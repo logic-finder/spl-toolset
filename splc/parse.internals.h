@@ -67,7 +67,7 @@ typedef struct stmthandler {
    parser_t *parse;
 } stmthandler_t;
 
-typedef void operator_t(parse_ctx_t *pctx, tree_t *op);
+typedef int operator_t(parse_ctx_t *pctx, tree_t *op);
 
 /*=====================*
  | FUNCTION PROTOTYPES |
@@ -95,13 +95,13 @@ static seeker_t seek_push;
 static seeker_t seek_pop;
 
 /* Parsers */
-static void parse_namelist(parse_ctx_t *pctx, tree_t *t);
+static int parse_namelist(parse_ctx_t *pctx, tree_t *t);
 static bool parse_line_as_conseq(parse_ctx_t *pctx);
-static void parse_const(parse_ctx_t *pctx, tree_t *stmt);
-static void parse_noun_phrase(parse_ctx_t *pctx, tree_t *cnst);
-static void parse_cond_eq(parse_ctx_t *pctx, tree_t *cond);
-static void parse_cond_ineq(parse_ctx_t *pctx, tree_t *cond);
-static void parse_op(parse_ctx_t *pctx, tree_t *stmt, nodekind_t kind);
+static int parse_const(parse_ctx_t *pctx, tree_t *stmt);
+static int parse_noun_phrase(parse_ctx_t *pctx, tree_t *cnst);
+static int parse_cond_eq(parse_ctx_t *pctx, tree_t *cond);
+static int parse_cond_ineq(parse_ctx_t *pctx, tree_t *cond);
+static int parse_op(parse_ctx_t *pctx, tree_t *stmt, nodekind_t kind);
 static bool parse_line_router(
    parse_ctx_t *pctx, const stmthandler_t *table, size_t tsiz
 );
@@ -124,12 +124,12 @@ static parser_t parse_cond;
 static parser_t parse_if;
 static parser_t parse_push;
 static parser_t parse_pop;
-static void parse_op_unary(
+static int parse_op_unary(
    parse_ctx_t *pctx,
    tree_t * restrict op,
    const char * restrict err
 );
-static void parse_op_binary(
+static int parse_op_binary(
    parse_ctx_t *pctx,
    tree_t * restrict op,
    const char * restrict type,
@@ -171,7 +171,7 @@ static bool is_be_conjs(parse_ctx_t *pctx);
 static nodekind_t what_pronoun(const char *str);
 static nodekind_t what_reflexive(const char *str);
 
-static void check_const_end(parse_ctx_t *pctx);
+static bool check_const_end(parse_ctx_t *pctx);
 static void check_cond_predicate(parse_ctx_t *pctx);
 static void check_asgn_predicate(parse_ctx_t *pctx);
 
@@ -180,6 +180,9 @@ static inline void rewind_tokstate(parse_ctx_t *pctx, size_t orig_idx);
 /* Error Handling */
 static void resync(parse_ctx_t *pctx, const char *follow);
 static void resyncbf(parse_ctx_t *pctx, resync_bitfield_t bf);
+static inline void resyncbf_all(parse_ctx_t *pctx);
+static void resyncfs(parse_ctx_t *pctx, const char *follow_set[]);
+
 static void regerr(parse_ctx_t *pctx);
 static array_iterator_t print_syntax_error;
 static void report_syntax_errors(parse_ctx_t *pctx);

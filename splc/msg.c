@@ -13,7 +13,7 @@ extern void init_msg(void) {
 
    msgs.err.syn.title.incomp = "incomplete title";
 
-   msgs.err.syn.dp.noname = "no name specified before period";
+   msgs.err.syn.dp.noname = "no name specified before ','";
    msgs.err.syn.dp.chardecl_incomp = "incomplete character declaration";
    msgs.err.syn.dp.desc_incomp = "incomplete character description";
    msgs.err.syn.dp.incomp = "incomplete dramatis personae";
