@@ -181,7 +181,7 @@ static void parse_title(parse_ctx_t *pctx) {
    graft_tree_s(title, NODEKIND_DATA, pctx->tok);
 
    pctx->reason = msgs.err.syn.title.incomp;
-   readtoks_until(pctx, ".!?", title);
+   readtoks_until(pctx, end_symbols, title);
 }
 
 static void parse_dp(parse_ctx_t *pctx) {
@@ -201,7 +201,7 @@ static void parse_dp(parse_ctx_t *pctx) {
       }
 
       pctx->reason = msgs.err.syn.dp.desc_incomp;
-      skiptoks(pctx, ".!?");
+      skiptoks(pctx, end_symbols);
 
       pctx->reason = msgs.err.syn.dp.nonext;
       gettok(pctx);
@@ -261,7 +261,7 @@ static void parse_act(parse_ctx_t *pctx) {
    }
 
    pctx->reason = msgs.err.syn.act.desc_incomp;
-   skiptoks(pctx, ".!?");
+   skiptoks(pctx, end_symbols);
 
    pctx->reason = msgs.err.syn.act.noscene;
    gettok(pctx);
@@ -312,7 +312,7 @@ static void parse_scene(parse_ctx_t *pctx) {
    }
 
    pctx->reason = msgs.err.syn.scene.desc_incomp;
-   skiptoks(pctx, ".!?");
+   skiptoks(pctx, end_symbols);
 }
 
 static int seek_enterlike(parse_ctx_t *pctx, const char *type) {
@@ -599,7 +599,7 @@ static void parse_asgn(parse_ctx_t *pctx) {
    if (!parse_const(pctx, asgn))
       return;  // fixme: after handle check_const_end first
 
-   if (strchr(".!", pctx->tok->run[0])) {
+   if (strchr(stmt_symbols, pctx->tok->run[0])) {
       return;
    }
 
@@ -711,7 +711,7 @@ static void parse_out(parse_ctx_t *pctx) {
 
    gettok(pctx);
 
-   if (!match(pctx->tok->run[0], ".!")) {
+   if (!match(pctx->tok->run[0], stmt_symbols)) {
       pctx->reason = msgs.err.syn.out.badsyn;
       regerr(pctx);
       resyncbf_all(pctx);
@@ -789,7 +789,7 @@ static void parse_in(parse_ctx_t *pctx) {
 
    gettok(pctx);
 
-   if (!match(pctx->tok->run[0], ".!")) {
+   if (!match(pctx->tok->run[0], stmt_symbols)) {
       pctx->reason = msgs.err.syn.in.badsyn;
       regerr(pctx);
       resyncbf_all(pctx);
@@ -896,7 +896,7 @@ static void parse_goto(parse_ctx_t *pctx) {
 
    gettok(pctx);
 
-   if (!match(pctx->tok->run[0], ".!")) {
+   if (!match(pctx->tok->run[0], stmt_symbols)) {
       pctx->reason = msgs.err.syn.gt.badsyn;
       regerr(pctx);
       resyncbf_all(pctx);
@@ -1090,7 +1090,7 @@ static void parse_push(parse_ctx_t *pctx) {
    if (!parse_const(pctx, push))
       return;  // fixme: after handle check_const_end first
 
-   if (!match(pctx->tok->run[0], ".!")) {
+   if (!match(pctx->tok->run[0], stmt_symbols)) {
       pctx->reason = msgs.err.syn.push.badsyn;
       regerr(pctx);
       resyncbf_all(pctx);
@@ -1105,7 +1105,7 @@ static int seek_pop(parse_ctx_t *pctx) {
 static void parse_pop(parse_ctx_t *pctx) {
    graft_tree_n(pctx->line, 0, NODEKIND_POP, pctx->tok);
    pctx->reason = msgs.err.syn.pop.incomp;
-   skiptoks(pctx, ".!?");
+   skiptoks(pctx, end_symbols);
 }
 
 // TODO: 파싱 결과가 2명 이상인데 and가 없었을 경우 오류
@@ -1659,7 +1659,7 @@ static bool check_const_end(parse_ctx_t *pctx) {
    pctx->reason = msgs.err.syn.cnst.incomp;
    gettok(pctx);
 
-   if (strchr(".!?", pctx->tok->run[0])
+   if (strchr(end_symbols, pctx->tok->run[0])
       || !strcasecmp(pctx->tok->run, KEYWRD_NOT)
       || !strcasecmp(pctx->tok->run, KEYWRD_AS)
       || !strcasecmp(pctx->tok->run, KEYWRD_MORE)
@@ -1883,7 +1883,7 @@ static void readtoks(parse_ctx_t *pctx, char sentinel, tree_t *base) {
    pctx->etok = pctx->tok;
 }
 
-static void readtoks_until(parse_ctx_t *pctx, char *scanset, tree_t *t) {
+static void readtoks_until(parse_ctx_t *pctx, const char *scanset, tree_t *t) {
    for (;;) {
       for (size_t i = 0; (scanset[i] != '\0'); i++) {
          if (pctx->tok->run[0] == scanset[i]) {

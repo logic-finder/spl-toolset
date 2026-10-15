@@ -155,7 +155,7 @@ static void skiptoks(parse_ctx_t *pctx, const char *sentinels);
 static void eqtok(parse_ctx_t *pctx, char ch);
 static void neqtok(parse_ctx_t *pctx, char ch);
 static void readtoks(parse_ctx_t *pctx, char sentinel, tree_t *base);
-static void readtoks_until(parse_ctx_t *pctx, char *scanset, tree_t *t);
+static void readtoks_until(parse_ctx_t *pctx, const char *scanset, tree_t *t);
 static void nexttok(parse_ctx_t *pctx);
 
 /* Utils */
@@ -214,8 +214,11 @@ static tree_callback_t shownode;
 static const char *resolve_nodekind(nodekind_t kind);
 
 /*==================*
- | GLOBAL VARIABLES |
+ | STATIC VARIABLES |
  *==================*/
+static const char *stmt_symbols = ".!";
+static const char *end_symbols = ".!?";
+
 static const stmthandler_t stmt_hdlrs[] = {
    { seek_if   , parse_if   },  /* MUST be 1st! see `parse_line_as_conseq` */
    { seek_asgn , parse_asgn },
