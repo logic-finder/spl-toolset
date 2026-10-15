@@ -96,7 +96,7 @@ optmd_t optmds[] = {
       .unique = true
    },
    {
-      .sname = '\0',
+      .sname = 'l',
       .lname = "verbose",
       .drive = drive_verbose,
       .reqv = false,
