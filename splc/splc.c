@@ -83,6 +83,7 @@ static void loadfile_talkative(compile_ctx_t *cctx, const char *filename) {
    if (!cctx->cfg->vbs)
       return;
    safe_vprintf(
+      "\n"
       ENPREFIX "loaded the source file " Cbyellow "%s" Creset,
       filename
    );
