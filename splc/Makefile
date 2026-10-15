@@ -3,9 +3,10 @@ TARGET := splc
 LIBDIR := ../lib
 SHELL := /bin/sh
 
-CC := gcc --std=c2x
+CC := gcc
 CFLAGS := -Wall -W -pedantic
-CFLAGS += -O0 -g
+CFLAGS += -O0 -g --std=c2x
+# CFLAGS += -fsanitize=address -fsanitize=leak -fsanitize=undefined
 CFLAGS += -MMD -MP
 CPPFLAGS = -I $(LIBDIR)
 
