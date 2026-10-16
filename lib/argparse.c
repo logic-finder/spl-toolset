@@ -47,10 +47,13 @@ extern void parse_argv(
 report_error:
    if (actx.errcnt > 0) {
       report_errors(&actx);
-      exit(EXIT_FAILURE);
+      exit(EXIT_FAILURE);  // fixme: this is technically a resource leak
    }
-
+   // since this wouldn't be invoked;
    array_destroy(actx.toks);
+   // rewrite the logic and do not use setjmp / longjmp
+   // the idea is: collect all resources even with a error path
+   // the same thing applies to parse.c / lex.c
 }
 
 extern void usage(
