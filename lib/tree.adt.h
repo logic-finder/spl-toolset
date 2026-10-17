@@ -4,6 +4,8 @@
 #include <stddef.h>
 #include <string.h>
 
+#include "arena.adt.h"
+
 /************
  * TYPEDEFS *
  ************/
@@ -14,7 +16,7 @@ typedef void tree_walker_t(tree_t *t, tree_callback_t *cb, int lv, void *ctx);
 /***********************
  * FUNCTION PROTOTYPES *
  ***********************/
-tree_t *tree_plant(void *data, size_t dsiz);
+tree_t *tree_plant(void *data, size_t dsiz, mem_allocator_t *alloc);
 tree_t *tree_graft(
    tree_t * restrict base,
    tree_t * restrict in

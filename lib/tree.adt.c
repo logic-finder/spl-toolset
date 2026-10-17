@@ -1,19 +1,20 @@
 #include "tree.adt.h"
 #include "tree.adt.internals.h"
 
-extern tree_t *tree_plant(void *data, size_t dsiz) {
+extern tree_t *tree_plant(void *data, size_t dsiz, mem_allocator_t *alloc) {
    tree_t *ret;  /* a little sapling! */
 
-   ret = safe_malloc(sizeof *ret);
+   ret = alloc(sizeof *ret);
 
-   ret->children = safe_malloc(INIT_CMAX * ESIZ(ret->children));
+   ret->children = alloc(INIT_CMAX * ESIZ(ret->children));
    ret->parent = NULL;
    ret->cmax = INIT_CMAX;
    ret->clen = 0;
    ret->siz = dsiz;
+   ret->alloc = alloc;
 
    if (data) {
-      ret->dat = safe_malloc(dsiz);
+      ret->dat = alloc(dsiz);
       memcpy(ret->dat, data, dsiz);
    }
    else ret->dat = NULL;
