@@ -24,7 +24,7 @@ typedef struct config {
    bool hlp;
    bool dbg;
    bool kwi;
-   bool vsn;
+   size_t vsn;
    bool dmp;
    bool opt;
    bool drt;

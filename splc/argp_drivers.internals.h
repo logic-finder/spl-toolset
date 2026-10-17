@@ -38,7 +38,8 @@ static opt_errhandler_t errhandle_unrecognized_value;
 optmd_t optmds[] = {
    /* Note: .seen be initialized with 0 */
    /* Note: [0] must be "help" and [1] "version"
-      fixme? - this kind of implicit promise may be confusing */
+      fixme? - this kind of implicit promise may be confusing
+      fixme: let's remove this regulation. no longer meaningful */
    {
       .sname = 'h',
       .lname = "help",

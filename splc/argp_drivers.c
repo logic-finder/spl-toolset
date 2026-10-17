@@ -9,6 +9,12 @@ static bool drive_help(argtok_t *tok, argerr_t *err) {
    return true;
 }
 
+static bool drive_version(argtok_t *tok, argerr_t *err) {
+   (void) tok, (void) err;
+   cfg.vsn++;  /* assumes cfg.vsn has been initialized */
+   return true;
+}
+
 static bool drive_debug(argtok_t *tok, argerr_t *err) {
    (void) tok, (void) err;
    cfg.dbg = true;
@@ -18,12 +24,6 @@ static bool drive_debug(argtok_t *tok, argerr_t *err) {
 static bool drive_kawaii(argtok_t *tok, argerr_t *err) {
    (void) tok, (void) err;
    cfg.kwi = true;
-   return true;
-}
-
-static bool drive_version(argtok_t *tok, argerr_t *err) {
-   (void) tok, (void) err;
-   cfg.vsn = true;
    return true;
 }
 

@@ -12,7 +12,8 @@
 #include "argp_drivers.h"
 
 static void print_manpage(void);
-static void print_version(optmd_t *v);
+static void print_version(void);
+static inline void easter_egg(void);
 
 /*==================*
  | EXTERN VARIABLES |

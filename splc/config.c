@@ -3,6 +3,7 @@
 
 extern void init_config(config_t *cfg) {
    cfg->source_files = array_create(NULL);
+   cfg->vsn = 0;
    cfg->job = 1;
    cfg->std = StdoptSpl01;
    cfg->lng = LngoptEn;
@@ -14,13 +15,18 @@ extern void destroy_config(config_t *cfg) {
 }
 
 extern void apply_config(config_t *cfg) {
+   if (cfg->hlp && cfg->vsn >= 3) {
+      easter_egg();
+      exit(EXIT_SUCCESS);
+   }
+
    if (cfg->hlp) {
       print_manpage();
       exit(EXIT_SUCCESS);  /* early exit */
    }
 
    if (cfg->vsn) {
-      print_version(&optmds[1]);
+      print_version();
       exit(EXIT_SUCCESS);  /* early exit */
    }
 
@@ -57,13 +63,17 @@ static void print_manpage(void) {
    safe_fclose(fp);
 }
 
-static void print_version(optmd_t *v) {
+static void print_version(void) {
    static const char *version = "v0.0.0";
    static const char *homepage = "https://github.com/logic-finder/spl-toolset";
 
-   if (v->seen >= 1)
+   if (cfg.vsn >= 1)
       safe_vprintf(EXECNAME " %s\n", version);
 
-   if (v->seen >= 2)
+   if (cfg.vsn >= 2)
       safe_vprintf("homepage: " Cul "%s\n" Creset, homepage);
+}
+
+static inline void easter_egg(void) {
+   safe_vprintf("블아 아즈사랑 결혼하고싶다 아즈사 너무 귀여워\n");
 }
