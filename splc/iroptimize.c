@@ -57,6 +57,7 @@
 extern void iroptimize(compile_ctx_t *cctx) {
    iroptmiz_ctx_t zctx;
 
+   zctx.arena = cctx->arena;
    zctx.ls = cctx->ls;
    zctx.cfg = cctx->cfg;
    zctx.irt = cctx->irt;
@@ -101,7 +102,7 @@ static void fold_const(iroptmiz_ctx_t *zctx) {
 
          for (size_t n = 0; n < scenesiz; n++) {
             block = tree_child(scene, n);
-            new_block = tree_plant(NULL, 0);
+            new_block = tree_plant(NULL, 0, zctx->arena);
 
             tree_setparent(new_block, tree_parent(block));
             /* reuse block->dat */

@@ -5,6 +5,9 @@
 #include <stdbool.h>
 #include <inttypes.h>
 
+#define STR_HELPER(x) #x
+#define STR(x) STR_HELPER(x)
+
 #define ESIZ(arr) (sizeof (arr)[0])
 #define ARRLEN(arr) (sizeof (arr) / ESIZ(arr))
 

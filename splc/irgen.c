@@ -2,7 +2,9 @@
 #include "irgen.internals.h"
 
 extern void irgenerate(compile_ctx_t *cctx) {
-   irgen_ctx_t ictx;
+   irgen_ctx_t ictx = {
+      .arena = cctx->arena
+   };
 
    /* irt -> [0] dp
           -> [1] nrtv */
@@ -12,12 +14,12 @@ extern void irgenerate(compile_ctx_t *cctx) {
 
    if (cctx->cfg->vbs) safe_fputs(stdout, ENPREFIX "generating IR...");
 
-   ictx.irt = plant_tree(NULL, 0, IrnodekindRoot, 0, 0);
+   ictx.irt = plant_tree(&ictx, NULL, 0, IrnodekindRoot, 0, 0);
    set_dpsz(&ictx);  /* appends the dp tree to irt */
-   ictx.nrtv = graft_tree_i(ictx.irt, 0, IrnodekindNrtv);
+   ictx.nrtv = graft_tree_i(&ictx, ictx.irt, 0, IrnodekindNrtv);
    tree_pre_traverse(ictx.pt_nrtv, route, 0, &ictx);
    /* Marks the last node with END OF PROGRAM */
-   graft_tree_i(ictx.curr_block, 0, IrnodekindEop);
+   graft_tree_i(&ictx, ictx.curr_block, 0, IrnodekindEop);
 
    if (cctx->cfg->vbs) safe_vprintf(" " Cgreen "done!" Creset
       "\t(total " Cbwhite "%zu" Creset " nodes)\n",
@@ -29,34 +31,36 @@ extern void irgenerate(compile_ctx_t *cctx) {
 }
 
 extern void destroy_irt(compile_ctx_t *cctx) {
-   tree_post_traverse(cctx->irt, cleanup_irnode, 0, NULL);
+   tree_post_traverse(cctx->irt, cleanup_irnode, 0, cctx);
    tree_prune(cctx->irt);
 }
 
 static void cleanup_irnode(tree_t *t, int lv, void *ctx) {
    irnode_t *n;
+   compile_ctx_t *cctx;
 
-   (void) lv, (void) ctx;
+   (void) lv;
 
    n = tree_dat(t);
+   cctx = ctx;
 
    if (n->datkind != IrnodeDatkindStr) {
       return;
    }
 
-   free(n->dat.s.run);
+   arena_free_fallback(cctx->arena, n->dat.s.run);
 }
 
 static void set_dpsz(irgen_ctx_t *ictx) {
    tree_t *opcode;
    int dpsz;
 
-   ictx->dp = graft_tree_i(ictx->irt, 0, IrnodekindDp);
+   ictx->dp = graft_tree_i(ictx, ictx->irt, 0, IrnodekindDp);
    dpsz = (int) tree_clen(ictx->pt_dp);
 
-   opcode = graft_tree_opcode(ictx->dp, IropcodeSet, 0, 0);
-   graft_tree_ui(opcode, IrvarDpsz, IrnodekindVar);
-   graft_tree_i(opcode, dpsz, IrnodekindConst);
+   opcode = graft_tree_opcode(ictx, ictx->dp, IropcodeSet, 0, 0);
+   graft_tree_ui(ictx, opcode, IrvarDpsz, IrnodekindVar);
+   graft_tree_i(ictx, opcode, dpsz, IrnodekindConst);
 }
 
 static void route(tree_t *t, int lv, void *ctx) {
@@ -97,6 +101,7 @@ static void handle_act(irgen_ctx_t *ictx) {
    romnum = tree_chdat(ictx->t, 0);
 
    ictx->curr_act = graft_tree_s(
+      ictx,
       ictx->nrtv,
       romnum->dat.s.run,
       romnum->dat.s.len,
@@ -112,6 +117,7 @@ static void handle_scene(irgen_ctx_t *ictx) {
    romnum = tree_chdat(ictx->t, 0);
 
    ictx->curr_scene = graft_tree_s(
+      ictx,
       ictx->curr_act,
       romnum->dat.s.run,
       romnum->dat.s.len,
@@ -136,12 +142,13 @@ static void handle_enter(irgen_ctx_t *ictx) {
       chdat = tree_chdat(ictx->t, i);
       charidx = chdat->dat.n;
       opcode = graft_tree_opcode(
+         ictx,
          ictx->curr_block,
          IropcodeEnter,
          ictx->n->lnum,
          ictx->n->lpos
       );
-      graft_tree_charidx(opcode, charidx);
+      graft_tree_charidx(ictx, opcode, charidx);
    }
 }
 
@@ -154,12 +161,13 @@ static void handle_exit(irgen_ctx_t *ictx) {
    charidx = chdat->dat.n;
 
    opcode = graft_tree_opcode(
+      ictx,
       ictx->curr_block,
       IropcodeExit,
       ictx->n->lnum,
       ictx->n->lpos
    );
-   graft_tree_charidx(opcode, charidx);
+   graft_tree_charidx(ictx, opcode, charidx);
 }
 
 static void handle_exeunt(irgen_ctx_t *ictx) {
@@ -173,6 +181,7 @@ static void handle_exeunt(irgen_ctx_t *ictx) {
    /* Generates 'EXEUNT' */
    if (!len) {
       graft_tree_opcode(
+         ictx,
          ictx->curr_block,
          IropcodeExeunt,
          ictx->n->lnum,
@@ -186,12 +195,13 @@ static void handle_exeunt(irgen_ctx_t *ictx) {
       chdat = tree_chdat(ictx->t, i);
       charidx = chdat->dat.n;
       opcode = graft_tree_opcode(
+         ictx,
          ictx->curr_block,
          IropcodeExit,
          ictx->n->lnum,
          ictx->n->lpos
       );
-      graft_tree_charidx(opcode, charidx);
+      graft_tree_charidx(ictx, opcode, charidx);
    }
 }
 
@@ -206,12 +216,13 @@ static void handle_line(irgen_ctx_t *ictx) {
 
    /* Generates 'SPEAK <charidx>' */
    opcode = graft_tree_opcode(
+      ictx,
       ictx->curr_block,
       IropcodeSpeak,
       dat->lnum,
       dat->lpos
    );
-   graft_tree_charidx(opcode, charidx);
+   graft_tree_charidx(ictx, opcode, charidx);
 }
 
 static void handle_asgn(irgen_ctx_t *ictx) {
@@ -224,17 +235,19 @@ static void handle_asgn(irgen_ctx_t *ictx) {
 
    /* Generates 'POP hearer' */
    opcode = graft_tree_opcode(
+      ictx,
       ictx->curr_block,
       IropcodePop,
       ictx->n->lnum,
       ictx->n->lpos
    );
-   graft_tree_var(opcode, IrvarHearer);
+   graft_tree_var(ictx, opcode, IrvarHearer);
 }
 
 static void handle_io(irgen_ctx_t *ictx, iropcode_t opcode) {
    /* Generates '<opcode>' */
    graft_tree_opcode(
+      ictx,
       ictx->curr_block,
       opcode,
       ictx->n->lnum,
@@ -251,13 +264,15 @@ static void handle_goto(irgen_ctx_t *ictx) {
    child = tree_chdat(ictx->t, 0);
 
    opcode = graft_tree_opcode(
+      ictx,
       ictx->curr_block,
       IropcodeGoto,
       ictx->n->lnum,
       ictx->n->lpos
    );
-   graft_tree_ui(opcode, type, IrnodekindData);
+   graft_tree_ui(ictx, opcode, type, IrnodekindData);
    graft_tree_s(
+      ictx,
       opcode,
       child->dat.s.run,
       child->dat.s.len,
@@ -285,13 +300,14 @@ static void handle_cond(irgen_ctx_t *ictx) {
 
    if (p->kind == NODEKIND_P1 || p->kind == NODEKIND_P2) {
       opcode = graft_tree_opcode(
+         ictx,
          ictx->curr_block,
          IropcodePush,
          0,
          0
       );
       var = p->kind == NODEKIND_P1 ? IrvarTeller : IrvarHearer;
-      graft_tree_var(opcode, var);
+      graft_tree_var(ictx, opcode, var);
    }
    /* NODEKIND_P3 */
    else resolve_const(tree_child(lhs_child, 0), ictx);
@@ -313,19 +329,21 @@ static void handle_cond(irgen_ctx_t *ictx) {
    /* Generates the comparison */
    set_operands(ictx);
    opcode = graft_tree_opcode(
+      ictx,
       ictx->curr_block,
       comp,
       ictx->n->lnum,
       ictx->n->lpos
    );
-   graft_tree_var(opcode, IrvarOperandL);
-   graft_tree_var(opcode, IrvarOperandR);
+   graft_tree_var(ictx, opcode, IrvarOperandL);
+   graft_tree_var(ictx, opcode, IrvarOperandR);
 
    /* Generates ! optionally */
    mode = tree_chdat(ictx->t, 1);
    if (mode->kind == NODEKIND_AFFIRM)
       return;  /* early return */
    graft_tree_opcode(
+      ictx,
       ictx->curr_block,
       IropcodeNegate,
       ictx->n->lnum,
@@ -357,13 +375,14 @@ static void handle_if(irgen_ctx_t *ictx) {
       default: jump = Iropcode_Unknown;
    }
    opcode = graft_tree_opcode(
+      ictx,
       ictx->curr_block,
       jump,
       ictx->n->lnum,
       ictx->n->lpos
    );
    my_cnt = ++ictx->labelcnt;  /* labelcnt updated */
-   graft_tree_ui(opcode, my_cnt, IrnodekindData);
+   graft_tree_ui(ictx, opcode, my_cnt, IrnodekindData);
 
    /* Example IR - "if not, recall your shiny proud!"
       .L1:
@@ -424,6 +443,7 @@ static void handle_push(irgen_ctx_t *ictx) {
 
 static void handle_pop(irgen_ctx_t *ictx) {
    graft_tree_opcode(
+      ictx,
       ictx->curr_block,
       IropcodeRecall,
       ictx->n->lnum,
@@ -473,19 +493,20 @@ static void resolve_const(tree_t *t, irgen_ctx_t *ictx) {
    for (size_t i = 0; i < clen - 1; i++) {  /* only adjs */
       adjdat = tree_chdat(t, i);
       opcode = graft_tree_opcode(
+         ictx,
          ictx->curr_block,
          Iropcode2x,
          adjdat->lnum,
          adjdat->lpos
       );
-      graft_tree_var(opcode, IrvarConst);
-      graft_tree_var(opcode, IrvarConst);
+      graft_tree_var(ictx, opcode, IrvarConst);
+      graft_tree_var(ictx, opcode, IrvarConst);
    }
 
    /* Generates 'PUSH const' */
    opcode = graft_tree_opcode(
-      ictx->curr_block, IropcodePush, 0, 0);
-   graft_tree_var(opcode, IrvarConst);
+      ictx, ictx->curr_block, IropcodePush, 0, 0);
+   graft_tree_var(ictx, opcode, IrvarConst);
 }
 
 static void resolve_unary_op(tree_t *t, irgen_ctx_t *ictx, iropcode_t opcode) {
@@ -498,25 +519,26 @@ static void resolve_unary_op(tree_t *t, irgen_ctx_t *ictx, iropcode_t opcode) {
 
    /* Generates 'POP operand_left */
    opcode_tree = graft_tree_opcode(
-      ictx->curr_block, IropcodePop, 0, 0);
-   graft_tree_var(opcode_tree, IrvarOperandL);
+      ictx, ictx->curr_block, IropcodePop, 0, 0);
+   graft_tree_var(ictx, opcode_tree, IrvarOperandL);
 
    op = tree_dat(t);
 
    /* Generates '<opcode> const left */
    opcode_tree = graft_tree_opcode(
+      ictx,
       ictx->curr_block,
       opcode,
       op->lnum,
       op->lpos
    );
-   graft_tree_var(opcode_tree, IrvarConst);
-   graft_tree_var(opcode_tree, IrvarOperandL);
+   graft_tree_var(ictx, opcode_tree, IrvarConst);
+   graft_tree_var(ictx, opcode_tree, IrvarOperandL);
 
    /* Generates 'PUSH const' */
    opcode_tree = graft_tree_opcode(
-      ictx->curr_block, IropcodePush, 0, 0);
-   graft_tree_var(opcode_tree, IrvarConst);
+      ictx, ictx->curr_block, IropcodePush, 0, 0);
+   graft_tree_var(ictx, opcode_tree, IrvarConst);
 }
 
 static void resolve_binary_op(tree_t *t, irgen_ctx_t *ictx, iropcode_t opcode) {
@@ -538,19 +560,20 @@ static void resolve_binary_op(tree_t *t, irgen_ctx_t *ictx, iropcode_t opcode) {
    /* Generates '<opcode> const left right' */
    op = tree_dat(t);
    opcode_tree = graft_tree_opcode(
+      ictx,
       ictx->curr_block,
       opcode,
       op->lnum,
       op->lpos
    );
-   graft_tree_var(opcode_tree, IrvarConst);
-   graft_tree_var(opcode_tree, IrvarOperandL);
-   graft_tree_var(opcode_tree, IrvarOperandR);
+   graft_tree_var(ictx, opcode_tree, IrvarConst);
+   graft_tree_var(ictx, opcode_tree, IrvarOperandL);
+   graft_tree_var(ictx, opcode_tree, IrvarOperandR);
 
    /* Generates 'PUSH const' */
    opcode_tree = graft_tree_opcode(
-      ictx->curr_block, IropcodePush, 0, 0);
-   graft_tree_var(opcode_tree, IrvarConst);
+      ictx, ictx->curr_block, IropcodePush, 0, 0);
+   graft_tree_var(ictx, opcode_tree, IrvarConst);
 }
 
 static void resolve_noun(tree_t *t, irgen_ctx_t *ictx) {
@@ -610,28 +633,29 @@ static void resolve_noun(tree_t *t, irgen_ctx_t *ictx) {
    }
 
    opcode = graft_tree_opcode(
+      ictx,
       ictx->curr_block,
       opkind,
       node->lnum,
       node->lpos
    );
 
-   graft_tree_var(opcode, IrvarConst);
+   graft_tree_var(ictx, opcode, IrvarConst);
 
    switch (node->kind) {
       case NODEKIND_ZERO : /* fall-through */
       case NODEKIND_PNOUN: /* fall-through */
       case NODEKIND_NNOUN:
-         graft_tree_i(opcode, val, nodekind);
+         graft_tree_i(ictx, opcode, val, nodekind);
       break;
 
       case NODEKIND_P1: /* fall-through */
       case NODEKIND_P2:
-         graft_tree_var(opcode, val);
+         graft_tree_var(ictx, opcode, val);
       break;
 
       case NODEKIND_CHAR:
-         graft_tree_charidx(opcode, val);
+         graft_tree_charidx(ictx, opcode, val);
       break;
 
       default: ;
@@ -642,15 +666,16 @@ static void set_operands(irgen_ctx_t *ictx) {
    tree_t *opcode;
 
    opcode = graft_tree_opcode(
-      ictx->curr_block, IropcodePop, 0, 0);
-   graft_tree_var(opcode, IrvarOperandR);
+      ictx, ictx->curr_block, IropcodePop, 0, 0);
+   graft_tree_var(ictx, opcode, IrvarOperandR);
 
    opcode = graft_tree_opcode(
-      ictx->curr_block, IropcodePop, 0, 0);
-   graft_tree_var(opcode, IrvarOperandL);
+      ictx, ictx->curr_block, IropcodePop, 0, 0);
+   graft_tree_var(ictx, opcode, IrvarOperandL);
 }
 
 static tree_t *plant_tree(
+   irgen_ctx_t *ictx,
    const char *run,
    size_t len,
    irnodekind_t kind,
@@ -661,7 +686,7 @@ static tree_t *plant_tree(
    char *buf;
 
    if (run) {
-      buf = safe_malloc(len + 1);  /* +1 for \0 */
+      buf = arena_malloc_fallback(ictx->arena, len + 1);  /* +1 for \0 */
       memcpy(buf, run, len + 1);  /* \0 copied */
    }
    else buf = NULL;
@@ -674,10 +699,11 @@ static tree_t *plant_tree(
    node.lpos = lpos;
    node.offset = 0;
 
-   return tree_plant(&node, sizeof node);
+   return tree_plant(&node, sizeof node, ictx->arena);
 }
 
 static tree_t *graft_tree_s(
+   irgen_ctx_t *ictx,
    tree_t *base,
    const char *run,
    size_t len,
@@ -685,31 +711,42 @@ static tree_t *graft_tree_s(
    size_t lnum,
    size_t lpos
 ) {
-   tree_t *sub = plant_tree(run, len, kind, lnum, lpos);
+   tree_t *sub = plant_tree(ictx, run, len, kind, lnum, lpos);
    return tree_graft(base, sub);
 }
 
-static tree_t *graft_tree_i(tree_t *base, int i, irnodekind_t kind) {
+static tree_t *graft_tree_i(
+   irgen_ctx_t *ictx,
+   tree_t *base,
+   int i,
+   irnodekind_t kind
+) {
    irnode_t node;
 
    node.datkind = IrnodeDatkindInt;
    node.dat.i = i;
    node.kind = kind;
 
-   return tree_graft(base, graft_tree_common(&node, 0, 0));
+   return tree_graft(base, graft_tree_common(ictx, &node, 0, 0));
 }
 
-static tree_t *graft_tree_ui(tree_t *base, unsigned int ui, irnodekind_t kind) {
+static tree_t *graft_tree_ui(
+   irgen_ctx_t *ictx,
+   tree_t *base,
+   unsigned int ui,
+   irnodekind_t kind
+) {
    irnode_t node;
 
    node.datkind = IrnodeDatkindUint;
    node.dat.ui = ui;
    node.kind = kind;
 
-   return tree_graft(base, graft_tree_common(&node, 0, 0));
+   return tree_graft(base, graft_tree_common(ictx, &node, 0, 0));
 }
 
 static tree_t *graft_tree_opcode(
+   irgen_ctx_t *ictx,
    tree_t *base,
    iropcode_t opcode,
    size_t lnum,
@@ -722,18 +759,27 @@ static tree_t *graft_tree_opcode(
    node.kind = IrnodekindOpcode;
 
    return tree_graft(base,
-      graft_tree_common(&node, lnum, lpos));
+      graft_tree_common(ictx, &node, lnum, lpos));
 }
 
-static tree_t *graft_tree_var(tree_t *base, irvar_t var) {
-   return graft_tree_ui(base, var, IrnodekindVar);
+static tree_t *graft_tree_var(
+   irgen_ctx_t *ictx,
+   tree_t *base,
+   irvar_t var
+) {
+   return graft_tree_ui(ictx, base, var, IrnodekindVar);
 }
 
-static tree_t *graft_tree_charidx(tree_t *base, spl_uint_t charidx) {
-   return graft_tree_ui(base, charidx, IrnodekindPerson);
+static tree_t *graft_tree_charidx(
+   irgen_ctx_t *ictx,
+   tree_t *base,
+   spl_uint_t charidx
+) {
+   return graft_tree_ui(ictx, base, charidx, IrnodekindPerson);
 }
 
 static inline tree_t *graft_tree_common(
+   irgen_ctx_t *ictx,
    irnode_t *node,
    size_t lnum,
    size_t lpos
@@ -742,11 +788,12 @@ static inline tree_t *graft_tree_common(
    node->lpos = lpos;
    node->offset = 0;
 
-   return tree_plant(node, sizeof *node);
+   return tree_plant(node, sizeof *node, ictx->arena);
 }
 
 static void add_block(irgen_ctx_t *ictx, size_t cnt) {
    ictx->curr_block = graft_tree_ui(
+      ictx,
       ictx->curr_scene,
       cnt,
       IrnodekindBlock

@@ -43,11 +43,12 @@ static void checkif_argc1(
 
 static void compile(config_t *cfg) {
    compile_ctx_t cctx = {
-      .cfg = cfg
+      .cfg = cfg,
+      .arena = arena_create()
    };
-   size_t total;
+   size_t total = array_size(cfg->source_files);
 
-   total = array_size(cfg->source_files);
+   arena_info(EXECNAME);
 
    for (size_t i = 0; i < total; i++) {
       cctx.sourcefile = array_peek(cfg->source_files, i);
@@ -71,11 +72,11 @@ static void compile(config_t *cfg) {
          assemble(&cctx);
 
       /* cleanup */
-      destroy_irt(&cctx);
-      destroy_pt(&cctx);
+      arena_cleanup(cctx.arena);
       array_destroy(cctx.toks);
       array_destroy(cctx.ls);
    }
+   arena_destroy(cctx.arena);
 }
 
 static void loadfile_talkative(compile_ctx_t *cctx, const char *filename) {

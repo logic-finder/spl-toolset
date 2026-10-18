@@ -7,10 +7,12 @@
 #include "global.h"
 #include "wrappers.h"
 #include "strutils.h"
+#include "arena.adt.h"
 #include "dbhandler.h"
 #include "colorcodes.h"
 
 typedef struct {
+   arena_t *arena;
    const char *reason;
    tree_t *pt, *title, *dp;
    config_t *cfg;
@@ -22,7 +24,7 @@ typedef struct {
 
 typedef void typechecker_t(typecheck_ctx_t *tctx);
 
-static void coalesce_childstr(tree_t *t);
+static void coalesce_childstr(typecheck_ctx_t *tctx, tree_t *t);
 static inline void coalesce_title(typecheck_ctx_t *tctx);
 static void coalesce_name(typecheck_ctx_t *tctx);
 static void check_namecol(typecheck_ctx_t *tctx);

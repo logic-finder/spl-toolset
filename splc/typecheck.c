@@ -7,6 +7,7 @@
 extern void typecheck(compile_ctx_t *cctx) {
    typecheck_ctx_t tctx;
 
+   tctx.arena = cctx->arena;
    tctx.pt = cctx->pt;
    tctx.title = tree_child(tctx.pt, 0);
    tctx.dp = tree_child(tctx.pt, 1);
@@ -28,7 +29,7 @@ extern void typecheck(compile_ctx_t *cctx) {
 }
 
 static inline void coalesce_title(typecheck_ctx_t *tctx) {
-   coalesce_childstr(tctx->title);
+   coalesce_childstr(tctx, tctx->title);
 }
 
 static void coalesce_name(typecheck_ctx_t *tctx) {
@@ -37,7 +38,7 @@ static void coalesce_name(typecheck_ctx_t *tctx) {
 
    for (size_t i = 0; i < dp_len; i++) {
       chardecl = tree_child(tctx->dp, i);
-      coalesce_childstr(chardecl);
+      coalesce_childstr(tctx, chardecl);
    }
 }
 
@@ -238,7 +239,7 @@ static void semerr_dupname(
    exit(EXIT_FAILURE);
 }
 
-static void coalesce_childstr(tree_t *t) {
+static void coalesce_childstr(typecheck_ctx_t *tctx, tree_t *t) {
    node_t *dat, *chdat;
    char *buf, *run;
    size_t clen, bufsiz, offset, runsiz;
@@ -252,7 +253,7 @@ static void coalesce_childstr(tree_t *t) {
    }
    bufsiz--;  /* -1 not to count \0 */
 
-   buf = safe_malloc(bufsiz + 1);  /* +1 for \0 */
+   buf = arena_malloc_fallback(tctx->arena, bufsiz + 1);  /* +1 for \0 */
 
    offset = 0;
    for (size_t i = 0; i < clen; i++) {

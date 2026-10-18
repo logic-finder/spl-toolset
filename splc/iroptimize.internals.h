@@ -6,8 +6,10 @@
 #include "irgen.h"
 #include "global.h"
 #include "wrappers.h"
+#include "arena.adt.h"
 
 typedef struct {
+   arena_t *arena;
    tree_t *irt, *nrtv;
    array_t *ls;
    config_t *cfg;

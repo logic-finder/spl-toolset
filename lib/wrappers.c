@@ -4,24 +4,12 @@
 /************
  * stdlib.h *
  ************/
+/* inline */
+extern void *safe_realloc2x(void *orig, size_t *siz);
+
 extern void *safe_malloc(size_t siz) {
    void *ret = malloc(siz);
    if (!ret) fatal("malloc error");
-   return ret;
-}
-
-extern void *safe_realloc2x(void *orig, size_t *siz) {
-   size_t new_siz;
-   void *ret;
-
-   new_siz = (*siz) * 2;
-   ret = realloc(orig, new_siz);
-
-   if (!ret) {
-      fatal("realloc error");
-   }
-
-   *siz = new_siz;
    return ret;
 }
 

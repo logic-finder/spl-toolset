@@ -15,7 +15,7 @@ void *safe_malloc(size_t siz);
  * @brief `safe_realloc2x` is a wrapper for `realloc`.
  * @note exits in failure.
  */
-void *safe_realloc2x(void *orig, size_t *siz);
+inline void *safe_realloc2x(void *orig, size_t *siz);
 
 /**
  *
@@ -97,5 +97,12 @@ void safe_fsetpos(FILE *fp, fpos_t *pos);
 
 void safe_fprintf(FILE *fp, const char *fmt, int n, ...);
 void safe_fscanf(FILE *fp, const char *fmt, int n, ...);
+
+/*====================*
+ | INLINE DEFINITIONS |
+ *====================*/
+inline void *safe_realloc2x(void *orig, size_t *siz) {
+   return safe_realloc2x_arr(orig, siz, sizeof (char));
+}
 
 #endif

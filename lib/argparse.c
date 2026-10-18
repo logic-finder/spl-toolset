@@ -50,6 +50,7 @@ report_error:
       exit(EXIT_FAILURE);  // fixme: this is technically a resource leak
    }
    // since this wouldn't be invoked;
+   array_destroy(actx.err_infos);
    array_destroy(actx.toks);
    // rewrite the logic and do not use setjmp / longjmp
    // the idea is: collect all resources even with a error path

@@ -4,8 +4,10 @@
 #include "global.h"
 #include "wrappers.h"
 #include "tree.adt.h"
+#include "arena.adt.h"
 
 typedef struct {
+   arena_t *arena;
    tree_t *irt, *dp, *nrtv;
    tree_t *curr_act, *curr_scene, *curr_block;
    tree_t *pt_dp, *pt_nrtv;
@@ -41,6 +43,7 @@ static void resolve_noun(tree_t *t, irgen_ctx_t *ictx);
 static void set_operands(irgen_ctx_t *ictx);
 
 static tree_t *plant_tree(
+   irgen_ctx_t *ictx,
    const char *run,
    size_t len,
    irnodekind_t kind,
@@ -49,6 +52,7 @@ static tree_t *plant_tree(
 );
 
 static tree_t *graft_tree_s(
+   irgen_ctx_t *ictx,
    tree_t *base,
    const char *run,
    size_t len,
@@ -56,17 +60,37 @@ static tree_t *graft_tree_s(
    size_t lnum,
    size_t lpos
 );
-static tree_t *graft_tree_i(tree_t *base, int i, irnodekind_t kind);
-static tree_t *graft_tree_ui(tree_t *base, unsigned int ui, irnodekind_t kind);
+static tree_t *graft_tree_i(
+   irgen_ctx_t *ictx,
+   tree_t *base,
+   int i,
+   irnodekind_t kind
+);
+static tree_t *graft_tree_ui(
+   irgen_ctx_t *ictx,
+   tree_t *base,
+   unsigned int ui,
+   irnodekind_t kind
+);
 static tree_t *graft_tree_opcode(
+   irgen_ctx_t *ictx,
    tree_t *base,
    iropcode_t opcode,
    size_t lnum,
    size_t lpos
 );
-static tree_t *graft_tree_var(tree_t *base, irvar_t var);
-static tree_t *graft_tree_charidx(tree_t *base, spl_uint_t charidx);
+static tree_t *graft_tree_var(
+   irgen_ctx_t *ictx,
+   tree_t *base,
+   irvar_t var
+);
+static tree_t *graft_tree_charidx(
+   irgen_ctx_t *ictx,
+   tree_t *base,
+   spl_uint_t charidx
+);
 static inline tree_t *graft_tree_common(
+   irgen_ctx_t *ictx,
    irnode_t *node,
    size_t lnum,
    size_t lpos

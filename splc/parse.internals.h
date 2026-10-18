@@ -14,6 +14,7 @@
 #include "wrappers.h"
 #include "strutils.h"
 #include "tree.adt.h"
+#include "arena.adt.h"
 #include "dbhandler.h"
 #include "colorcodes.h"
 
@@ -21,6 +22,7 @@
  | TYPEDEFS |
  *==========*/
 typedef struct {
+   arena_t *arena;
    config_t *cfg;
    const char *sourcefile;
    array_t *ls;  /* array of line_t */
@@ -192,6 +194,7 @@ static void synerr(parse_ctx_t *pctx);
 
 /* Miscellnaeous */
 static tree_t *plant_tree(
+   parse_ctx_t *pctx,
    const char *run,
    size_t len,
    nodekind_t kind,
@@ -199,11 +202,13 @@ static tree_t *plant_tree(
    size_t lpos
 );
 static tree_t *graft_tree_s(
+   parse_ctx_t *pctx,
    tree_t *base,
    nodekind_t kind,
    const token_t *tok
 );
 static tree_t *graft_tree_n(
+   parse_ctx_t *pctx,
    tree_t *base,
    int val,
    nodekind_t kind,
