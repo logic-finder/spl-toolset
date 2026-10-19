@@ -554,8 +554,11 @@ static void errhandle_unrecognized(argtok_t *tok, const char *reason, void *ctx)
    if (tok->kind == ArgtokShortFlag) {
       safe_vprintf("%s: %s\n", tok->field, err_short);
    }
-   else {  /* long flag */
-      safe_vprintf("%s: %s. Do you mean" Cbgreen, tok->field, err_long);
+   else /* long flag */ {
+      safe_vprintf(
+         "%s: %s. Do you mean one of the following?" Cbgreen,
+         tok->field, err_long
+      );
       /* at least one exists */
       if (array_size(candidates) == 1) {
          safe_vprintf(" --%s" Creset "?\n", array_peek(candidates, 0));

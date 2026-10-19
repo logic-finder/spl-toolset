@@ -7,10 +7,10 @@
 
 #include "config.h"
 #include "common.h"
-#include "strutils.h"
 #include "wrappers.h"
 #include "colorcodes.h"
 #include "argp_drivers.h"
+#include "../lib/strutils.h"
 
 typedef struct {
    const void **targets;
