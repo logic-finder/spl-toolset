@@ -18,7 +18,7 @@ inline void *arena_realloc2x(arena_t *arena, void *ptr, size_t *siz);
 void *arena_realloc2x_arr(
    arena_t *arena,
    void *ptr,
-   size_t *cnt,
+   size_t *nmemb,
    size_t esiz
 );
 inline void *arena_malloc_fallback(arena_t *arena, size_t siz);
