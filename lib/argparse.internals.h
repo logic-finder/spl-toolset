@@ -39,6 +39,11 @@ typedef struct {
    volatile size_t errcnt;
 } argp_ctx_t;
 
+typedef struct a {
+   optmd_t *table;
+   size_t table_len;
+} errhandle_unrecognized_ctx_t;
+
 static void validate_schemas(argp_ctx_t *actx);
 static void tokenize_argv(argp_ctx_t *actx);
 static void parse_argtoks(argp_ctx_t *actx);
@@ -66,9 +71,14 @@ static array_destructor_t destruct_errinfo;
 static opt_errhandler_t errhandle_seen_multiple;
 static opt_errhandler_t errhandle_unrecognized;
 static opt_errhandler_t errhandle_out_of_tok;
-static void regerr(argp_ctx_t *actx, argtok_t *tok, void *ctx, size_t ctxsiz);
+static void regerr(argp_ctx_t *actx, argtok_t *tok);
 
 static void report_errors(argp_ctx_t *actx);
+
+static array_t *find_opt_candidates(
+   argtok_t *tok,
+   errhandle_unrecognized_ctx_t *ctx
+);
 
 static void showargtoks(argp_ctx_t *actx, bool terse);
 static void showargtok(void *dat, size_t idx, void *ctx);

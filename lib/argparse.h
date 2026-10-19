@@ -39,6 +39,8 @@ struct argtok {
 struct argerr {
    opt_errhandler_t *errhandle;
    const char *reason;
+   const void *ctx;
+   size_t ctx_siz;
 };
 
 void parse_argv(

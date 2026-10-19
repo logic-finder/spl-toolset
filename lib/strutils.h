@@ -4,6 +4,11 @@
 #include <string.h>
 #include <stdbool.h>
 
+typedef struct {
+   const char **alikes;
+   size_t nmemb;
+} find_alikes_ret_t;
+
 bool match(char ch, const char *scanset);
 
 /* Returns arrlen when str doesn't exist in arr */
@@ -58,6 +63,14 @@ char *strndup(const char *src, size_t n);
 bool is_rnum(const char *rnum);
 
 unsigned int interpret_romnum(const char *romnum);
+
+size_t levenshtein_distance(const char *s, const char *t);
+find_alikes_ret_t find_alikes(
+   const char *src,
+   const void **targets,
+   size_t targets_len,
+   size_t target_siz
+);
 
 /* Inline Functions */
 inline char lastch(const char *line) {

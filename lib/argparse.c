@@ -96,6 +96,10 @@ static void validate_schemas(argp_ctx_t *actx) {
    optmd_t *subject, *against;
    size_t count_dup;
 
+   if (actx->table_len == 0) {
+      goto fatal;
+   }
+
    count_dup = 0;
 
    /* short flags */
@@ -133,6 +137,7 @@ static void validate_schemas(argp_ctx_t *actx) {
    if (count_dup == 0)
       return;
 
+fatal:
    safe_fputs(stdout, "Currently the program has a problematic option table. Terminating.\n");
    exit(EXIT_FAILURE);  /* No choice but to kill it! */
 }
@@ -191,7 +196,12 @@ static void parse_argtoks(argp_ctx_t *actx) {
       /* unrecognized option? */
       if (tok->md == NULL) {
          actx->err.errhandle = errhandle_unrecognized;
-         regerr(actx, tok, NULL, 0);
+         actx->err.ctx = & (errhandle_unrecognized_ctx_t) {
+            .table = actx->table,
+            .table_len = actx->table_len
+         };
+         actx->err.ctx_siz = sizeof (errhandle_unrecognized_ctx_t);
+         regerr(actx, tok);
          goto next;
       }
 
@@ -201,7 +211,9 @@ static void parse_argtoks(argp_ctx_t *actx) {
       /* specified multiple times? */
       if (tok->md->seen++ && tok->md->unique == true) {
          actx->err.errhandle = errhandle_seen_multiple;
-         regerr(actx, tok, tok->md, sizeof *tok->md);
+         actx->err.ctx = tok->md;
+         actx->err.ctx_siz = sizeof *tok->md;
+         regerr(actx, tok);
          goto next;
       }
 
@@ -229,7 +241,7 @@ static void parse_argtoks(argp_ctx_t *actx) {
       parse_result = (*tok->md->drive)(tok, &actx->err);
       if (parse_result == false) {
          /* err has been filled by drive() */
-         regerr(actx, tok, NULL, 0);
+         regerr(actx, tok);
       }
 
    next:
@@ -385,7 +397,7 @@ static optmd_t *query_by_longname(argp_ctx_t *actx, const char *flag) {
 static argtok_t *gettok(argp_ctx_t *actx) {
    if (actx->idx == actx->toks_len - 1) {
       actx->err.errhandle = errhandle_out_of_tok;
-      regerr(actx, actx->tok, NULL, 0);  /* dummy tok */
+      regerr(actx, actx->tok);  /* dummy tok */
       longjmp(actx->env, 1);
    }
 
@@ -426,7 +438,7 @@ static bool preprocess_shortflag(argp_ctx_t *actx) {
    ungettok(actx);
    actx->err.errhandle = errhandle_default;
    actx->err.reason = "no positional argument follows";
-   regerr(actx, actx->tok, NULL, 0);
+   regerr(actx, actx->tok);
    return false;
 }
 
@@ -441,7 +453,7 @@ static bool preprocess_longflag(argp_ctx_t *actx) {
       if (tok->value != NULL) {
          actx->err.errhandle = errhandle_default;
          actx->err.reason = "doesn't require a value but given one";
-         regerr(actx, tok, NULL, 0);
+         regerr(actx, tok);
       }
       /* whether error or not, return true */
       return true;
@@ -452,7 +464,7 @@ static bool preprocess_longflag(argp_ctx_t *actx) {
       if (tok->value == NULL) {
          actx->err.errhandle = errhandle_default;
          actx->err.reason = "value not given after '='";
-         regerr(actx, tok, NULL, 0);
+         regerr(actx, tok);
          return false; /* e.g. --job= */
       }
       else
@@ -468,7 +480,7 @@ static bool preprocess_longflag(argp_ctx_t *actx) {
    ungettok(actx);
    actx->err.errhandle = errhandle_default;
    actx->err.reason = "no positional argument follows";
-   regerr(actx, actx->tok, NULL, 0);
+   regerr(actx, actx->tok);
    return false;
 }
 
@@ -532,19 +544,37 @@ static void errhandle_unrecognized(argtok_t *tok, const char *reason, void *ctx)
    static const char *err_short = "unrecognized short flag";
    static const char *err_long  = "unrecognized long flag";
 
-   (void) reason, (void) ctx;
+   errhandle_unrecognized_ctx_t *ectx;
+   array_t *candidates;
 
-   safe_vprintf(
-      "%s: %s\n",
-      tok->field,
-      tok->kind == ArgtokShortFlag ? err_short : err_long
-   );
+   (void) reason;
+   ectx = ctx;
+   candidates = find_opt_candidates(tok, ectx);
+
+   if (tok->kind == ArgtokShortFlag) {
+      safe_vprintf("%s: %s\n", tok->field, err_short);
+   }
+   else {  /* long flag */
+      safe_vprintf("%s: %s. Do you mean" Cbgreen, tok->field, err_long);
+      /* at least one exists */
+      if (array_size(candidates) == 1) {
+         safe_vprintf(" --%s" Creset "?\n", array_peek(candidates, 0));
+      }
+      else {
+         safe_vprintf("\n\t");
+         for (size_t i = 0; i < array_size(candidates); i++) {
+            safe_vprintf("%s  ", array_peek(candidates, i));
+         }
+         safe_vprintf(Creset "\n");
+      }
+      array_destroy(candidates);
+   }
 
    if (!once) {
       safe_vprintf(
-         "   * Note: should this be a filename, specify '"
+         "* Note: should this be a filename, specify '"
          Cbwhite "--" Creset "' first\n"
-         "   * Note: type "
+         "* Note: type "
          Cbmagenta "-h" Creset " or "
          Cbmagenta "--help" Creset " to see the manual page\n"
       );
@@ -558,7 +588,7 @@ static void errhandle_out_of_tok(argtok_t *tok, const char *reason, void *ctx) {
    safe_vprintf("argparse: ran out of command line arguments, having expected one\n");
 }
 
-static void regerr(argp_ctx_t *actx, argtok_t *tok, void *ctx, size_t ctxsiz) {
+static void regerr(argp_ctx_t *actx, argtok_t *tok) {
    errinfo_t ei = {
       .tok = *tok,
       .err = actx->err,  /* structs are copied */
@@ -570,13 +600,16 @@ static void regerr(argp_ctx_t *actx, argtok_t *tok, void *ctx, size_t ctxsiz) {
    if (tok->value != NULL) ei.tok.value = strdup(tok->value);
 
    /* Inits ei.ctx */
-   if (ctx != NULL) {
-      ei.ctx = safe_malloc(ctxsiz);
-      memcpy(ei.ctx, ctx, ctxsiz);
+   if (actx->err.ctx != NULL) {
+      ei.ctx = safe_malloc(actx->err.ctx_siz);
+      memcpy(ei.ctx, actx->err.ctx, actx->err.ctx_siz);
    }
 
    actx->errcnt++;
    array_append(actx->err_infos, &ei, sizeof ei);
+
+   /* cleanup the error structure */
+   actx->err.ctx = NULL;
 
    if (actx->errcnt == actx->errcnt_max) {
       longjmp(actx->env, 1);
@@ -602,6 +635,44 @@ static void report_errors(argp_ctx_t *actx) {
       " Aborting argv parsing at idx = %zu.\n",
       actx->idx
    );
+}
+
+// fixme: find_alikes로 대체하기
+// 그러려면 우선 옵션 배열 구조체에서 lname을 맨 위로 옮겨놔야 함 (optmds는 .lname=으로 정의되어 있으니까 수정할 필요 x)
+static array_t *find_opt_candidates(
+   argtok_t *tok,
+   errhandle_unrecognized_ctx_t *ctx
+) {
+   size_t dists[ctx->table_len];  /* assumes table is not empty */
+
+   /* Evaluates distances */
+   for (size_t i = 0; i < ctx->table_len; i++) {
+      dists[i] = levenshtein_distance(tok->field, ctx->table[i].lname);
+   }
+
+   size_t min = dists[0];
+
+   /* Finds the smallest distance */
+   for (size_t i = 1; i < ctx->table_len; i++) {
+      if (min > dists[i]) {
+         min = dists[i];
+      }
+   }
+
+   array_t *results = array_create(NULL);
+
+   /* Collects candidates which have the same distance with `min` */
+   for (size_t i = 0; i < ctx->table_len; i++) {
+      if (min == dists[i]) {
+         array_append(
+            results,
+            ctx->table[i].lname,
+            strlen(ctx->table[i].lname) + 1  /* +1 for \0 */
+         );
+      }
+   }
+
+   return results;
 }
 
 /*** DEBUG ***/

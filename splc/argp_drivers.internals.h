@@ -9,7 +9,14 @@
 #include "common.h"
 #include "strutils.h"
 #include "wrappers.h"
+#include "colorcodes.h"
 #include "argp_drivers.h"
+
+typedef struct {
+   const void **targets;
+   size_t targets_len;
+   size_t target_siz;
+} errhandle_unrecognized_value_ctx_t;
 
 static opt_driver_t drive_help;
 static opt_driver_t drive_debug;

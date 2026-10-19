@@ -334,3 +334,118 @@ extern unsigned int interpret_romnum(const char *romnum) {
 
    return v;
 }
+
+/* C port of https://en.wikipedia.org/wiki/Levenshtein_distance#Computation */
+extern size_t levenshtein_distance(const char *s, const char *t) {
+   size_t sl, tl, subst_cost, ret;
+   size_t *d;
+
+   sl = strlen(s);  /* source length */
+   tl = strlen(t);  /* target length */
+
+   if (sl == 0) return tl;
+   if (tl == 0) return sl;
+
+   /* LAYOUT OF d[sl + 1][tl + 1]
+         Note: +1 to represent an empty state
+
+      # 0 t a r g e t
+      0 - - - - - - -
+      s - - - - - - -
+      r - - - - - - -
+      c - - - - - - -
+
+      sl = the number of rows
+      tl = the number of columns */
+
+   d = safe_calloc((sl + 1) * (tl + 1), sizeof (size_t));
+
+   #define D(r, c) d[(r) * ((tl) + 1) + (c)]
+
+   for (size_t r = 0; r <= sl; r++) {
+      D(r, 0) = r;
+   }
+
+   for (size_t c = 0; c <= tl; c++) {
+      D(0, c) = c;
+   }
+
+   for (size_t c = 1; c <= tl; c++) {
+      for (size_t r = 1; r <= sl; r++) {
+         subst_cost = (s[r - 1] == t[c - 1]) ? 0 : 1;
+         D(r,c) = min3(
+            D(r - 1, c) + 1,  /* deletion of s[r] */
+            D(r, c - 1) + 1,   /* insertion of t[c] */
+            D(r - 1, c - 1) + subst_cost  /* match or substitution */
+         );
+      }
+   }
+
+   ret = D(sl, tl);
+   free(d);
+   #undef D
+   return ret;
+}
+
+extern find_alikes_ret_t find_alikes(
+   const char *src,
+   const void **targets,
+   size_t targets_len,
+   size_t target_siz
+) {
+   size_t *dists = safe_malloc(targets_len * sizeof (size_t));
+
+   /* Note. targets should be like:
+         accept_set[] = { { "spl01", ... }, { "cor27", ... } }
+         optmds[] = { "help", ... }, { "version", ... } }
+
+      What GETSTR() does is to find each string in the array
+      of unknown types. It assumes the string member is the first
+      field in each struct! */
+
+   /* Note: sizeof (char) = 1 */
+   #define GETSTR(i) (* (char **) (((char *) targets) + (i) * (target_siz)))
+
+   /* Evaluates distances */
+   for (size_t i = 0; i < targets_len; i++) {
+      dists[i] = levenshtein_distance(
+         src, GETSTR(i)
+      );
+   }
+
+   size_t min = dists[0];
+
+   /* Finds the smallest distance */
+   for (size_t i = 1; i < targets_len; i++) {
+      if (min > dists[i]) {
+         min = dists[i];
+      }
+   }
+
+   size_t results_len = 0;
+
+   /* Counts the total length of the result array */
+   for (size_t i = 0; i < targets_len; i++) {
+      if (min == dists[i]) {
+         results_len++;
+      }
+   }
+
+   const char **results = safe_malloc(results_len * sizeof *results);
+
+   /* Collects candidates which have the same distance with `min` */
+   for (size_t i = 0, idx = 0; i < targets_len; i++) {
+      if (min == dists[i]) {
+         results[idx++] = GETSTR(i);
+      }
+   }
+
+   /* cleanup */
+   free(dists);
+   #undef GETSTR
+
+   return (find_alikes_ret_t) {
+      .alikes = results,
+      .nmemb = results_len
+   };
+}
