@@ -30,6 +30,7 @@ extern void irgenerate(compile_ctx_t *cctx) {
    return;
 }
 
+[[deprecated]]
 extern void destroy_irt(compile_ctx_t *cctx) {
    tree_post_traverse(cctx->irt, cleanup_irnode, 0, cctx);
    tree_prune(cctx->irt);
