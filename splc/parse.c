@@ -90,7 +90,7 @@ report_error:
    return;
 }
 
-[[maybe_unused]]
+[[deprecated]]
 extern void destroy_pt(compile_ctx_t *cctx) {
    tree_post_traverse(cctx->pt, cleanup_node, 0, cctx);
    tree_prune(cctx->pt);
