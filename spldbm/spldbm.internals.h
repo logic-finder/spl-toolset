@@ -6,7 +6,7 @@
 #include "fatal.h"
 #include "global.h"
 #include "dbmaker.h"
-#include "argparse.h"
+#include "old_argparse.h"
 #include "compressor.h"
 
 #endif
