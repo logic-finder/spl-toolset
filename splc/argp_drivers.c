@@ -246,9 +246,9 @@ static void errhandle_unrecognized_value(argtok_t *tok, const char *reason, void
       "%s: unrecognized value " Cbwhite "'%s'" Creset ".",
       tok->field, tok->value
    );
-   safe_vprintf(" Do you mean " Cbgreen);
+   safe_vprintf(" Do you mean ");
    if (ret.nmemb == 1) {
-      safe_vprintf("'%s'" Creset "?\n", ret.alikes[0]);
+      safe_vprintf(Cbgreen "'%s'" Creset "?\n", ret.alikes[0]);
    }
    else {
       safe_vprintf("one of the following?\n\t" Cbgreen);
