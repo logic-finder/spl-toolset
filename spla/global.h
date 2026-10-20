@@ -2,7 +2,7 @@
 #define GLOBAL_H
 
 #include "common.h"
-#include "argparse.h"
+#include "old_argparse.h"
 
 #define EXECNAME "spla"
 #define ENPREFIX EXECNAME ": "

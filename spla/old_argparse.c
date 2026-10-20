@@ -1,5 +1,5 @@
-#include "argparse.h"
-#include "argparse.internals.h"
+#include "old_argparse.h"
+#include "old_argparse.internals.h"
 
 extern void parse_args(const char **argv) {
    /*

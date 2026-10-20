@@ -1,5 +1,5 @@
-#ifndef ARGPARSE_H
-#define ARGPARSE_H
+#ifndef OLD_ARGPARSE_H
+#define OLD_ARGPARSE_H
 
 typedef struct optflg {
    unsigned int

@@ -1,7 +1,9 @@
-#ifndef ARGPARSE_INTERNALS_H
-#define ARGPARSE_INTERNALS_H
+#ifndef OLD_ARGPARSE_INTERNALS_H
+#define OLD_ARGPARSE_INTERNALS_H
 
 #include <string.h>
+
+#include "fatal.h"
 #include "global.h"
 
 typedef void parser_t(const char *arg);
