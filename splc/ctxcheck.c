@@ -6,22 +6,57 @@
 // + I II III ... 넘버링이 순서대로 되는지
 
 extern void ctxcheck(compile_ctx_t *cctx) {
-   ctxcheck_ctx_t octx;
+   ctxcheck_ctx_t octx = {0};
 
    octx.sourcefile = cctx->sourcefile;
    octx.cfg = cctx->cfg;
    octx.ls = cctx->ls;
    octx.errs = array_create(NULL);
+   octx.errcnt = 0;
+   octx.errcnt_max = 50;
    octx.nrtv = tree_child(cctx->pt, 2);
 
    if (cctx->cfg->vbs) safe_fputs(stdout, ENPREFIX "context-checking...");
 
    check_goto_unexistent(&octx);
-   check_empty_scene(&octx);
+   if (check_empty_scene(&octx) != CtxcheckStatcodeOk) {
+      goto report_errors;
+   }
 
-   // TODO: if errcnt > 0, halt.
+report_errors:
+   if (octx.errcnt > 0) {
+      report_errors(&octx);
+      goto cleanup;
+   }
 
    if (cctx->cfg->vbs) safe_vprintf(" " Cgreen "done!" Creset "\n");
+
+cleanup:
+   return;
+}
+
+static ctxcheck_statcode_t regerr(ctxcheck_ctx_t *octx) {
+   array_append(octx->errs, &octx->err, sizeof octx->err);
+
+   octx->errcnt++;
+
+   return (octx->errcnt < octx->errcnt_max)
+      ? CtxcheckStatcodeOk
+      : CtxcheckStatcodeErrcntMax;
+}
+
+static void report_errors(ctxcheck_ctx_t *octx) {
+   const size_t errs_cnt = array_size(octx->errs);
+   ctxcheck_err_ctx_t *errctx;
+
+   for (size_t i = 0; i < errs_cnt; i++) {
+      errctx = array_peek(octx->errs, i);
+      (*errctx->handle)(octx, errctx, i);
+   }
+
+   if (octx->errcnt == octx->errcnt_max) {
+      safe_vprintf("Error count reached max. Aborting.\n");
+   }
 }
 
 static inline void check_goto_unexistent(ctxcheck_ctx_t *octx) {
@@ -91,9 +126,10 @@ static void check_goto_unexistent_goto(ctxcheck_ctx_t *octx) {
    semerr_unknown_label(octx, romnum);
 }
 
-static void check_empty_scene(ctxcheck_ctx_t *octx) {
+static ctxcheck_statcode_t check_empty_scene(ctxcheck_ctx_t *octx) {
    size_t nact, nscn;
    tree_t *act, *scn;
+   ctxcheck_statcode_t status;
 
    /* nrtv
       -> act
@@ -110,16 +146,60 @@ static void check_empty_scene(ctxcheck_ctx_t *octx) {
       for (size_t s = 1; s < nscn; s++) {
          scn = tree_child(act, s);
 
-         if (tree_clen(scn) == 1) {
-            // TODO: elaborate
-            safe_vprintf("Scene is empty\n");
+         if (tree_clen(scn) != 1) {
+            continue;
+         }
+
+         /* error path */
+         octx->err = (ctxcheck_err_ctx_t) {
+            .act = act,
+            .scene = scn,
+            .handle = ctxcheck_errhandle_empty_scene
+         };
+         status = regerr(octx);
+         if (status == CtxcheckStatcodeErrcntMax) {
+            goto cleanup;
          }
       }
    }
+
+cleanup:
+   return status;
 }
 
-static void regerr(ctxcheck_ctx_t *octx) {
+static void ctxcheck_errhandle_empty_scene(
+   ctxcheck_ctx_t *superctx,
+   ctxcheck_err_ctx_t *errctx,
+   size_t idx
+) {
+   node_t *act_dat = tree_dat(errctx->act);
+   line_t *act_ln = array_peek(superctx->ls, act_dat->lnum - 1);
+   node_t *act_romnum = tree_chdat(errctx->act, 0);
 
+   node_t *scene_dat = tree_dat(errctx->scene);
+   line_t *scene_ln = array_peek(superctx->ls, scene_dat->lnum - 1);
+   node_t *scene_romnum = tree_chdat(errctx->scene, 0);
+
+   safe_vprintf("\n");
+   safe_vprintf(
+      Cbred "> Semantic Error #%zu: " Creset
+      "the " Cul "Scene %s" Creset " is empty\n",
+      idx + 1, scene_romnum->dat.s.run
+   );
+   safe_vprintf(
+      "[%s:%zu:%zu] " Cbwhite "note:" Creset " defined at here\n"
+      "%4d|" Cbmagenta "%s\n" Creset,
+      superctx->sourcefile, scene_dat->lnum, scene_dat->lpos,
+      scene_dat->lnum, scene_ln->run
+   );
+   safe_vprintf(
+      "[%s:%zu:%zu] " Cbwhite "note:" Creset " under the "
+      Cul "Act %s\n" Creset
+      "%4d|%s\n",
+      superctx->sourcefile, act_dat->lnum, act_dat->lpos,
+      act_romnum->dat.s.run,
+      act_dat->lnum, act_ln->run
+   );
 }
 
 static void print_err(ctxcheck_ctx_t *octx) {
