@@ -64,7 +64,7 @@ static bool drive_job(argtok_t *tok, argerr_t *err) {
    errno = 0;
    ret = strtoul(tok->value, &end, 10);
 
-   err->errhandle = errhandle_default;
+   err->errhandle = argp_errhandle_default;
 
    if (errno == ERANGE || ret > ULONG_MAX) {
       err->reason = "a value out of range";

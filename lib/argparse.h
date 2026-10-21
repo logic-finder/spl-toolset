@@ -57,6 +57,6 @@ void usage(
    const char *intro
 );
 
-opt_errhandler_t errhandle_default;
+opt_errhandler_t argp_errhandle_default;
 
 #endif

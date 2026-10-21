@@ -436,7 +436,7 @@ static bool preprocess_shortflag(argp_ctx_t *actx) {
 
    /* error path! */
    ungettok(actx);
-   actx->err.errhandle = errhandle_default;
+   actx->err.errhandle = argp_errhandle_default;
    actx->err.reason = "no positional argument follows";
    regerr(actx, actx->tok);
    return false;
@@ -451,7 +451,7 @@ static bool preprocess_longflag(argp_ctx_t *actx) {
    if (tok->md->reqv == false) {
       /* error path! */
       if (tok->value != NULL) {
-         actx->err.errhandle = errhandle_default;
+         actx->err.errhandle = argp_errhandle_default;
          actx->err.reason = "doesn't require a value but given one";
          regerr(actx, tok);
       }
@@ -462,7 +462,7 @@ static bool preprocess_longflag(argp_ctx_t *actx) {
    if (tok->has_eq) {
       /* error path! */
       if (tok->value == NULL) {
-         actx->err.errhandle = errhandle_default;
+         actx->err.errhandle = argp_errhandle_default;
          actx->err.reason = "value not given after '='";
          regerr(actx, tok);
          return false; /* e.g. --job= */
@@ -478,7 +478,7 @@ static bool preprocess_longflag(argp_ctx_t *actx) {
 
    /* error path! */
    ungettok(actx);
-   actx->err.errhandle = errhandle_default;
+   actx->err.errhandle = argp_errhandle_default;
    actx->err.reason = "no positional argument follows";
    regerr(actx, actx->tok);
    return false;
@@ -518,7 +518,7 @@ static void destruct_errinfo(void *item, size_t idx) {
    free(ei->ctx);
 }
 
-extern void errhandle_default(argtok_t *tok, const char *reason, void *ctx) {
+extern void argp_errhandle_default(argtok_t *tok, const char *reason, void *ctx) {
    /* Note: for short flag and long flag, whose tok is fully filled */
    (void) ctx;
    safe_vprintf("%s: %s\n", tok->field, reason);
