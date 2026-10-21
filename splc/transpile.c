@@ -61,7 +61,7 @@ static void gen_cleanup(void) {
    safe_fputs(fp, INDENT "cleanup_memories(memories, dpsz);\n");
 }
 
-static void generate(tree_t *t, int lv, void *ctx) {
+static void generate(tree_t *t, size_t lv, void *ctx) {
    node_t *n;
 
    (void) lv, (void) ctx;

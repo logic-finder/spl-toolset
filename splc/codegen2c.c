@@ -70,7 +70,7 @@ static void codegen_locals(cg2c_ctx_t *gctx) {
    }
 }
 
-static void codegen_route(tree_t *t, int lv, void *ctx) {
+static void codegen_route(tree_t *t, size_t lv, void *ctx) {
    cg2c_ctx_t *gctx;
 
    (void) lv;

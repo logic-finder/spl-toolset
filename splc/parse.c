@@ -96,7 +96,7 @@ extern void destroy_pt(compile_ctx_t *cctx) {
    tree_prune(cctx->pt);
 }
 
-static void cleanup_node(tree_t *t, int lv, void *ctx) {
+static void cleanup_node(tree_t *t, size_t lv, void *ctx) {
    node_t *n;
    compile_ctx_t *cctx;
 
@@ -2156,7 +2156,7 @@ extern void showpt(compile_ctx_t *cctx) {
    tree_pre_traverse(cctx->pt, shownode, 0, NULL);
 }
 
-static void shownode(tree_t *t, int lv, void *ctx) {
+static void shownode(tree_t *t, size_t lv, void *ctx) {
    static char buf[128];
 
    node_t *n;
@@ -2164,7 +2164,7 @@ static void shownode(tree_t *t, int lv, void *ctx) {
 
    (void) ctx;
    n = tree_dat(t);
-   cnt = sprintf(buf, "%d", lv);
+   cnt = sprintf(buf, "%zu", lv);
    buf[cnt] = '\0';
    total = lv * strlen("  ");
    total -= cnt;

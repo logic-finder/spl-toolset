@@ -36,7 +36,7 @@ extern void destroy_irt(compile_ctx_t *cctx) {
    tree_prune(cctx->irt);
 }
 
-static void cleanup_irnode(tree_t *t, int lv, void *ctx) {
+static void cleanup_irnode(tree_t *t, size_t lv, void *ctx) {
    irnode_t *n;
    compile_ctx_t *cctx;
 
@@ -64,7 +64,7 @@ static void set_dpsz(irgen_ctx_t *ictx) {
    graft_tree_i(ictx, opcode, dpsz, IrnodekindConst);
 }
 
-static void route(tree_t *t, int lv, void *ctx) {
+static void route(tree_t *t, size_t lv, void *ctx) {
    irgen_ctx_t *ictx;
 
    (void) lv;
@@ -810,7 +810,7 @@ extern size_t count_opcodes(tree_t *irt) {
    return counter;
 }
 
-static void opcode_counter(tree_t *t, int lv, void *ctx) {
+static void opcode_counter(tree_t *t, size_t lv, void *ctx) {
    irnode_t *n;
    size_t *counter;
 

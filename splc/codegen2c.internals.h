@@ -20,7 +20,7 @@ static const char *indent = "   ";
 
 static void codegen_title(cg2c_ctx_t *gctx);
 static void codegen_locals(cg2c_ctx_t *gctx);
-static void codegen_route(tree_t *t, int lv, void *ctx);
+static tree_callback_t codegen_route;
 
 static void handle_scene(cg2c_ctx_t *gctx);
 static void handle_block(cg2c_ctx_t *gctx);

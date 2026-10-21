@@ -28,7 +28,7 @@ extern void irdump(compile_ctx_t *cctx) {
    free(destname);
 }
 
-static void route(tree_t *t, int lv, void *ctx) {
+static void route(tree_t *t, size_t lv, void *ctx) {
    irdump_ctx_t *ictx;
 
    (void) lv;
@@ -344,7 +344,7 @@ extern void showirt(compile_ctx_t *cctx) {
    tree_pre_traverse(cctx->irt, showirnode, 0, NULL);
 }
 
-static void showirnode(tree_t *t, int lv, void *ctx) {
+static void showirnode(tree_t *t, size_t lv, void *ctx) {
    static char buf[128];
    irnode_t *n;
    int cnt, total;
@@ -352,7 +352,7 @@ static void showirnode(tree_t *t, int lv, void *ctx) {
    (void) ctx;
 
    n = tree_dat(t);
-   cnt = sprintf(buf, "%d", lv);
+   cnt = sprintf(buf, "%zu", lv);
    buf[cnt] = '\0';
    total = lv * strlen("  ");
    total -= cnt;

@@ -75,7 +75,7 @@ extern void assemble(compile_ctx_t *cctx) {
    free(destname);
 }
 
-static void setoffset_route(tree_t *t, int lv, void *ctx) {
+static void setoffset_route(tree_t *t, size_t lv, void *ctx) {
    /* SIZE
          opcode  - 1 byte
          var     - 1 byte
@@ -128,7 +128,7 @@ static void setoffset_route(tree_t *t, int lv, void *ctx) {
    }
 }
 
-static void write_route(tree_t *t, int lv, void *ctx) {
+static void write_route(tree_t *t, size_t lv, void *ctx) {
    asm_ctx_t *actx;
 
    (void) lv;
@@ -349,7 +349,7 @@ static void write_debug_info(asm_ctx_t *actx) {
    safe_fsetpos(actx->fp, &eos_pos);
 }
 
-static void write_dbginfo_route(tree_t *t, int lv, void *ctx) {
+static void write_dbginfo_route(tree_t *t, size_t lv, void *ctx) {
    irnode_t *n;
    asm_ctx_t *actx;
 

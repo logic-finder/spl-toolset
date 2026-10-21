@@ -63,7 +63,7 @@ static inline void check_goto_unexistent(ctxcheck_ctx_t *octx) {
    tree_pre_traverse(octx->nrtv, check_goto_unexistent_route, 0, octx);
 }
 
-static void check_goto_unexistent_route(tree_t *t, int lv, void *ctx) {
+static void check_goto_unexistent_route(tree_t *t, size_t lv, void *ctx) {
    ctxcheck_ctx_t *octx;
 
    (void) lv;
@@ -109,7 +109,7 @@ static void check_goto_unexistent_goto(ctxcheck_ctx_t *octx) {
    }
 
    root_len = tree_clen(root);
-   for ( ; i < root_len; i++) {
+   for (/* empty */; i < root_len; i++) {
       root_child = tree_child(root, i);
       against = TREE_CHDAT(root_child, 0)->dat.s.run;
       if (!strcmp(romnum, against)) {

@@ -60,7 +60,7 @@ static void check_namecol(typecheck_ctx_t *tctx) {
    }
 }
 
-static void typecheck_router(tree_t *t, int lv, void *ctx) {
+static void typecheck_router(tree_t *t, size_t lv, void *ctx) {
    typedef struct typehandler {
       nodekind_t kind;
       typechecker_t *check;
