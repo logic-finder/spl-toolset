@@ -77,14 +77,14 @@ extern void tree_destroy_shallow(tree_t *t) {
    arena_free_fallback(t->arena, t);
 }
 
-extern void tree_pre_traverse(tree_t *t, tree_callback_t *cb, int lv, void *ctx) {
+extern void tree_pre_traverse(tree_t *t, tree_callback_t *cb, size_t lv, void *ctx) {
    (*cb)(t, lv, ctx);
    if (!t->clen) return;
    for (size_t i = 0; i < t->clen; i++)
       tree_pre_traverse(t->children[i], cb, lv + 1, ctx);
 }
 
-extern void tree_post_traverse(tree_t *t, tree_callback_t *cb, int lv, void *ctx) {
+extern void tree_post_traverse(tree_t *t, tree_callback_t *cb, size_t lv, void *ctx) {
    if (!t->clen) {
       (*cb)(t, lv, ctx);
       return;

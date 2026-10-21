@@ -10,8 +10,8 @@
  * TYPEDEFS *
  ************/
 typedef struct tree tree_t;
-typedef void tree_callback_t(tree_t *tree, int lv, void *ctx);
-typedef void tree_walker_t(tree_t *t, tree_callback_t *cb, int lv, void *ctx);
+typedef void tree_callback_t(tree_t *tree, size_t lv, void *ctx);
+typedef void tree_walker_t(tree_t *t, tree_callback_t *cb, size_t lv, void *ctx);
 
 /***********************
  * FUNCTION PROTOTYPES *
