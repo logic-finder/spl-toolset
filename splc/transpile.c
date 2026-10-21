@@ -61,7 +61,7 @@ static void gen_cleanup(void) {
    safe_fputs(fp, INDENT "cleanup_memories(memories, dpsz);\n");
 }
 
-static void generate(tree_t *t, size_t lv, void *ctx) {
+static bool generate(tree_t *t, size_t lv, void *ctx) {
    node_t *n;
 
    (void) lv, (void) ctx;
@@ -87,8 +87,10 @@ static void generate(tree_t *t, size_t lv, void *ctx) {
       case NODEKIND_POP    : gen_pop   (t); break;
       /* NODEKIND__DEPEND falls here; see `gen_if` */
       /* const and operators also falls here */
-      default : return;
+      default : ;
    }
+
+   return true;
 }
 
 static void eval_const(tree_t *cnst) {

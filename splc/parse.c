@@ -96,7 +96,7 @@ extern void destroy_pt(compile_ctx_t *cctx) {
    tree_prune(cctx->pt);
 }
 
-static void cleanup_node(tree_t *t, size_t lv, void *ctx) {
+static bool cleanup_node(tree_t *t, size_t lv, void *ctx) {
    node_t *n;
    compile_ctx_t *cctx;
 
@@ -106,10 +106,12 @@ static void cleanup_node(tree_t *t, size_t lv, void *ctx) {
    cctx = ctx;
 
    if (n->datkind != DATKIND_STR) {
-      return;
+      return true;
    }
 
    arena_free_fallback(cctx->arena, n->dat.s.run);
+
+   return true;
 }
 
 static nodekind_t seek_direction(parse_ctx_t *pctx) {
@@ -2156,7 +2158,7 @@ extern void showpt(compile_ctx_t *cctx) {
    tree_pre_traverse(cctx->pt, shownode, 0, NULL);
 }
 
-static void shownode(tree_t *t, size_t lv, void *ctx) {
+static bool shownode(tree_t *t, size_t lv, void *ctx) {
    static char buf[128];
 
    node_t *n;
@@ -2184,6 +2186,8 @@ static void shownode(tree_t *t, size_t lv, void *ctx) {
       );
       printf(" " Cbblack "(len = %d)" Creset "\n", n->dat.s.len);
    }
+
+   return true;
 }
 
 static const char *resolve_nodekind(nodekind_t kind) {

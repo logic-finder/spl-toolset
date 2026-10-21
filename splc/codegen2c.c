@@ -70,7 +70,7 @@ static void codegen_locals(cg2c_ctx_t *gctx) {
    }
 }
 
-static void codegen_route(tree_t *t, size_t lv, void *ctx) {
+static bool codegen_route(tree_t *t, size_t lv, void *ctx) {
    cg2c_ctx_t *gctx;
 
    (void) lv;
@@ -85,6 +85,8 @@ static void codegen_route(tree_t *t, size_t lv, void *ctx) {
       case IrnodekindOpcode : handle_opcode(gctx); break;
       default: ;
    }
+
+   return true;
 }
 
 static void handle_scene(cg2c_ctx_t *gctx) {

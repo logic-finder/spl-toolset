@@ -60,7 +60,8 @@ static void check_namecol(typecheck_ctx_t *tctx) {
    }
 }
 
-static void typecheck_router(tree_t *t, size_t lv, void *ctx) {
+// fixme: switch 문으로 바꾸는게 나을듯함
+static bool typecheck_router(tree_t *t, size_t lv, void *ctx) {
    typedef struct typehandler {
       nodekind_t kind;
       typechecker_t *check;
@@ -91,8 +92,9 @@ static void typecheck_router(tree_t *t, size_t lv, void *ctx) {
       if (tctx->n->kind != type->kind)
          continue;
       (*type->check)(tctx);
-      return;
+      return true;
    }
+   return true;
 }
 
 static void typecheck_name(typecheck_ctx_t *tctx) {

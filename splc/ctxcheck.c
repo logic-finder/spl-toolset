@@ -63,7 +63,7 @@ static inline void check_goto_unexistent(ctxcheck_ctx_t *octx) {
    tree_pre_traverse(octx->nrtv, check_goto_unexistent_route, 0, octx);
 }
 
-static void check_goto_unexistent_route(tree_t *t, size_t lv, void *ctx) {
+static bool check_goto_unexistent_route(tree_t *t, size_t lv, void *ctx) {
    ctxcheck_ctx_t *octx;
 
    (void) lv;
@@ -78,6 +78,8 @@ static void check_goto_unexistent_route(tree_t *t, size_t lv, void *ctx) {
       case NODEKIND_GOTO  : check_goto_unexistent_goto (octx); break;
       default: ;
    }
+
+   return true;
 }
 
 static inline void check_goto_unexistent_act(ctxcheck_ctx_t *octx) {

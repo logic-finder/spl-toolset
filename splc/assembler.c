@@ -75,7 +75,7 @@ extern void assemble(compile_ctx_t *cctx) {
    free(destname);
 }
 
-static void setoffset_route(tree_t *t, size_t lv, void *ctx) {
+static bool setoffset_route(tree_t *t, size_t lv, void *ctx) {
    /* SIZE
          opcode  - 1 byte
          var     - 1 byte
@@ -89,14 +89,14 @@ static void setoffset_route(tree_t *t, size_t lv, void *ctx) {
    n = tree_dat(t);
 
    if (n->kind != IrnodekindOpcode && n->kind != IrnodekindEop)
-      return;
+      return true;
 
    /* Writes the offset of the current node */
    offset = ctx;
    n->offset = *offset;
 
    if (n->kind == IrnodekindEop)
-      return;
+      return true;
 
    /* Calculates the offset of the next node */
    *offset += SPL_OPCODE_SIZ;
@@ -126,9 +126,11 @@ static void setoffset_route(tree_t *t, size_t lv, void *ctx) {
       case IropcodeJumpF  : *offset += SPL_ADDR_SIZ; break;
       default: ;  /* opcodes with no parameter fall here */
    }
+
+   return true;
 }
 
-static void write_route(tree_t *t, size_t lv, void *ctx) {
+static bool write_route(tree_t *t, size_t lv, void *ctx) {
    asm_ctx_t *actx;
 
    (void) lv;
@@ -138,7 +140,7 @@ static void write_route(tree_t *t, size_t lv, void *ctx) {
    actx->n = tree_dat(actx->t);
 
    if (actx->n->kind != IrnodekindOpcode)
-      return;
+      return true;
 
    switch (actx->n->dat.ui) {
       case IropcodeSet    : write_set(actx); break;
@@ -174,6 +176,8 @@ static void write_route(tree_t *t, size_t lv, void *ctx) {
       case IropcodeJumpF  : write_jumplike(actx); break;
       default: ;  /* control never reaches default */
    }
+
+   return true;
 }
 
 static void write_set(asm_ctx_t *actx) {
@@ -349,7 +353,7 @@ static void write_debug_info(asm_ctx_t *actx) {
    safe_fsetpos(actx->fp, &eos_pos);
 }
 
-static void write_dbginfo_route(tree_t *t, size_t lv, void *ctx) {
+static bool write_dbginfo_route(tree_t *t, size_t lv, void *ctx) {
    irnode_t *n;
    asm_ctx_t *actx;
 
@@ -359,7 +363,7 @@ static void write_dbginfo_route(tree_t *t, size_t lv, void *ctx) {
    n = tree_dat(t);
 
    if (n->kind != IrnodekindOpcode)
-      return;
+      return true;
 
    // fixme: 프로젝트 전체적으로 lnum lpos 사이즈 spl_...로 통일
    // fixme: 프로젝트에서 size_t를 쓰는게 적절한곳엔 size_t 사용
@@ -368,6 +372,8 @@ static void write_dbginfo_route(tree_t *t, size_t lv, void *ctx) {
    safe_fwrite(&n->lpos, OBJFILE_DI_ET_SP, 1, actx->fp);
 
    actx->offset += OBJFILE_DI_ETSIZ;
+
+   return true;
 }
 
 static void write_srcfile(asm_ctx_t *actx) {

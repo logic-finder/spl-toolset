@@ -28,7 +28,7 @@ extern void irdump(compile_ctx_t *cctx) {
    free(destname);
 }
 
-static void route(tree_t *t, size_t lv, void *ctx) {
+static bool route(tree_t *t, size_t lv, void *ctx) {
    irdump_ctx_t *ictx;
 
    (void) lv;
@@ -44,6 +44,8 @@ static void route(tree_t *t, size_t lv, void *ctx) {
       case IrnodekindBlock  : handle_block (ictx); break;
       default: ;
    }
+
+   return true;
 }
 
 static void handle_opcode(irdump_ctx_t *ictx) {
@@ -344,7 +346,7 @@ extern void showirt(compile_ctx_t *cctx) {
    tree_pre_traverse(cctx->irt, showirnode, 0, NULL);
 }
 
-static void showirnode(tree_t *t, size_t lv, void *ctx) {
+static bool showirnode(tree_t *t, size_t lv, void *ctx) {
    static char buf[128];
    irnode_t *n;
    int cnt, total;
@@ -395,9 +397,11 @@ static void showirnode(tree_t *t, size_t lv, void *ctx) {
    }
    if (n->kind != IrnodekindOpcode) {
       putchar('\n');
-      return;
+      return true;
    }
    printf(" " Cbblack "at " Ccyan "code+0x%08" SPL_UINT_FMTSPC_HEX Creset "\n", n->offset);
+
+   return true;
 }
 
 static const char *resolve_nodekind(irnodekind_t kind) {
