@@ -77,21 +77,31 @@ extern void tree_destroy_shallow(tree_t *t) {
    arena_free_fallback(t->arena, t);
 }
 
-extern void tree_pre_traverse(tree_t *t, tree_callback_t *cb, size_t lv, void *ctx) {
-   (*cb)(t, lv, ctx);
-   if (!t->clen) return;
-   for (size_t i = 0; i < t->clen; i++)
-      tree_pre_traverse(t->children[i], cb, lv + 1, ctx);
+extern bool tree_pre_traverse(tree_t *t, tree_callback_t *cb, size_t lv, void *ctx) {
+   if (!(*cb)(t, lv, ctx)) {
+      return false;
+   }
+   if (t->clen == 0) {
+      return true;
+   }
+   for (size_t i = 0; i < t->clen; i++) {
+      if (!tree_pre_traverse(t->children[i], cb, lv + 1, ctx)) {
+         return false;
+      }
+   }
+   return true;
 }
 
-extern void tree_post_traverse(tree_t *t, tree_callback_t *cb, size_t lv, void *ctx) {
-   if (!t->clen) {
-      (*cb)(t, lv, ctx);
-      return;
+extern bool tree_post_traverse(tree_t *t, tree_callback_t *cb, size_t lv, void *ctx) {
+   if (t->clen == 0) {
+      return (*cb)(t, lv, ctx);
    }
-   for (size_t i = 0; i < t->clen; i++)
-      tree_post_traverse(t->children[i], cb, lv + 1, ctx);
-   (*cb)(t, lv, ctx);
+   for (size_t i = 0; i < t->clen; i++) {
+      if (!tree_post_traverse(t->children[i], cb, lv + 1, ctx)) {
+         return false;
+      }
+   }
+   return (*cb)(t, lv, ctx);
 }
 
 extern size_t tree_clen(const tree_t *t) {

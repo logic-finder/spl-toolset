@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 #include <string.h>
+#include <stdbool.h>
 
 #include "arena.adt.h"
 
@@ -10,8 +11,8 @@
  * TYPEDEFS *
  ************/
 typedef struct tree tree_t;
-typedef void tree_callback_t(tree_t *tree, size_t lv, void *ctx);
-typedef void tree_walker_t(tree_t *t, tree_callback_t *cb, size_t lv, void *ctx);
+typedef bool tree_callback_t(tree_t *tree, size_t lv, void *ctx);
+typedef bool tree_walker_t(tree_t *t, tree_callback_t *cb, size_t lv, void *ctx);
 
 /***********************
  * FUNCTION PROTOTYPES *
