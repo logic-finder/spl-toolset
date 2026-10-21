@@ -1322,6 +1322,7 @@ static int parse_noun_phrase(parse_ctx_t *pctx, tree_t *cnst) {
       tok  = "wall\0"   (len = 4)
       buf  = "stone wall\0"  (len = 10) */
 
+   // TODO: it'd be nice to have arena_strcat with separator
    bufsiz = prev_tok->len + 1 + pctx->tok->len;
    buf = arena_malloc_fallback(pctx->arena, bufsiz + 1);  /* +1 for \0 */
    memcpy(
@@ -2079,6 +2080,7 @@ static tree_t *plant_tree(
    char *buf;
 
    if (run) {
+      // TODO: it'd be nice to have arena_strdup
       buf = arena_malloc_fallback(pctx->arena, len + 1);  /* +1 for \0 */
       memcpy(buf, run, len + 1);  /* \0 copied */
    }

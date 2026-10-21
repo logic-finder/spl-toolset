@@ -79,6 +79,7 @@ static void regtok(parse_ctx_t *pctx, const char *run) {
    token_t tok = {0};
 
    tok.len = strlen(run);
+   // TODO: it'd be nice to have arena_strdup
    tok.run = arena_malloc(pctx->arena, tok.len + 1);  /* +1 for \0 */
    memcpy(tok.run, run, tok.len + 1);  /* \0 copied */
    array_append(pctx->toks, &tok, sizeof tok);
