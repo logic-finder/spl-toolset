@@ -3,23 +3,32 @@
 
 // TODO: conjugation이 제대로 됐는지같은걸 검사하도록 하자 (이건 warning을 띄워야 할듯)
 // TODO: 미선언이름사용, 이름중복선언, 미사용이름체크, scene/act 중복선언 같은것을 체크
+// + I II III ... 넘버링이 순서대로 되는지
 
 extern void ctxcheck(compile_ctx_t *cctx) {
    ctxcheck_ctx_t octx;
 
-   octx.ls = cctx->ls;
-   octx.cfg = cctx->cfg;
-   octx.nrtv = tree_child(cctx->pt, 2);
    octx.sourcefile = cctx->sourcefile;
+   octx.cfg = cctx->cfg;
+   octx.ls = cctx->ls;
+   octx.errs = array_create(NULL);
+   octx.nrtv = tree_child(cctx->pt, 2);
 
    if (cctx->cfg->vbs) safe_fputs(stdout, ENPREFIX "context-checking...");
 
-   tree_pre_traverse(octx.nrtv, ctxcheck_router, 0, &octx);
+   check_goto_unexistent(&octx);
+   check_empty_scene(&octx);
+
+   // TODO: if errcnt > 0, halt.
 
    if (cctx->cfg->vbs) safe_vprintf(" " Cgreen "done!" Creset "\n");
 }
 
-static void ctxcheck_router(tree_t *t, int lv, void *ctx) {
+static inline void check_goto_unexistent(ctxcheck_ctx_t *octx) {
+   tree_pre_traverse(octx->nrtv, check_goto_unexistent_route, 0, octx);
+}
+
+static void check_goto_unexistent_route(tree_t *t, int lv, void *ctx) {
    ctxcheck_ctx_t *octx;
 
    (void) lv;
@@ -29,22 +38,22 @@ static void ctxcheck_router(tree_t *t, int lv, void *ctx) {
    octx->n = tree_dat(octx->t);
 
    switch(octx->n->kind) {
-      case NODEKIND_ACT   : ctxcheck_act  (octx); break;
-      case NODEKIND_SCENE : ctxcheck_scene(octx); break;
-      case NODEKIND_GOTO  : ctxcheck_goto (octx); break;
+      case NODEKIND_ACT   : check_goto_unexistent_act  (octx); break;
+      case NODEKIND_SCENE : check_goto_unexistent_scene(octx); break;
+      case NODEKIND_GOTO  : check_goto_unexistent_goto (octx); break;
       default: ;
    }
 }
 
-static inline void ctxcheck_act(ctxcheck_ctx_t *octx) {
+static inline void check_goto_unexistent_act(ctxcheck_ctx_t *octx) {
    octx->act = octx->t;
 }
 
-static inline void ctxcheck_scene(ctxcheck_ctx_t *octx) {
+static inline void check_goto_unexistent_scene(ctxcheck_ctx_t *octx) {
    octx->scene = octx->t;
 }
 
-static void ctxcheck_goto(ctxcheck_ctx_t *octx) {
+static void check_goto_unexistent_goto(ctxcheck_ctx_t *octx) {
    const tree_t *root, *root_child;
    const char *romnum, *against;
    size_t i, root_len;
@@ -80,6 +89,37 @@ static void ctxcheck_goto(ctxcheck_ctx_t *octx) {
       octx->reason = msgs.err.sem.no_such_scene;
    }
    semerr_unknown_label(octx, romnum);
+}
+
+static void check_empty_scene(ctxcheck_ctx_t *octx) {
+   size_t nact, nscn;
+   tree_t *act, *scn;
+
+   /* nrtv
+      -> act
+         -> romnum (first child)
+         -> scene
+            -> romnum (first child) */
+
+   nact = tree_clen(octx->nrtv);
+
+   for (size_t a = 0; a < nact; a++) {
+      act = tree_child(octx->nrtv, a);
+      nscn = tree_clen(act);
+
+      for (size_t s = 1; s < nscn; s++) {
+         scn = tree_child(act, s);
+
+         if (tree_clen(scn) == 1) {
+            // TODO: elaborate
+            safe_vprintf("Scene is empty\n");
+         }
+      }
+   }
+}
+
+static void regerr(ctxcheck_ctx_t *octx) {
+
 }
 
 static void print_err(ctxcheck_ctx_t *octx) {
@@ -126,5 +166,6 @@ static void semerr_unknown_label(ctxcheck_ctx_t *octx, const char *s) {
    trace(octx, octx->scene, "Scene");
    trace(octx, octx->act, "Act");
    safe_fputc(stdout, '\n');
+   // TODO: do not halt on the first error
    exit(EXIT_FAILURE);
 }
