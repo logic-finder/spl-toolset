@@ -6,15 +6,15 @@
 // + I II III ... 넘버링이 순서대로 되는지
 
 extern void ctxcheck(compile_ctx_t *cctx) {
-   ctxcheck_ctx_t octx = {0};
-
-   octx.sourcefile = cctx->sourcefile;
-   octx.cfg = cctx->cfg;
-   octx.ls = cctx->ls;
-   octx.errs = array_create(NULL);
-   octx.errcnt = 0;
-   octx.errcnt_max = 50;
-   octx.nrtv = tree_child(cctx->pt, 2);
+   ctxcheck_ctx_t octx = {
+      .sourcefile = cctx->sourcefile,
+      .cfg = cctx->cfg,
+      .ls = cctx->ls,
+      .errs = array_create(NULL),
+      .errcnt = 0,
+      .errcnt_max = 50,
+      .nrtv = tree_child(cctx->pt, 2)
+   };
 
    if (cctx->cfg->vbs) safe_fputs(stdout, ENPREFIX "context-checking...");
 
