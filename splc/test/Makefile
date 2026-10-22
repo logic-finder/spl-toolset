@@ -17,7 +17,7 @@ SOURCES = $(addprefix $(SRCDIR),config.c dbhandler.c msg.c)
 LIBSRCS = $(wildcard $(LIBDIR)/*.c)
 OBJECTS = $(SOURCES:.c=.o)
 LIBOBJS = $(notdir $(LIBSRCS:.c=.o))
-DEPENDS = $(OBJECTS:.o=.d) $(LIBOBJS:.o=.d)
+DEPENDS = $(addsuffix .d,$(EXECS)) $(OBJECTS:.o=.d) $(LIBOBJS:.o=.d)
 
 ## Targets ##
 .PHONY: all clean run

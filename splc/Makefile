@@ -38,6 +38,7 @@ $(LIBOBJS): %.o: $(LIBDIR)/%.c
 # Tasks #
 clean:
 	rm -f $(TARGET) *.o *.d
+	$(MAKE) --directory=test clean
 
 # TODO:
 #  - copy the executable under /usr/local/bin
