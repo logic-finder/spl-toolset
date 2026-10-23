@@ -442,25 +442,9 @@ static int seek_line(parse_ctx_t *pctx) {
 }
 
 static void parse_line(parse_ctx_t *pctx) {
-   // fixme: remove this comments
-   // pctx->reason = msgs.err.syn.line.incomp;
-   // gettok(pctx);
-
-   // if (pctx->tok->run[0] != ':') {
-   //    pctx->reason = "a colon expected after a character name to construct a line";
-   //    regerr(pctx);
-   //    resyncbf_all(pctx);
-   //    return;
-   // }
-
    /* Note: charidx has been updated by is_name() in seek_line() */
    pctx->line = graft_tree_n(pctx, pctx->scene, 0, NODEKIND_LINE, pctx->tok);
    graft_tree_n(pctx, pctx->line, pctx->charidx, NODEKIND_CHAR, pctx->tok);
-
-   // TODO: 문이 비어있는지 아닌지는 나중에 체크
-   // Romeo:
-   // Juliet: ...
-   // 이런거는 일단 파싱할때는 받아들이기
 
    pctx->reason = msgs.err.syn.line.incomp;
 
