@@ -22,6 +22,8 @@ extern void ctxcheck(compile_ctx_t *cctx) {
       goto report_errors;
    if (check_empty_scene(&octx) != CtxcheckStatcodeOk)
       goto report_errors;
+   if (check_empty_line(&octx) != CtxcheckStatcodeOk)
+      goto report_errors;
 
 report_errors:
    if (octx.errcnt > 0) {
@@ -59,6 +61,16 @@ static void report_errors(ctxcheck_ctx_t *octx) {
    }
 }
 
+static inline bool route_act(ctxcheck_ctx_t *octx) {
+   octx->act = octx->t;
+   return true;
+}
+
+static inline bool route_scene(ctxcheck_ctx_t *octx) {
+   octx->scene = octx->t;
+   return true;
+}
+
 static ctxcheck_statcode_t check_invalid_goto(ctxcheck_ctx_t *octx) {
    bool ret;
 
@@ -75,22 +87,21 @@ static bool check_invalid_goto_route(tree_t *t, size_t lv, void *ctx) {
    bool ret;
 
    (void) lv;
-
    octx = ctx;
    octx->t = t;
    octx->n = tree_dat(octx->t);
 
-   switch(octx->n->kind) {
+   switch (octx->n->kind) {
       case NODEKIND_ACT:
-         ret = check_invalid_goto_act(octx);
+         ret = route_act(octx);
       break;
 
       case NODEKIND_SCENE:
-         ret = check_invalid_goto_scene(octx);
+         ret = route_scene(octx);
       break;
 
       case NODEKIND_GOTO:
-         ret = check_invalid_goto_goto (octx);
+         ret = check_invalid_goto_target(octx);
       break;
 
       default: ret = true;
@@ -99,27 +110,17 @@ static bool check_invalid_goto_route(tree_t *t, size_t lv, void *ctx) {
    return ret;
 }
 
-static inline bool check_invalid_goto_act(ctxcheck_ctx_t *octx) {
-   octx->act = octx->t;
-   return true;
-}
-
-static inline bool check_invalid_goto_scene(ctxcheck_ctx_t *octx) {
-   octx->scene = octx->t;
-   return true;
-}
-
-static bool check_invalid_goto_goto(ctxcheck_ctx_t *octx) {
+static bool check_invalid_goto_target(ctxcheck_ctx_t *octx) {
    const nodekind_t dest = octx->n->dat.n;
    bool ret;
 
    switch (dest) {
       case NODEKIND_ACT:
-         ret = check_invalid_goto_goto_act(octx);
+         ret = check_invalid_goto_target_act(octx);
       break;
 
       case NODEKIND_SCENE:
-         ret = check_invalid_goto_goto_scene(octx);
+         ret = check_invalid_goto_target_scene(octx);
       break;
 
       /* control never reaches default because `goto` node
@@ -133,7 +134,7 @@ static bool check_invalid_goto_goto(ctxcheck_ctx_t *octx) {
    return ret;
 }
 
-static bool check_invalid_goto_goto_act(ctxcheck_ctx_t *octx) {
+static bool check_invalid_goto_target_act(ctxcheck_ctx_t *octx) {
    const size_t num_acts = tree_clen(octx->nrtv);
    const tree_t *act;
    const node_t *goto_rn_dat, *act_rn_dat;
@@ -179,7 +180,7 @@ cleanup:
       : false;
 }
 
-static bool check_invalid_goto_goto_scene(ctxcheck_ctx_t *octx) {
+static bool check_invalid_goto_target_scene(ctxcheck_ctx_t *octx) {
    const size_t act_clen = tree_clen(octx->act);
    const tree_t *scene;
    const node_t *goto_rn_dat, *scene_rn_dat;
@@ -232,7 +233,7 @@ cleanup:
 static ctxcheck_statcode_t check_empty_scene(ctxcheck_ctx_t *octx) {
    size_t nact, nscn;
    tree_t *act, *scn;
-   ctxcheck_statcode_t status;
+   ctxcheck_statcode_t status = CtxcheckStatcodeOk;
 
    /* nrtv
       -> act
@@ -270,6 +271,85 @@ static ctxcheck_statcode_t check_empty_scene(ctxcheck_ctx_t *octx) {
 
 cleanup:
    return status;
+}
+
+static ctxcheck_statcode_t check_empty_line(ctxcheck_ctx_t *octx) {
+   bool ret;
+
+   octx->status = CtxcheckStatcodeOk;
+   ret = tree_pre_traverse(octx->nrtv, check_empty_line_route, 0, octx);
+
+   return ret
+      ? CtxcheckStatcodeOk
+      : CtxcheckStatcodeErrcntMax;
+}
+
+static bool check_empty_line_route(tree_t *t, size_t lv, void *ctx) {
+   ctxcheck_ctx_t *octx;
+   bool ret;
+
+   (void) lv;
+   octx = ctx;
+   octx->t = t;
+   octx->n = tree_dat(octx->t);
+
+   switch (octx->n->kind) {
+      case NODEKIND_ACT:
+         ret = route_act(octx);
+      break;
+
+      case NODEKIND_SCENE:
+         ret = route_scene(octx);
+      break;
+
+      case NODEKIND_LINE:
+         ret = check_empty_line_target(octx);
+      break;
+
+      default: ret = true;
+   }
+
+   return ret;
+}
+
+static bool check_empty_line_target(ctxcheck_ctx_t *octx) {
+   /* line
+         -> char
+         -> stmt... */
+
+   if (tree_clen(octx->t) > 1) {
+      return true;
+   }
+
+   /* error path */
+   octx->err = (ctxcheck_err_ctx_t) {
+      .act = octx->act,
+      .scene = octx->scene,
+      .curr = octx->t,
+      .reason = "this line is empty",
+      .handle = ctxcheck_errhandle_default
+   };
+   octx->status = regerr(octx);
+   if (octx->status == CtxcheckStatcodeErrcntMax) {
+      goto cleanup;
+   }
+
+cleanup:
+   return (octx->status == CtxcheckStatcodeOk)
+      ? true
+      : false;
+}
+
+static void ctxcheck_errhandle_default(
+   ctxcheck_ctx_t *superctx,
+   ctxcheck_err_ctx_t *errctx,
+   size_t idx
+) {
+   serr_header(idx);
+   safe_vprintf("%s\n", errctx->reason);
+   diag_template("at here", superctx, errctx->curr);
+   under_scene(superctx, errctx->scene);
+   under_act(superctx, errctx->act);
 }
 
 static void ctxcheck_errhandle_invalid_goto(

@@ -43,8 +43,8 @@ struct ctxcheck_ctx {
    ctxcheck_statcode_t status;
    tree_t *act;
    tree_t *scene;
-   tree_t *t;  /* temporary tree */
-   node_t *n;  /* temporary tree.dat */
+   tree_t *t;  /* current tree */
+   node_t *n;  /* t.dat */
 };
 
 typedef struct {
@@ -52,18 +52,24 @@ typedef struct {
    line_t *ln;
 } diag_info_t;
 
+static bool route_act(ctxcheck_ctx_t *octx);
+static bool route_scene(ctxcheck_ctx_t *octx);
+
 static ctxcheck_statcode_t check_invalid_goto(ctxcheck_ctx_t *octx);
 static tree_callback_t check_invalid_goto_route;
-static bool check_invalid_goto_act(ctxcheck_ctx_t *octx);
-static bool check_invalid_goto_scene(ctxcheck_ctx_t *octx);
-static bool check_invalid_goto_goto(ctxcheck_ctx_t *octx);
-static bool check_invalid_goto_goto_act(ctxcheck_ctx_t *octx);
-static bool check_invalid_goto_goto_scene(ctxcheck_ctx_t *octx);
+static bool check_invalid_goto_target(ctxcheck_ctx_t *octx);
+static bool check_invalid_goto_target_act(ctxcheck_ctx_t *octx);
+static bool check_invalid_goto_target_scene(ctxcheck_ctx_t *octx);
 
 static ctxcheck_statcode_t check_empty_scene(ctxcheck_ctx_t *octx);
 
+static ctxcheck_statcode_t check_empty_line(ctxcheck_ctx_t *octx);
+static bool check_empty_line_route(tree_t *t, size_t lv, void *ctx);
+static bool check_empty_line_target(ctxcheck_ctx_t *octx);
+
 static ctxcheck_statcode_t regerr(ctxcheck_ctx_t *octx);
 static void report_errors(ctxcheck_ctx_t *octx);
+static ctxcheck_errhandler_t ctxcheck_errhandle_default;
 static ctxcheck_errhandler_t ctxcheck_errhandle_invalid_goto;
 static ctxcheck_errhandler_t ctxcheck_errhandle_empty_scene;
 
