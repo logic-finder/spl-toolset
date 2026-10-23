@@ -106,8 +106,8 @@ extern void init_msg(void) {
    msgs.err.sem.bad_rnum = "incomprehensible roman numeral";
 
    /* Context Errors */
-   msgs.err.sem.no_such_act = "attempt of jump to nonexistent " Ccyan "Act %s" Creset;
-   msgs.err.sem.no_such_scene = "attempt of jump to nonexistent " Ccyan "Scene %s" Creset;
+   msgs.err.sem.no_such_act = "jump to the nonexistent " Ccyan "Act %s" Creset;
+   msgs.err.sem.no_such_scene = "jump to the nonexistent " Ccyan "Scene %s" Creset;
 
    /* Optimizer Warnings */
    msgs.warn.optimizer.flow = "this adjective causes over/underflow. Stop constant folding.";

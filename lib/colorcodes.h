@@ -18,4 +18,6 @@
 #define Cyellow   "\033[0;33m"   /* yellow */
 #define Ccyan     "\033[0;36m"   /* cyan */
 
+#define Cemerald  "\033[38;5;49m"   /* emerald */
+
 #endif

@@ -18,10 +18,10 @@ extern void ctxcheck(compile_ctx_t *cctx) {
 
    if (cctx->cfg->vbs) safe_fputs(stdout, ENPREFIX "context-checking...");
 
-   check_goto_unexistent(&octx);
-   if (check_empty_scene(&octx) != CtxcheckStatcodeOk) {
+   if (check_invalid_goto(&octx) != CtxcheckStatcodeOk)
       goto report_errors;
-   }
+   if (check_empty_scene(&octx) != CtxcheckStatcodeOk)
+      goto report_errors;
 
 report_errors:
    if (octx.errcnt > 0) {
@@ -59,12 +59,20 @@ static void report_errors(ctxcheck_ctx_t *octx) {
    }
 }
 
-static inline void check_goto_unexistent(ctxcheck_ctx_t *octx) {
-   tree_pre_traverse(octx->nrtv, check_goto_unexistent_route, 0, octx);
+static ctxcheck_statcode_t check_invalid_goto(ctxcheck_ctx_t *octx) {
+   bool ret;
+
+   octx->status = CtxcheckStatcodeOk;
+   ret = tree_pre_traverse(octx->nrtv, check_invalid_goto_route, 0, octx);
+
+   return ret
+      ? CtxcheckStatcodeOk
+      : CtxcheckStatcodeErrcntMax;
 }
 
-static bool check_goto_unexistent_route(tree_t *t, size_t lv, void *ctx) {
+static bool check_invalid_goto_route(tree_t *t, size_t lv, void *ctx) {
    ctxcheck_ctx_t *octx;
+   bool ret;
 
    (void) lv;
 
@@ -73,59 +81,152 @@ static bool check_goto_unexistent_route(tree_t *t, size_t lv, void *ctx) {
    octx->n = tree_dat(octx->t);
 
    switch(octx->n->kind) {
-      case NODEKIND_ACT   : check_goto_unexistent_act  (octx); break;
-      case NODEKIND_SCENE : check_goto_unexistent_scene(octx); break;
-      case NODEKIND_GOTO  : check_goto_unexistent_goto (octx); break;
-      default: ;
+      case NODEKIND_ACT:
+         ret = check_invalid_goto_act(octx);
+      break;
+
+      case NODEKIND_SCENE:
+         ret = check_invalid_goto_scene(octx);
+      break;
+
+      case NODEKIND_GOTO:
+         ret = check_invalid_goto_goto (octx);
+      break;
+
+      default: ret = true;
    }
 
+   return ret;
+}
+
+static inline bool check_invalid_goto_act(ctxcheck_ctx_t *octx) {
+   octx->act = octx->t;
    return true;
 }
 
-static inline void check_goto_unexistent_act(ctxcheck_ctx_t *octx) {
-   octx->act = octx->t;
-}
-
-static inline void check_goto_unexistent_scene(ctxcheck_ctx_t *octx) {
+static inline bool check_invalid_goto_scene(ctxcheck_ctx_t *octx) {
    octx->scene = octx->t;
+   return true;
 }
 
-static void check_goto_unexistent_goto(ctxcheck_ctx_t *octx) {
-   const tree_t *root, *root_child;
-   const char *romnum, *against;
-   size_t i, root_len;
-   nodekind_t mark;
-   node_t *chdat;
+static bool check_invalid_goto_goto(ctxcheck_ctx_t *octx) {
+   const nodekind_t dest = octx->n->dat.n;
+   bool ret;
 
-   mark = octx->n->dat.n;
-   chdat = tree_chdat(octx->t, 0);
-   romnum = chdat->dat.s.run;
+   switch (dest) {
+      case NODEKIND_ACT:
+         ret = check_invalid_goto_goto_act(octx);
+      break;
 
-   if (mark == NODEKIND_ACT) {
-      i = 0;
-      root = octx->nrtv;  /* root_child = NODEKIND_ACT */
+      case NODEKIND_SCENE:
+         ret = check_invalid_goto_goto_scene(octx);
+      break;
+
+      /* control never reaches default because `goto` node
+         has either NODEKIND_ACT or NODEKIND_SCENE because
+         of parse_goto()'s logic */
+      default: ret = false;
+      /* Note: return false means that the tree traversal
+         needs to stop */
    }
-   else {  /* Scene */
-      i = 1;
-      root = octx->act;   /* root_child = NODEKIND_SCENE */
-   }
 
-   root_len = tree_clen(root);
-   for (/* empty */; i < root_len; i++) {
-      root_child = tree_child(root, i);
-      against = TREE_CHDAT(root_child, 0)->dat.s.run;
-      if (!strcmp(romnum, against)) {
-         return;  /* found */
+   return ret;
+}
+
+static bool check_invalid_goto_goto_act(ctxcheck_ctx_t *octx) {
+   const size_t num_acts = tree_clen(octx->nrtv);
+   const tree_t *act;
+   const node_t *goto_rn_dat, *act_rn_dat;
+   const char *goto_rn_str, *act_rn_str;
+
+   /* nrtv
+         -> act
+            -> romnum (first child)
+      goto
+         -> romnum (first child) */
+
+   goto_rn_dat = tree_chdat(octx->t, 0);
+   goto_rn_str = goto_rn_dat->dat.s.run;
+
+   for (size_t i = 0; i < num_acts; i++) {
+      act = tree_child(octx->nrtv, i);
+      act_rn_dat = tree_chdat(act, 0);
+      act_rn_str = act_rn_dat->dat.s.run;
+
+      if (!strcmp(goto_rn_str, act_rn_str)) {
+         return true;
+         /* Note: return true means that the tree traversal
+            can continue */
       }
    }
 
-   if (root == octx->nrtv) {
-      octx->reason = msgs.err.sem.no_such_act;
+   /* error path */
+   octx->err = (ctxcheck_err_ctx_t) {
+      .act = octx->act,
+      .scene = octx->scene,
+      .curr = octx->t,
+      .reason = NULL,
+      .handle = ctxcheck_errhandle_invalid_goto
+   };
+   octx->status = regerr(octx);
+   if (octx->status == CtxcheckStatcodeErrcntMax) {
+      goto cleanup;
    }
-   else {
-      octx->reason = msgs.err.sem.no_such_scene;
+
+cleanup:
+   return (octx->status == CtxcheckStatcodeOk)
+      ? true
+      : false;
+}
+
+static bool check_invalid_goto_goto_scene(ctxcheck_ctx_t *octx) {
+   const size_t act_clen = tree_clen(octx->act);
+   const tree_t *scene;
+   const node_t *goto_rn_dat, *scene_rn_dat;
+   const char *goto_rn_str, *scene_rn_str;
+
+   /* nrtv
+         -> act...
+            -> romnum (first child)
+            -> scene...
+               -> romnum (first child)
+      goto
+         -> romnum (first child) */
+
+   goto_rn_dat = tree_chdat(octx->t, 0);
+   goto_rn_str = goto_rn_dat->dat.s.run;
+
+   /* Note that `i` begins at 1 because the first child
+      of act is not scene but the act's roman numeral node */
+   for (size_t i = 1; i < act_clen; i++) {
+      scene = tree_child(octx->act, i);
+      scene_rn_dat = tree_chdat(scene, 0);
+      scene_rn_str = scene_rn_dat->dat.s.run;
+
+      if (!strcmp(goto_rn_str, scene_rn_str)) {
+         return true;
+         /* Note: return true means that the tree traversal
+            can continue */
+      }
    }
-   semerr_unknown_label(octx, romnum);
+
+   /* error path */
+   octx->err = (ctxcheck_err_ctx_t) {
+      .act = octx->act,
+      .scene = octx->scene,
+      .curr = octx->t,
+      .reason = NULL,
+      .handle = ctxcheck_errhandle_invalid_goto
+   };
+   octx->status = regerr(octx);
+   if (octx->status == CtxcheckStatcodeErrcntMax) {
+      goto cleanup;
+   }
+
+cleanup:
+   return (octx->status == CtxcheckStatcodeOk)
+      ? true
+      : false;
 }
 
 static ctxcheck_statcode_t check_empty_scene(ctxcheck_ctx_t *octx) {
@@ -156,6 +257,8 @@ static ctxcheck_statcode_t check_empty_scene(ctxcheck_ctx_t *octx) {
          octx->err = (ctxcheck_err_ctx_t) {
             .act = act,
             .scene = scn,
+            .curr = scn,
+            .reason = NULL,
             .handle = ctxcheck_errhandle_empty_scene
          };
          status = regerr(octx);
@@ -169,85 +272,89 @@ cleanup:
    return status;
 }
 
+static void ctxcheck_errhandle_invalid_goto(
+   ctxcheck_ctx_t *superctx,
+   ctxcheck_err_ctx_t *errctx,
+   size_t idx
+) {
+   node_t *goto_dat = tree_dat(errctx->curr);
+   node_t *goto_romnum = tree_chdat(errctx->curr, 0);
+
+   serr_header(idx);
+   safe_vprintf(
+      "jump to the nonexistent " Cbmagenta "%s %s\n" Creset,
+      (goto_dat->dat.n == NODEKIND_ACT) ? "Act" : "Scene",
+      goto_romnum->dat.s.run
+   );
+   diag_template("at here", superctx, errctx->curr);
+   under_scene(superctx, errctx->scene);
+   under_act(superctx, errctx->act);
+}
+
 static void ctxcheck_errhandle_empty_scene(
    ctxcheck_ctx_t *superctx,
    ctxcheck_err_ctx_t *errctx,
    size_t idx
 ) {
-   node_t *act_dat = tree_dat(errctx->act);
-   line_t *act_ln = array_peek(superctx->ls, act_dat->lnum - 1);
-   node_t *act_romnum = tree_chdat(errctx->act, 0);
+   node_t *rn = tree_chdat(errctx->scene, 0);
 
-   node_t *scene_dat = tree_dat(errctx->scene);
-   line_t *scene_ln = array_peek(superctx->ls, scene_dat->lnum - 1);
-   node_t *scene_romnum = tree_chdat(errctx->scene, 0);
+   serr_header(idx);
+   safe_vprintf(
+      "the " Cbmagenta "Scene %s" Creset " is empty\n",
+      rn->dat.s.run
+   );
+   diag_template("defined at here", superctx, errctx->scene);
+   under_act(superctx, errctx->act);
+}
 
-   safe_vprintf("\n");
+static inline void serr_header(size_t idx) {
    safe_vprintf(
-      Cbred "> Semantic Error #%zu: " Creset
-      "the " Cul "Scene %s" Creset " is empty\n",
-      idx + 1, scene_romnum->dat.s.run
+      "\n"
+      Cbred "> Semantic Error #%zu: " Creset,
+      idx + 1
    );
-   safe_vprintf(
-      "[%s:%zu:%zu] " Cbwhite "note:" Creset " defined at here\n"
-      "%4d|" Cbmagenta "%s\n" Creset,
-      superctx->sourcefile, scene_dat->lnum, scene_dat->lpos,
-      scene_dat->lnum, scene_ln->run
-   );
+}
+
+static inline void under_act(ctxcheck_ctx_t *ctx, tree_t *act) {
+   under_template("Act", ctx, act);
+}
+
+static inline void under_scene(ctxcheck_ctx_t *ctx, tree_t *scene) {
+   under_template("Scene", ctx, scene);
+}
+
+static void under_template(const char *kind, ctxcheck_ctx_t *ctx, tree_t *t) {
+   diag_info_t di;
+   node_t *rn;
+
+   di = get_di(ctx, t);
+   rn = tree_chdat(t, 0);
+
    safe_vprintf(
       "[%s:%zu:%zu] " Cbwhite "note:" Creset " under the "
-      Cul "Act %s\n" Creset
+      Cemerald "%s %s\n" Creset
       "%4d|%s\n",
-      superctx->sourcefile, act_dat->lnum, act_dat->lpos,
-      act_romnum->dat.s.run,
-      act_dat->lnum, act_ln->run
+      ctx->sourcefile, di.dat->lnum, di.dat->lpos,
+      kind, rn->dat.s.run,
+      di.dat->lnum, di.ln->run
    );
 }
 
-static void print_err(ctxcheck_ctx_t *octx) {
-   size_t lnum, lpos;
-   line_t *l;
-
-   lnum = octx->n->lnum;
-   lpos = octx->n->lpos;
-   l = array_peek(octx->ls, lnum - 1);
-
+static void diag_template(const char *msg, ctxcheck_ctx_t *ctx, tree_t *t) {
+   diag_info_t di = get_di(ctx, t);
    safe_vprintf(
-      "\n[%s:%zu:%zu] " Cbwhite "note:" Creset " at this goto statement"
-      "\n%4d|%s",
-      octx->sourcefile, lnum, lpos,
-      lnum, l->run
+      "[%s:%zu:%zu] " Cbwhite "note: " Creset "%s\n"
+      "%4d|%s\n",
+      ctx->sourcefile, di.dat->lnum, di.dat->lpos, msg,
+      di.dat->lnum, di.ln->run
    );
 }
 
-static void trace(ctxcheck_ctx_t *octx, tree_t *t, const char *type) {
-   size_t lnum, lpos;
-   line_t *l;
-   node_t *rootnode, *childnode;
+static diag_info_t get_di(ctxcheck_ctx_t *ctx, tree_t *t) {
+   diag_info_t ret = {0};
 
-   rootnode = tree_dat(t);
-   lnum = rootnode->lnum;
-   lpos = rootnode->lpos;
-   l = array_peek(octx->ls, lnum - 1);
-   childnode = tree_chdat(t, 0);
+   ret.dat = tree_dat(t);
+   ret.ln = array_peek(ctx->ls, ret.dat->lnum - 1);
 
-   safe_vprintf(
-      "\n[%s:%zu:%zu] " Cbwhite "note:" Creset
-      " in the " Cbmagenta "%s %s" Creset
-      "\n%4d|%s",
-      octx->sourcefile, lnum, lpos,
-      type, childnode->dat.s.run,
-      lnum, l->run
-   );
-}
-
-static void semerr_unknown_label(ctxcheck_ctx_t *octx, const char *s) {
-   safe_fputs(stdout, Cbred "\n<semantic error> " Creset);
-   safe_vprintf(octx->reason, s);
-   print_err(octx);
-   trace(octx, octx->scene, "Scene");
-   trace(octx, octx->act, "Act");
-   safe_fputc(stdout, '\n');
-   // TODO: do not halt on the first error
-   exit(EXIT_FAILURE);
+   return ret;
 }
