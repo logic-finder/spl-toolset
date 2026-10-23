@@ -229,11 +229,19 @@ static void parse_dp(parse_ctx_t *pctx) {
 }
 
 static int seek_act(parse_ctx_t *pctx) {
-   return strcasecmp(pctx->tok->run, KEYWRD_ACT) ? 0 : 1;
+   if (strcasecmp(pctx->tok->run, KEYWRD_ACT))
+      return 0;
+   gettokn(pctx, 2);
+   if (pctx->tok->run[0] != ':')
+      return 0;
+   else
+      return 1;
 }
 
 static void parse_act(parse_ctx_t *pctx) {
    pctx->recovery_point = NODEKIND__UNKNOWN;  /* reset */
+
+   ungettokn(pctx, 2);
 
    if (pctx->cfg->w_kc && strcmp(pctx->tok->run, KEYWRD_ACT)) {
       pctx->reason = "this keyword should be 'Act'";
@@ -280,11 +288,19 @@ static void parse_act(parse_ctx_t *pctx) {
 }
 
 static int seek_scene(parse_ctx_t *pctx) {
-   return strcasecmp(pctx->tok->run, KEYWRD_SCENE) ? 0 : 1;
+   if (strcasecmp(pctx->tok->run, KEYWRD_SCENE))
+      return 0;
+   gettokn(pctx, 2);
+   if (pctx->tok->run[0] != ':')
+      return 0;
+   else
+      return 1;
 }
 
 static void parse_scene(parse_ctx_t *pctx) {
    pctx->recovery_point = NODEKIND__UNKNOWN;  /* reset */
+
+   ungettokn(pctx, 2);
 
    if (pctx->cfg->w_kc && strcmp(pctx->tok->run, KEYWRD_SCENE)) {
       pctx->reason = "this keyword should be 'Scene'";
