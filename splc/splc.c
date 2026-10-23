@@ -57,7 +57,7 @@ static void compile(config_t *cfg) {
       lex(&cctx);
       parse(&cctx);
       typecheck(&cctx);
-      ctxcheck(&cctx);
+      if (!ctxcheck(&cctx)) goto cleanup;
       irgenerate(&cctx);
 
       if (cfg->opt)
@@ -71,7 +71,7 @@ static void compile(config_t *cfg) {
       else
          assemble(&cctx);
 
-      /* cleanup */
+cleanup:
       arena_cleanup(cctx.arena);
       array_destroy(cctx.toks);
       array_destroy(cctx.ls);

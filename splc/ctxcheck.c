@@ -2,22 +2,38 @@
 #include "ctxcheck.internals.h"
 
 // TODO: conjugation이 제대로 됐는지같은걸 검사하도록 하자 (이건 warning을 띄워야 할듯)
-// TODO: 미선언이름사용, 이름중복선언, 미사용이름체크, scene/act 중복선언 같은것을 체크
+// TODO: 미선언이름사용, 이름중복선언, scene/act 중복선언 같은것을 체크
 // + I II III ... 넘버링이 순서대로 되는지
 
-extern void ctxcheck(compile_ctx_t *cctx) {
+extern bool ctxcheck(compile_ctx_t *cctx) {
    ctxcheck_ctx_t octx = {
       .sourcefile = cctx->sourcefile,
       .cfg = cctx->cfg,
+      .arena = cctx->arena,
       .ls = cctx->ls,
       .errs = array_create(NULL),
       .errcnt = 0,
       .errcnt_max = 50,
+      .warns = array_create(NULL),
+      .warncnt = 0,
+      .warncnt_max = 50,
+      .dp = tree_child(cctx->pt, 1),
       .nrtv = tree_child(cctx->pt, 2)
    };
+   bool ret = true;
 
    if (cctx->cfg->vbs) safe_fputs(stdout, ENPREFIX "context-checking...");
 
+   /* Warnings */
+   if (check_unused_dp(&octx) != CtxcheckStatcodeOk)
+      goto report_warns;
+
+report_warns:
+   if (octx.warncnt > 0) {
+      report_warnings(&octx);
+   }
+
+   /* Errors */
    if (check_invalid_goto(&octx) != CtxcheckStatcodeOk)
       goto report_errors;
    if (check_empty_scene(&octx) != CtxcheckStatcodeOk)
@@ -28,13 +44,14 @@ extern void ctxcheck(compile_ctx_t *cctx) {
 report_errors:
    if (octx.errcnt > 0) {
       report_errors(&octx);
+      ret = false;
       goto cleanup;
    }
 
    if (cctx->cfg->vbs) safe_vprintf(" " Cgreen "done!" Creset "\n");
 
 cleanup:
-   return;
+   return ret;
 }
 
 static ctxcheck_statcode_t regerr(ctxcheck_ctx_t *octx) {
@@ -45,6 +62,17 @@ static ctxcheck_statcode_t regerr(ctxcheck_ctx_t *octx) {
    return (octx->errcnt < octx->errcnt_max)
       ? CtxcheckStatcodeOk
       : CtxcheckStatcodeErrcntMax;
+}
+
+static ctxcheck_statcode_t regwarn(ctxcheck_ctx_t *octx) {
+   /* Note: octx->err is intended */
+   array_append(octx->warns, &octx->warn, sizeof octx->warn);
+
+   octx->warncnt++;
+
+   return (octx->warncnt < octx->warncnt_max)
+      ? CtxcheckStatcodeOk
+      : CtxcheckStatcodeWarncntMax;
 }
 
 static void report_errors(ctxcheck_ctx_t *octx) {
@@ -58,6 +86,20 @@ static void report_errors(ctxcheck_ctx_t *octx) {
 
    if (octx->errcnt == octx->errcnt_max) {
       safe_vprintf("Error count reached max. Aborting.\n");
+   }
+}
+
+static void report_warnings(ctxcheck_ctx_t *octx) {
+   const size_t warns_cnt = array_size(octx->warns);
+   ctxcheck_warn_ctx_t *warnctx;
+
+   for (size_t i = 0; i < warns_cnt; i++) {
+      warnctx = array_peek(octx->warns, i);
+      (*warnctx->handle)(octx, warnctx, i);
+   }
+
+   if (octx->warncnt == octx->warncnt_max) {
+      safe_vprintf("Warning count reached max. Warning check stopped.\n");
    }
 }
 
@@ -340,6 +382,63 @@ cleanup:
       : false;
 }
 
+static ctxcheck_statcode_t check_unused_dp(ctxcheck_ctx_t *octx) {
+   size_t dp_clen;
+   ctxcheck_statcode_t status = CtxcheckStatcodeOk;
+
+   dp_clen = tree_clen(octx->dp);
+   octx->dp_counters = arena_calloc_fallback(
+      octx->arena,
+      dp_clen,
+      sizeof *octx->dp_counters
+   );
+
+   tree_pre_traverse(octx->nrtv, check_unused_dp_route, 0, octx);
+
+   for (size_t i = 0; i < dp_clen; i++) {
+      if (octx->dp_counters[i] > 0) {
+         continue;
+      }
+      /* error path */
+      octx->warn = (ctxcheck_warn_ctx_t) {
+         .act = NULL,
+         .scene = NULL,
+         .curr = tree_child(octx->dp, i),
+         /* fixme maybe this hack? support ctx member instead */
+         .reason = (char *) i,  /* to be used as charidx */
+         .handle = ctxcheck_warnhandle_unused_dp
+      };
+      status = regwarn(octx);
+      if (status == CtxcheckStatcodeWarncntMax) {
+         goto cleanup;
+      }
+   }
+
+cleanup:
+   arena_free_fallback(octx->arena, octx->dp_counters);
+
+   return status;
+}
+
+static bool check_unused_dp_route(tree_t *t, size_t lv, void *ctx) {
+   ctxcheck_ctx_t *octx;
+   size_t charidx;
+
+   (void) lv;
+   octx = ctx;
+   octx->t = t;
+   octx->n = tree_dat(octx->t);
+
+   if (octx->n->kind != NODEKIND_CHAR) {
+      return true;
+   }
+
+   charidx = octx->n->dat.n;
+   octx->dp_counters[charidx]++;
+
+   return true;
+}
+
 static void ctxcheck_errhandle_default(
    ctxcheck_ctx_t *superctx,
    ctxcheck_err_ctx_t *errctx,
@@ -387,10 +486,37 @@ static void ctxcheck_errhandle_empty_scene(
    under_act(superctx, errctx->act);
 }
 
+static void ctxcheck_warnhandle_unused_dp(
+   ctxcheck_ctx_t *superctx,
+   ctxcheck_err_ctx_t *errctx,
+   size_t idx
+) {
+   node_t *chardecl_node = tree_dat(errctx->curr);
+   size_t charidx = (size_t) errctx->reason;
+
+   swarn_header(idx);
+   /* assumes that name concatenation done already */
+   safe_vprintf(
+      Cemerald "%s" Creset " was declared as "
+      Cyellow "dp[%zu]" Creset
+      " but not used throughout the source file\n",
+      chardecl_node->dat.s.run, charidx
+   );
+   diag_template("declared at here", superctx, errctx->curr);
+}
+
 static inline void serr_header(size_t idx) {
    safe_vprintf(
       "\n"
       Cbred "> Semantic Error #%zu: " Creset,
+      idx + 1
+   );
+}
+
+static inline void swarn_header(size_t idx) {
+   safe_vprintf(
+      "\n"
+      Cyellow "> Semantic Warning #%zu: " Creset,
       idx + 1
    );
 }
@@ -413,7 +539,7 @@ static void under_template(const char *kind, ctxcheck_ctx_t *ctx, tree_t *t) {
    safe_vprintf(
       "[%s:%zu:%zu] " Cbwhite "note:" Creset " under the "
       Cemerald "%s %s\n" Creset
-      "%4d|%s\n",
+      "%4d|%s",
       ctx->sourcefile, di.dat->lnum, di.dat->lpos,
       kind, rn->dat.s.run,
       di.dat->lnum, di.ln->run
@@ -424,7 +550,7 @@ static void diag_template(const char *msg, ctxcheck_ctx_t *ctx, tree_t *t) {
    diag_info_t di = get_di(ctx, t);
    safe_vprintf(
       "[%s:%zu:%zu] " Cbwhite "note: " Creset "%s\n"
-      "%4d|%s\n",
+      "%4d|" Cbmagenta "%s" Creset,
       ctx->sourcefile, di.dat->lnum, di.dat->lpos, msg,
       di.dat->lnum, di.ln->run
    );

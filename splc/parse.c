@@ -196,10 +196,11 @@ static void parse_dp(parse_ctx_t *pctx) {
    dp = graft_tree_n(pctx, pctx->pt, 0, NODEKIND_DP, pctx->tok);
 
    for (;;) {
+      gettok(pctx);
       character = graft_tree_n(pctx, dp, 0, NODEKIND_CHDECL, pctx->tok);
 
       pctx->reason = msgs.err.syn.dp.chardecl_incomp;
-      readtoks(pctx, ',', character);
+      readtoks_until(pctx, ",", character);
 
       if (tree_clen(character) == 0) {
          pctx->reason = msgs.err.syn.dp.noname;
@@ -1878,13 +1879,14 @@ static void neqtok(parse_ctx_t *pctx, char ch) {
    regerr(pctx);
 }
 
+// TODO: consider remove this
 static void readtoks(parse_ctx_t *pctx, char sentinel, tree_t *base) {
    for (;;) {
-      nexttok(pctx);
       if (pctx->tok->run[0] == sentinel) {
          break;
       }
       graft_tree_s(pctx, base, NODEKIND_DATA, pctx->tok);
+      nexttok(pctx);
    }
 
    pctx->etok = pctx->tok;

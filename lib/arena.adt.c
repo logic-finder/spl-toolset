@@ -4,8 +4,9 @@
 /*================*
  | DEFINED INLINE |
  *================*/
-extern void *arena_realloc2x(arena_t *arena, void *ptr, size_t *siz);
 extern void *arena_malloc_fallback(arena_t *arena, size_t siz);
+extern void *arena_calloc_fallback(arena_t *arena, size_t nmemb, size_t siz);
+extern void *arena_realloc2x(arena_t *arena, void *ptr, size_t *siz);
 extern void *arena_realloc2x_arr_fallback(
    arena_t *arena,
    void *ptr,

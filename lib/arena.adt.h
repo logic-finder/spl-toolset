@@ -33,12 +33,16 @@ inline void arena_free_fallback(arena_t *arena, void *ptr);
 /*====================*
  | INLINE DEFINITIONS |
  *====================*/
-inline void *arena_realloc2x(arena_t *arena, void *ptr, size_t *siz) {
-   return arena_realloc2x_arr(arena, ptr, siz, sizeof (char));
-}
-
 inline void *arena_malloc_fallback(arena_t *arena, size_t siz) {
    return arena ? arena_malloc(arena, siz) : safe_malloc(siz);
+}
+
+inline void *arena_calloc_fallback(arena_t *arena, size_t nmemb, size_t siz) {
+   return arena ? arena_calloc(arena, nmemb, siz) : safe_calloc(nmemb, siz);
+}
+
+inline void *arena_realloc2x(arena_t *arena, void *ptr, size_t *siz) {
+   return arena_realloc2x_arr(arena, ptr, siz, sizeof (char));
 }
 
 inline void *arena_realloc2x_arr_fallback(
