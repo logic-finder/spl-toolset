@@ -7,9 +7,29 @@
 /* inline */
 extern void *safe_realloc2x(void *orig, size_t *siz);
 
+extern void safe_malloc_set_callback(safe_malloc_cb_t *cb) {
+   safe_malloc_callback = cb;
+}
+
+static void safe_malloc_cb_default(int errcode, size_t sz) {
+   (void) errcode;
+   fprintf(stderr, "fatal: failed to allocate %zu\n", sz);
+}
+
 extern void *safe_malloc(size_t siz) {
-   void *ret = malloc(siz);
-   if (!ret) fatal("malloc error");
+   void *ret;
+
+   if (siz == 0) {
+      return NULL;
+   }
+
+   if ((ret = malloc(siz)) == NULL) {
+      if (safe_malloc_callback) {
+         safe_malloc_callback(errno, siz);
+      }
+      exit(EXIT_FAILURE);
+   }
+
    return ret;
 }
 
@@ -29,8 +49,19 @@ extern void *safe_realloc2x_arr(void *orig_arr, size_t *cnt, size_t esiz) {
 }
 
 extern void *safe_calloc(size_t n, size_t siz) {
-   void *ret = calloc(n, siz);
-   if (!ret) fatal("calloc error");
+   void *ret;
+
+   if (siz == 0) {
+      return NULL;
+   }
+
+   if ((ret = calloc(n, siz)) == NULL) {
+      if (safe_malloc_callback) {
+         safe_malloc_callback(errno, siz);
+      }
+      exit(EXIT_FAILURE);
+   }
+
    return ret;
 }
 

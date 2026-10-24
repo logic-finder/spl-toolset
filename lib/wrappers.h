@@ -5,6 +5,10 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
+typedef void safe_malloc_cb_t(int errcode, size_t sz);
+
+void safe_malloc_set_callback(safe_malloc_cb_t *cb);
+
 /**
  * @brief `safe_malloc` is a wrapper for `malloc`.
  * @note exits in failure.
