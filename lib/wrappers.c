@@ -113,8 +113,14 @@ extern void safe_fwrite(
    unsigned int cnt,
    FILE *dest
 ) {
-   if (fwrite(src, siz, cnt, dest) < cnt)
+   https://en.cppreference.com/c/io/fwrite
+
+   if (siz == 0 || cnt == 0) {
+      return;  /* in this case, fwrite returns 0 */
+   }
+   if (fwrite(src, siz, cnt, dest) < cnt) {
       fatal("fwrite error");
+   }
 }
 
 extern void safe_fseek(FILE *fp, long offset, int whence) {
@@ -132,13 +138,13 @@ extern void safe_fsetpos(FILE *fp, fpos_t *pos) {
       fatal("fsetpos error");
 }
 
-extern void safe_fprintf(FILE *fp, const char *fmt, int n, ...) {
+extern void safe_fprintf(FILE *fp, const char *fmt, ...) {
    va_list ap;
    int ret;  /* vfprintf returns int */
 
-   va_start(ap, n);
+   va_start(ap, fmt);
    ret = vfprintf(fp, fmt, ap);
-   if (ret < n)
+   if (ret < 0)
       fatal("vfprintf error");
    va_end(ap);
 }

@@ -3,7 +3,6 @@
 
 extern void lex(compile_ctx_t *cctx) {
    lex_ctx_t lctx = {0};
-   int ret;
 
    lctx.toks = array_create(destruct_tok);
    lctx.ls = cctx->ls;
@@ -18,9 +17,7 @@ extern void lex(compile_ctx_t *cctx) {
    if (cctx->cfg->vbs) safe_fputs(stdout, ENPREFIX "scanning...");
 
    /* Constructs a stream of tokens */
-   ret = setjmp(lctx.env);
-
-   if (ret == 0)
+   if (setjmp(lctx.env) == 0)
       goto tokenize;
    else
       goto cleanup;

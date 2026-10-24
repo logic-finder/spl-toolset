@@ -1,6 +1,17 @@
 #include "array.adt.h"
 #include "array.adt.internals.h"
 
+/*
+ * TODO: write a new data structure, vector, which takes only one type
+ * (1) do not use void **
+ * (2) allocate memory contiguously
+ * (3) minimize realloc calls
+ * (4) reduce dereferene level
+ * (5) use 2x+1 resize strategy (begins at 0)
+ * (6) store the element size when init and use that size when alloc
+ * Once done, replace array to vector if appropriate
+ */
+
 extern array_t *array_create(array_destructor_t *destruct) {
    array_t *a;
 

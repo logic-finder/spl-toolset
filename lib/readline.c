@@ -11,7 +11,7 @@ extern int readln(FILE *fp, char **line, size_t *len) {
 
    if (ch == EOF) {
       *line = NULL;
-      *len = 0;
+      if (len != NULL) *len = 0;
       return 1;
    }
    else ungetc(ch, fp);

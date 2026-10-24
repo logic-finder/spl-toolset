@@ -5,29 +5,32 @@
 // fixme: error code를 전파하는 방식으로 변경 (gettok 제외)
 
 extern void parse(compile_ctx_t *cctx) {
-   parse_ctx_t pctx = {0};
-   int ret;
+   parse_ctx_t *pctx;
 
    /* Initializes pctx struct */
-   pctx.arena = cctx->arena;
-   pctx.cfg = cctx->cfg;
-   pctx.sourcefile = cctx->sourcefile;
-   pctx.ls = cctx->ls;
-   pctx.toks = cctx->toks;
-   pctx.len = array_size(pctx.toks);
-   pctx.idx = 0;
+   if ((pctx = arena_malloc(cctx->arena, sizeof *pctx)) == NULL)
+      goto OOM1;
+   pctx->arena = cctx->arena;
+   if ((pctx->pt = plant_tree(pctx, NULL, 0, NODEKIND_ROOT, 0, 0)) == NULL)
+      goto OOM2;
+   if ((pctx->errs = array_create(NULL)) == NULL)
+      goto OOM3;
+   pctx->cfg = cctx->cfg;
+   pctx->sourcefile = cctx->sourcefile;
+   pctx->ls = cctx->ls;
+   pctx->toks = cctx->toks;
+   pctx->len = array_size(pctx->toks);
+   pctx->idx = 0;
    /* Note: toks has at least one element, otherwise the program
       would have been terminated already in loadfile() by splc.c */
    /* Note: didn't use gettok() on purpose since it advances
       pctx.idx, causing an unmatch between current token and its idx */
-   pctx.tok = array_peek(pctx.toks, pctx.idx);
-   pctx.etok = pctx.tok;
-   pctx.reason = "none";
-   pctx.pt = plant_tree(&pctx, NULL, 0, NODEKIND_ROOT, 0, 0);
-   pctx.errcnt = 0;
-   pctx.errcnt_max = 50;
-   pctx.errs = array_create(NULL);
-   pctx.recovery_point = NODEKIND__UNKNOWN;
+   pctx->tok = array_peek(pctx->toks, pctx->idx);
+   pctx->etok = pctx->tok;
+   pctx->reason = "none";
+   pctx->errcnt = 0;
+   pctx->errcnt_max = 50;
+   pctx->recovery_point = NODEKIND__UNKNOWN;
 
    if (cctx->cfg->vbs) safe_fputs(stdout, ENPREFIX "parsing...");
 
@@ -36,27 +39,23 @@ extern void parse(compile_ctx_t *cctx) {
          pt[1] = dp
          pt[2] = nrtv  */
 
-   /* Note: errcnt is declared volatile in order to prevent
-      its value from being restored to the snapshotted value
-      after longjmp */
-   ret = setjmp(pctx.env_parse);
-   if (ret == NODEKIND__FINALE) {
+   if (setjmp(pctx->env_parse) == NODEKIND__FINALE) {
       goto report_error;
    }
 
-   parse_title(&pctx);
-   parse_dp(&pctx);
-   pctx.nrtv = graft_tree_n(&pctx, pctx.pt, 0, NODEKIND_NRTV, pctx.tok);
+   parse_title(pctx);
+   parse_dp(pctx);
+   pctx->nrtv = graft_tree_n(pctx, pctx->pt, 0, NODEKIND_NRTV, pctx->tok);
    for (;;) {
-      parse_act(&pctx);
+      parse_act(pctx);
       for (;;) {
-         parse_scene(&pctx);
+         parse_scene(pctx);
          for (;;) {
-            switch (seek_direction(&pctx)) {
-               case NODEKIND_LINE   : parse_line  (&pctx); break;
-               case NODEKIND_ENTER  : parse_enter (&pctx); break;
-               case NODEKIND_EXIT   : parse_exit  (&pctx); break;
-               case NODEKIND_EXEUNT : parse_exeunt(&pctx); break;
+            switch (seek_direction(pctx)) {
+               case NODEKIND_LINE   : parse_line  (pctx); break;
+               case NODEKIND_ENTER  : parse_enter (pctx); break;
+               case NODEKIND_EXIT   : parse_exit  (pctx); break;
+               case NODEKIND_EXEUNT : parse_exeunt(pctx); break;
                case NODEKIND__FINALE : goto EOE;
                case NODEKIND_ACT     : goto EOA;
                case NODEKIND_SCENE   : goto EOS;
@@ -72,21 +71,25 @@ EOE: ;
 
    /* Reports collected syntax errors, if any */
 report_error:
-   if (pctx.errcnt > 0) {
-      report_syntax_errors(&pctx);
+   if (pctx->errcnt > 0) {
+      report_syntax_errors(pctx);
       exit(EXIT_FAILURE);
    }
 
    if (cctx->cfg->vbs) safe_vprintf(" " Cgreen "done!" Creset
       "\t(total " Cbwhite "%zu" Creset " nodes)\n",
-      count_tree_node(pctx.pt)
+      count_tree_node(pctx->pt)
    );
 
-   /* cleanup */
-   array_destroy(pctx.errs);
-
-   /* done! */
-   cctx->pt = pctx.pt;
+cleanup:
+   array_destroy(pctx->errs);
+OOM3:
+   ;  /* need to keep pt */
+OOM2:
+   ;  /* cctx->arena will be cleared in the caller of parse */
+OOM1:
+   /* Registers the parse tree into cctx */
+   cctx->pt = pctx->pt;
    return;
 }
 

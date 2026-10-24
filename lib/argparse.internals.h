@@ -11,6 +11,7 @@
 #include "wrappers.h"
 #include "strutils.h"
 #include "array.adt.h"
+#include "arena.adt.h"
 #include "colorcodes.h"
 
 typedef struct {
@@ -20,6 +21,7 @@ typedef struct {
 } errinfo_t;
 
 typedef struct {
+   arena_t *arena;
    int argc;
    const char **argv;
    const char *arg;
@@ -35,8 +37,7 @@ typedef struct {
    argerr_t err;
    array_t *err_infos;
    jmp_buf env;
-   /* Needs to keep its value after longjmp */
-   volatile size_t errcnt;
+   size_t errcnt;
 } argp_ctx_t;
 
 typedef struct a {

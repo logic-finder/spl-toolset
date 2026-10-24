@@ -17,7 +17,7 @@ extern void destroy_config(config_t *cfg) {
 extern void apply_config(config_t *cfg) {
    if (cfg->hlp && cfg->vsn >= 3) {
       easter_egg();
-      exit(EXIT_SUCCESS);
+      exit(EXIT_SUCCESS);  // fixme: exit대신 에러코드 리턴해서 main에서 받아쓰기
    }
 
    if (cfg->hlp) {

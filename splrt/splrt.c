@@ -245,7 +245,7 @@ static void io_out(
    const char *fmt
 ) {
    set_hearer(rctx);
-   safe_fprintf(stdout, fmt, 1, rctx->dp[rctx->h]);
+   safe_fprintf(stdout, fmt, rctx->dp[rctx->h]);
 }
 
 static void clearbuf(void) {

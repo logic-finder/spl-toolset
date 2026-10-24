@@ -44,20 +44,18 @@ extern char *basename(const char *src) {
    const char *dpos;  /* position of '/' */
    char *dest;  /* a buffer to hold the result */
 
-   /* Finds the position of '/' from the end */
+   /* Finds the part after the final slash, if any */
    len = strlen(src);
-
-   for (dpos = src + len - 1; dpos >= src; dpos--)
-      if (*dpos == '/')
-         break;
+   dpos = strrchr(src, '/');
+   dpos = (dpos != NULL) ? dpos + 1 : src;
 
    /* case 3 & 4 */
-   if (*(dpos + 1) == '\0')
+   if (*dpos == '\0')
       return NULL;
 
    /* case 1 & 2 */
    dest = safe_malloc(len + 1);  /* max size */
-   strcpy(dest, dpos + 1);
+   strcpy(dest, dpos);
 
    return dest;
 }
@@ -140,7 +138,7 @@ extern char **split(
 
       /* Stores the buffer into the array */
       if (siz == max) {
-         arr = safe_realloc2x(arr, &max);
+         arr = safe_realloc2x_arr(arr, &max, ESIZ(arr));
       }
       arr[siz++] = buf;
    } while (fin);
@@ -156,14 +154,14 @@ extern void trim(char *src) {
    len = strlen(src);
 
    /* Searches for a non-whitespace character from the back */
-   for (fin = src + len - 1; fin >= src; fin--)
-      if (!isspace(*fin))
+   for (fin = src + len; fin > src; fin--)
+      if (!isspace((unsigned char) fin[-1]))
          break;
 
    /* Removes the trailing whitespaces */
-   *(fin + 1) = '\0';
+   *fin = '\0';
 
-   if (fin == src - 1)  /* when src consists of only whitespaces */
+   if (fin == src)  /* when src consists of only whitespaces */
       return;
 
    /* Finds the first non-whitespace character */
@@ -191,16 +189,13 @@ extern void translate(
 }
 
 extern void normalize(char *src) {
-   char *tok;
+   size_t sz = strlen(src);
 
-   tok = strtok(src, whitespaces);
-   if (!tok)
-      return;
-
-   do {
-      *tok = ' ';
-      tok = strtok(NULL, whitespaces);
-   } while (!tok);
+   for (size_t i = 0; i < sz; i++) {
+      if (isspace((unsigned char) src[i])) {
+         src[i] = ' ';
+      }
+   }
 }
 
 extern char *make_destname(
@@ -266,23 +261,19 @@ extern char *strdup(const char *src) {
 }
 
 extern char *strndup(const char *src, size_t n) {
+   size_t idx, len;
    char *buf;
-   size_t i;
 
-   buf = safe_malloc(n + 1);  /* +1 for \0 */
-
-   /* copies at most n bytes */
-   for (i = 0; (i < n && src[i] != '\0'); i++) {
-      buf[i] = src[i];
+   /* the loop finishes once idx == n or src[idx] == 0 */
+   idx = 0;
+   while (idx < n && src[idx] != '\0') {
+      idx++;
    }
 
-   /* populates the remaining space with \0, if exists */
-   for (/* empty */; i < n; i++) {
-      buf[i] = '\0';
-   }
-
-   /* null-terminates buf */
-   buf[n] = '\0';
+   len = idx;
+   buf = safe_malloc(len + 1);  /* +1 for \0 */
+   memcpy(buf, src, len);
+   buf[len] = '\0';
 
    return buf;
 }
@@ -393,6 +384,13 @@ extern find_alikes_ret_t find_alikes(
    size_t targets_len,
    size_t target_siz
 ) {
+   if (targets_len == 0) {
+      return (find_alikes_ret_t) {
+         .alikes = NULL,
+         .nmemb = 0
+      };
+   }
+
    size_t *dists = safe_malloc(targets_len * sizeof (size_t));
 
    /* Note. targets should be like:
