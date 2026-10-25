@@ -65,6 +65,35 @@ extern void *safe_calloc(size_t n, size_t siz) {
    return ret;
 }
 
+extern void *realloc2xarr(void *orig_arr, size_t *cnt, size_t esiz) {
+   size_t new_cnt;
+   void *ret;
+
+   // TODO: overflow check; see realloc (3)
+   new_cnt = (*cnt) * 2;
+
+   if (orig_arr == NULL) {
+      if (*cnt == 0 || esiz == 0) {
+         return NULL;
+      }
+      return malloc(new_cnt * esiz);
+   }
+
+   /* orig_arr != NULL */
+
+   if (*cnt == 0 || esiz == 0) {
+      free(orig_arr);
+      return NULL;
+   }
+
+   /* both cnt and esiz are not 0 */
+   if ((ret = realloc(orig_arr, new_cnt * esiz)) == NULL) {
+      return NULL;
+   }
+
+   return ret;
+}
+
 /***********
  * stdio.h *
  ***********/
