@@ -4,17 +4,27 @@
 // fixme: STREQL 매크로 정의해서 쓰기 (!strcmp 대체 프로젝트 전체적으로)
 // fixme: error code를 전파하는 방식으로 변경 (gettok 제외)
 
-extern void parse(compile_ctx_t *cctx) {
+extern bool parse(compile_ctx_t *cctx) {
    parse_ctx_t *pctx;
+   bool ret = true;
 
    /* Initializes pctx struct */
-   if ((pctx = arena_malloc(cctx->arena, sizeof *pctx)) == NULL)
+   if ((pctx = arena_malloc(cctx->arena, sizeof *pctx)) == NULL) {
+      ret = false;
       goto OOM1;
+   }
+
    pctx->arena = cctx->arena;
-   if ((pctx->pt = plant_tree(pctx, NULL, 0, NODEKIND_ROOT, 0, 0)) == NULL)
+   if ((pctx->pt = plant_tree(pctx, NULL, 0, NODEKIND_ROOT, 0, 0)) == NULL) {
+      ret = false;
       goto OOM2;
-   if ((pctx->errs = array_create(NULL)) == NULL)
+   }
+
+   if ((pctx->errs = array_create(NULL, cctx->arena)) == NULL) {
+      ret = false;
       goto OOM3;
+   }
+
    pctx->cfg = cctx->cfg;
    pctx->sourcefile = cctx->sourcefile;
    pctx->ls = cctx->ls;
@@ -22,7 +32,7 @@ extern void parse(compile_ctx_t *cctx) {
    pctx->len = array_size(pctx->toks);
    pctx->idx = 0;
    /* Note: toks has at least one element, otherwise the program
-      would have been terminated already in loadfile() by splc.c */
+      would have been terminated already in splc.c */
    /* Note: didn't use gettok() on purpose since it advances
       pctx.idx, causing an unmatch between current token and its idx */
    pctx->tok = array_peek(pctx->toks, pctx->idx);
@@ -72,17 +82,20 @@ EOE: ;
    /* Reports collected syntax errors, if any */
 report_error:
    if (pctx->errcnt > 0) {
+      ret = false;
       report_syntax_errors(pctx);
-      exit(EXIT_FAILURE);
    }
 
-   if (cctx->cfg->vbs) safe_vprintf(" " Cgreen "done!" Creset
-      "\t(total " Cbwhite "%zu" Creset " nodes)\n",
-      count_tree_node(pctx->pt)
-   );
+   if (ret && cctx->cfg->vbs) {
+      safe_vprintf(
+         " " Cgreen "done!" Creset
+         "\t(total " Cbwhite "%zu" Creset " nodes)\n",
+         count_tree_node(pctx->pt)
+      );
+   }
 
-cleanup:
-   array_destroy(pctx->errs);
+
+   ;  /* pctx->errs used arena */
 OOM3:
    ;  /* need to keep pt */
 OOM2:
@@ -90,7 +103,7 @@ OOM2:
 OOM1:
    /* Registers the parse tree into cctx */
    cctx->pt = pctx->pt;
-   return;
+   return ret;
 }
 
 [[deprecated]]

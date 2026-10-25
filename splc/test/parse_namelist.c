@@ -36,10 +36,11 @@ static void setup(parse_ctx_t *pctx) {
    token_t dummy = {0};
    tree_t *dp;
 
+   /* Assumes every allocation are successful */
    pctx->arena = arena_create();
-   pctx->toks = array_create(NULL);
+   pctx->toks = array_create(NULL, pctx->arena);
    pctx->pt = tree_plant(NULL, 0, pctx->arena);
-   pctx->errs = array_create(NULL);
+   pctx->errs = array_create(NULL, pctx->arena);
    pctx->idx = 0;
 
    graft_tree_n(pctx, pctx->pt, 0, NODEKIND_TITLE, &dummy);

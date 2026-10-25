@@ -34,7 +34,7 @@ typedef struct token {
  * and produces a token stream.
  * @param cctx a pointer to compile_ctx_t
  */
-void lex(compile_ctx_t *cctx);
+bool lex(compile_ctx_t *cctx);
 
 void showtoks(compile_ctx_t *cctx);
 

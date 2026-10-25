@@ -6,14 +6,16 @@ int main(int argc, const char *argv[]) {
 
    /* init */
    init_msg();
-   init_config(&cfg);
+   if (!init_config(&cfg))
+      goto cleanup;
    parse_argv(argc, argv, optmds, optmds_len, cfg.source_files);
    apply_config(&cfg);
    dbload(&cfg);
 
-   compile(&cfg);
+   if (!compile(&cfg))
+      goto cleanup;
 
-   /* cleanup */
+cleanup:
    dbunload();
    destroy_config(&cfg);
 
@@ -41,20 +43,26 @@ static void checkif_argc1(
    }
 }
 
-static void compile(config_t *cfg) {
+static bool compile(config_t *cfg) {
    compile_ctx_t cctx = {
       .cfg = cfg,
-      .arena = arena_create()
+      .arena = NULL
    };
    size_t total = array_size(cfg->source_files);
+   bool ret = true;
+
+   if ((cctx.arena = arena_create()) == NULL)
+      return false;
 
    arena_info(EXECNAME);
 
    for (size_t i = 0; i < total; i++) {
       cctx.sourcefile = array_peek(cfg->source_files, i);
-      loadfile_talkative(&cctx, cctx.sourcefile);
+      if (!(ret = loadfile_talkative(&cctx, cctx.sourcefile)))
+         goto cleanup;
 
-      lex(&cctx);
+      if (!(ret = lex(&cctx)))
+         goto cleanup;
       parse(&cctx);
       typecheck(&cctx);
       if (!ctxcheck(&cctx)) goto cleanup;
@@ -77,12 +85,25 @@ cleanup:
       array_destroy(cctx.ls);
    }
    arena_destroy(cctx.arena);
+
+   return ret;
 }
 
-static void loadfile_talkative(compile_ctx_t *cctx, const char *filename) {
-   cctx->ls = loadfile(filename, &cctx->lc, &cctx->wc);
-   if (!cctx->cfg->vbs)
-      return;
+static bool loadfile_talkative(compile_ctx_t *cctx, const char *filename) {
+   cctx->ls = loadfile(cctx->arena, filename, &cctx->lc, &cctx->wc);
+   if (cctx->ls == NULL) {
+      safe_fprintf(stderr, "fatal: failed to load: %s\n", cctx->sourcefile);
+      return false;
+   }
+   if (cctx->lc == 0) {
+      safe_fprintf(stderr, "fatal: empty file: %s\n", cctx->sourcefile);
+      return false;
+   }
+
+   if (!cctx->cfg->vbs) {
+      return true;
+   }
+
    safe_vprintf(
       "\n"
       ENPREFIX "loaded the source file " Cbyellow "%s" Creset,
@@ -92,4 +113,6 @@ static void loadfile_talkative(compile_ctx_t *cctx, const char *filename) {
       " (total " Cbwhite "%zu" Creset " lines, " Cbwhite "%zu" Creset " chars)\n",
       cctx->lc, cctx->wc
    );
+
+   return true;
 }

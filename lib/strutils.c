@@ -254,7 +254,9 @@ extern char *strdup(const char *src) {
    size_t siz;
 
    siz = strlen(src);
-   buf = safe_malloc(siz + 1);  /* +1 for \0 */
+   buf = malloc(siz + 1);  /* +1 for \0 */
+   if (!buf)
+      return NULL;
    memcpy(buf, src, siz + 1);  /* \0 copied */
 
    return buf;
@@ -271,7 +273,9 @@ extern char *strndup(const char *src, size_t n) {
    }
 
    len = idx;
-   buf = safe_malloc(len + 1);  /* +1 for \0 */
+   buf = malloc(len + 1);  /* +1 for \0 */
+   if (!buf)
+      return NULL;
    memcpy(buf, src, len);
    buf[len] = '\0';
 
@@ -282,6 +286,10 @@ extern bool is_rnum(const char *rnum) {
    size_t i, k, nlen;
    place_t *p;
    const char *dat;
+
+   if (rnum[0] == '\0') {
+      return false;
+   }
 
    for (i = 0; i < ps_len; i++) {
       p = ps + i;
@@ -295,7 +303,7 @@ extern bool is_rnum(const char *rnum) {
       }
    }
 
-   return !strlen(rnum);
+   return (rnum[0] == '\0');
 }
 
 extern unsigned int interpret_romnum(const char *romnum) {
@@ -327,7 +335,7 @@ extern unsigned int interpret_romnum(const char *romnum) {
 }
 
 /* C port of https://en.wikipedia.org/wiki/Levenshtein_distance#Computation */
-extern size_t levenshtein_distance(const char *s, const char *t) {
+extern int levenshtein_distance(const char *s, const char *t) {
    size_t sl, tl, subst_cost, ret;
    size_t *d;
 
@@ -336,6 +344,14 @@ extern size_t levenshtein_distance(const char *s, const char *t) {
 
    if (sl == 0) return tl;
    if (tl == 0) return sl;
+
+   /* Note: for convinience, I put an arbitrary limit, on the length
+      of s and t, which is 255 */
+   static const size_t size_limit = 255;
+
+   if (sl >= size_limit || tl >= size_limit) {
+      return -1;
+   }
 
    /* LAYOUT OF d[sl + 1][tl + 1]
          Note: +1 to represent an empty state
@@ -375,7 +391,7 @@ extern size_t levenshtein_distance(const char *s, const char *t) {
    ret = D(sl, tl);
    free(d);
    #undef D
-   return ret;
+   return ret;  /* must representable as int due to size_limit */
 }
 
 extern find_alikes_ret_t find_alikes(
@@ -384,11 +400,13 @@ extern find_alikes_ret_t find_alikes(
    size_t targets_len,
    size_t target_siz
 ) {
+   find_alikes_ret_t ret = {
+      .alikes = NULL,
+      .nmemb = 0
+   };
+
    if (targets_len == 0) {
-      return (find_alikes_ret_t) {
-         .alikes = NULL,
-         .nmemb = 0
-      };
+      return ret;  /* early exit */
    }
 
    size_t *dists = safe_malloc(targets_len * sizeof (size_t));
@@ -409,6 +427,9 @@ extern find_alikes_ret_t find_alikes(
       dists[i] = levenshtein_distance(
          src, GETSTR(i)
       );
+      if (dists[i] == -1) {
+         goto cleanup;
+      }
    }
 
    size_t min = dists[0];
@@ -438,12 +459,12 @@ extern find_alikes_ret_t find_alikes(
       }
    }
 
-   /* cleanup */
+   ret.alikes = results;
+   ret.nmemb = results_len;
+
+cleanup:
    free(dists);
    #undef GETSTR
 
-   return (find_alikes_ret_t) {
-      .alikes = results,
-      .nmemb = results_len
-   };
+   return ret;
 }

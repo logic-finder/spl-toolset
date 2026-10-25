@@ -12,36 +12,67 @@
  * Once done, replace array to vector if appropriate
  */
 
-extern array_t *array_create(array_destructor_t *destruct) {
-   array_t *a;
+[[nodiscard]]
+extern array_t *array_create(
+   array_destructor_t *destruct,
+   arena_t *arena
+) {
+   array_t *a = NULL;
 
-   a = safe_malloc(sizeof *a);
-   a->container = safe_malloc(INIT_MAX * ESIZ(a->container));
+   a = arena_malloc_fallback(arena, sizeof *a);
+   if (a == NULL)
+      goto OOM1;
+
+   a->container = arena_malloc_fallback(
+      arena,
+      INIT_MAX * ESIZ(a->container)
+   );
+   if (a->container == NULL)
+      goto OOM2;
+
    a->len = 0;
    a->max = INIT_MAX;
    a->destruct = destruct;
+   a->arena = arena;
 
    return a;
+
+OOM2:
+   free(a);
+OOM1:
+   return NULL;
 }
 
 extern void array_destroy(array_t *a) {
+   if (a == NULL) {
+      return;
+   }
+
    for (size_t i = 0; i < a->len; i++) {
-      if (a->destruct != NULL)
+      if (a->destruct != NULL) {
          a->destruct(a->container[i], i);
+      }
       free(a->container[i]);
    }
    free(a->container);
    free(a);
 }
 
-extern void array_append(array_t *a, const void *item, size_t siz) {
+[[nodiscard]]
+extern bool array_append(array_t *a, const void *item, size_t siz) {
    void *p;
 
-   if (array_full(a)) array_enlarge(a);
+   if (array_full(a) && !array_enlarge(a)) {
+      return false;
+   }
 
-   p = safe_malloc(siz);
+   if ((p = arena_malloc(a->arena, siz)) == NULL) {
+      return false;
+   }
    memcpy(p, item, siz);
    a->container[a->len++] = p;
+
+   return true;
 }
 
 extern void *array_peek(array_t *a, int idx) {
@@ -66,10 +97,13 @@ static inline bool array_full(array_t *a) {
    return a->len == a->max;
 }
 
-static void array_enlarge(array_t *a) {
-   a->container = safe_realloc2x_arr(
+static bool array_enlarge(array_t *a) {
+   a->container = realloc2xarr(
       a->container,
       &a->max,
       ESIZ(a->container)
    );
+   return a->container
+      ? true
+      : false;
 }

@@ -162,8 +162,14 @@ static void write_sect_type_A(
    array_t *records;
    record_A_t temp, *r;
 
-   src = safe_fopen(ov.mak[sectkind], "rb");
-   records = array_create(destruct_record_A);
+   src = fopen(ov.mak[sectkind], "rb");
+   if (src == NULL)
+      goto ERR1;
+
+   records = array_create(destruct_record_A, NULL);
+   if (records == NULL)
+      goto ERR2;
+
    ecnt = 0;
 
    // Write header
@@ -190,7 +196,6 @@ static void write_sect_type_A(
       array_append(records, &temp, sizeof temp);
    }
    if (!ecnt) VERR("empty %s file", sectname);
-   safe_fclose(src);
 
    // Sort!
    array_sort(records, compare);
@@ -207,7 +212,6 @@ static void write_sect_type_A(
          safe_fputc(fp, '\0');  /* zero-padding */
       }
    }
-   array_destroy(records);
    safe_fgetpos(fp, &eos_pos);  /* end of section */
 
    // Write entry count
@@ -218,6 +222,13 @@ static void write_sect_type_A(
 
    // Prepare the next section
    safe_fsetpos(fp, &eos_pos);
+
+   // Clean up
+   array_destroy(records);
+ERR2:
+   (void) fclose(fp);
+ERR1:
+   ;  // fixme: return ret
 }
 
 static void write_sect_type_B(
@@ -252,7 +263,13 @@ static void write_sect_type_B(
    record_B_t temp, *r;
 
    src = safe_fopen(ov.mak[sectkind], "rb");
-   records = array_create(destruct_record_B);
+   if (src == NULL)
+      goto ERR1;
+
+   records = array_create(destruct_record_B, NULL);
+   if (records == NULL)
+      goto ERR2;
+
    maxlen =
       dt_s_len     // 64
       + 1          // comma = 1 byte
@@ -300,7 +317,6 @@ static void write_sect_type_B(
       free(ln);
    }
    if (!ecnt) VERR("empty %s file", sectname);
-   safe_fclose(src);
 
    // Sort!
    array_sort(records, compare);
@@ -318,7 +334,6 @@ static void write_sect_type_B(
          safe_fputc(fp, '\0');
       }
    }
-   array_destroy(records);
    safe_fgetpos(fp, &eos_pos);
 
    // Write entry count
@@ -329,6 +344,13 @@ static void write_sect_type_B(
 
    // Prepare the next section
    safe_fsetpos(fp, &eos_pos);
+
+   // Clean up
+   array_destroy(records);
+ERR2:
+   (void) fclose(fp);
+ERR1:
+   ;  // fixme: return ret
 }
 
 static void write_namesect(FILE *fp) {

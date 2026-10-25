@@ -2,6 +2,7 @@
 #include "loadfile.internals.h"
 
 extern array_t *loadfile(
+   arena_t *arena,
    const char *filename,
    size_t * restrict lc,
    size_t * restrict wc
@@ -9,39 +10,43 @@ extern array_t *loadfile(
    FILE *fp;
    array_t *lines;
    line_t line;
-   size_t rlen,   /* the length of `run` */
-          lcnt,   /* line count */
-          wcnt;   /* word count */
-   char *run;  /* the contents of a line */
+   char *run;
+   size_t run_len, lcnt, wcnt;
 
-   fp = safe_fopen(filename, "r");
-   lcnt = wcnt = 0;
-   lines = array_create(destruct_line);
+   /* init */
+   lines = NULL;
+   wcnt = 0;  /* word count */
+   lcnt = 0;  /* line count */
 
-   while (!readln(fp, &run, &rlen)) {
-      line.len = rlen;
+   if ((fp = fopen(filename, "r")) == NULL)
+      goto ERR1;
+   if ((lines = array_create(destruct_line, arena)) == NULL)
+      goto ERR2;
+
+   while (!readln(fp, &run, &run_len)) {
+      line.len = run_len;
       line.run = run;
       line.num = ++lcnt;
-      wcnt += rlen;
-      array_append(lines, &line, sizeof line);
+      wcnt += run_len;
+      if (!array_append(lines, &line, sizeof line)) {
+         goto ERR3;
+      }
    }
 
-   if (lcnt == 0) {
-      fatal("empty source file");
-   }
-
-   safe_fclose(fp);
-
+ERR3:
+   if (!arena) array_destroy(lines);
+ERR2:
+   (void) fclose(fp);
+ERR1:
    if (lc != NULL) *lc = lcnt;
    if (wc != NULL) *wc = wcnt;
-   return lines;
+   return lines;  /* line was initialized NULL */
 }
 
 static void destruct_line(void *item, size_t idx) {
    line_t *l;
 
    (void) idx;
-
    l = item;
    free(l->run);
 }

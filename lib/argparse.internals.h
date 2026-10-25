@@ -4,6 +4,7 @@
 #include <setjmp.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 #include "fatal.h"
 #include "common.h"
@@ -45,15 +46,15 @@ typedef struct a {
    size_t table_len;
 } errhandle_unrecognized_ctx_t;
 
-static void validate_schemas(argp_ctx_t *actx);
+static bool validate_schemas(argp_ctx_t *actx);
 static void tokenize_argv(argp_ctx_t *actx);
 static void parse_argtoks(argp_ctx_t *actx);
 
-static void handle_posarg(argp_ctx_t *actx);
+static bool handle_posarg(argp_ctx_t *actx);
 
-static void populate_as_dashdash(argp_ctx_t *actx);
-static void populate_as_longflag(argp_ctx_t *actx);
-static void populate_as_shortflag(argp_ctx_t *actx);
+static bool populate_as_dashdash(argp_ctx_t *actx);
+static bool populate_as_longflag(argp_ctx_t *actx);
+static bool populate_as_shortflag(argp_ctx_t *actx);
 static void populate_as_posarg(argp_ctx_t *actx);
 
 static optmd_t *query_by_shortname(argp_ctx_t *actx, char flag);

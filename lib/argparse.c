@@ -21,9 +21,11 @@ extern void parse_argv(
       goto OOM1;
    if ((actx->arena = arena_create()) == NULL)
       goto OOM2;
-   if ((actx->toks = array_create(destruct_argtok)) == NULL)
+   actx->toks = array_create(destruct_argtok, actx->arena);
+   if (actx->toks == NULL)
       goto OOM3;
-   if ((actx->err_infos = array_create(destruct_errinfo)) == NULL)
+   actx->err_infos = array_create(destruct_errinfo, actx->arena);
+   if (actx->err_infos == NULL)
       goto OOM4;
    actx->argc = argc;
    actx->argv = argv;
@@ -45,7 +47,8 @@ extern void parse_argv(
       goto report_error;
    }
 
-   validate_schemas(actx);
+   if (validate_schemas(actx) == false)
+      goto cleanup;
    tokenize_argv(actx);
    parse_argtoks(actx);
 
@@ -107,16 +110,17 @@ extern void usage(
    );
 }
 
-static void validate_schemas(argp_ctx_t *actx) {
+static bool validate_schemas(argp_ctx_t *actx) {
    size_t i, j;
    optmd_t *subject, *against;
-   size_t errcnt;
+   size_t errcnt = 0;
+   bool ret;
 
+   /* option table is empty? */
    if (actx->table_len == 0) {
-      goto fatal;
+      safe_vprintf("the option table is empty.\n");
+      errcnt++;
    }
-
-   errcnt = 0;
 
    /* duplication check for short flags */
    for (i = 0; i < actx->table_len; i++) {
@@ -163,15 +167,26 @@ static void validate_schemas(argp_ctx_t *actx) {
       }
    }
 
-   if (errcnt == 0)
-      return;
+   if (errcnt == 0) {
+      ret = true;
+   }
+   else {
+      ret = false;
+      /* No choice but to kill it! */
+      safe_fputs(
+         stdout,
+         "Currently the program has a problematic option table. "
+         "Terminating.\n"
+      );
+   }
 
-fatal:
-   safe_fputs(stdout, "Currently the program has a problematic option table. Terminating.\n");
-   exit(EXIT_FAILURE);  /* No choice but to kill it! */
+cleanup:
+   return ret;
 }
 
 static void tokenize_argv(argp_ctx_t *actx) {
+   bool ret = true;
+
    /* Note: begins from 1 to skip the program name */
    for (int i = 1; i < actx->argc; i++) {
       actx->arg = actx->argv[i];
@@ -183,15 +198,18 @@ static void tokenize_argv(argp_ctx_t *actx) {
 
       if (!strcmp(actx->arg, "--")) {
          actx->eoe = true;
-         populate_as_dashdash(actx);
+         if (!(ret = populate_as_dashdash(actx)))
+            goto cleanup;
       }
       else
       if (!strncmp(actx->arg, "--", 2)) {
-         populate_as_longflag(actx);
+         if (!(ret = populate_as_longflag(actx)))
+            goto cleanup;
       }
       else
       if (actx->arg[0] == '-' && actx->arg[1] != '\0') {
-         populate_as_shortflag(actx);
+         if (!(ret = populate_as_shortflag(actx)))
+            goto cleanup;
       }
       else {
          populate_as_posarg(actx);
@@ -199,11 +217,15 @@ static void tokenize_argv(argp_ctx_t *actx) {
    }
 
    actx->toks_len = array_size(actx->toks);
+
+cleanup:
+   return ret;
 }
 
 static void parse_argtoks(argp_ctx_t *actx) {
    argtok_t *tok;
    bool preproc_result, parse_result;
+   bool ret = true;
 
    /* Note: toks has at least one element since argc > 1 supposed */
    /* Did not use gettok() on purpose; since it advances actx->idx,
@@ -218,7 +240,8 @@ static void parse_argtoks(argp_ctx_t *actx) {
 
       /* positional argument? */
       if (tok->kind == ArgtokPosArg) {
-         handle_posarg(actx);
+         if (!(ret = handle_posarg(actx)))
+            goto cleanup;
          goto next;
       }
 
@@ -283,15 +306,23 @@ static void parse_argtoks(argp_ctx_t *actx) {
    /* Collects the remanining positional arguments after -- as filenames */
    while (actx->idx < actx->toks_len - 1) {
       gettok(actx);
-      handle_posarg(actx);
+      if (!(ret = handle_posarg(actx)))
+         goto cleanup;
    }
+
+cleanup:
+   return ret;
 }
 
-static void handle_posarg(argp_ctx_t *actx) {
-   array_append(actx->sourcefiles, actx->tok->field, strlen(actx->tok->field) + 1);
+static bool handle_posarg(argp_ctx_t *actx) {
+   return array_append(
+      actx->sourcefiles,
+      actx->tok->field,
+      strlen(actx->tok->field) + 1
+   );
 }
 
-static void populate_as_dashdash(argp_ctx_t *actx) {
+static bool populate_as_dashdash(argp_ctx_t *actx) {
    argtok_t tok = {
       .kind = ArgtokOptionEnd,
       .field = NULL,
@@ -300,10 +331,10 @@ static void populate_as_dashdash(argp_ctx_t *actx) {
       .has_eq = false
    };
 
-   array_append(actx->toks, &tok, sizeof tok);
+   return array_append(actx->toks, &tok, sizeof tok);
 }
 
-static void populate_as_longflag(argp_ctx_t *actx) {
+static bool populate_as_longflag(argp_ctx_t *actx) {
    argtok_t tok = {
       .kind = ArgtokLongFlag,
       .field = NULL,
@@ -323,6 +354,9 @@ static void populate_as_longflag(argp_ctx_t *actx) {
    arg_len = strlen(actx->arg);
 
    tok.field = strndup(actx->arg, eq_pos);
+   if (!tok.field) {
+      goto ERR1;
+   }
    tok.md = query_by_longname(actx, tok.field);
 
    if (eq_pos < arg_len) {
@@ -330,13 +364,22 @@ static void populate_as_longflag(argp_ctx_t *actx) {
       /* arg_len - eq_pos == 1 happens when no value given after = */
       if (arg_len - eq_pos > 1) {
          tok.value = strdup(&actx->arg[eq_pos + 1]);
+         if (!tok.value) {
+            goto ERR2;
+         }
       }
    }
 
-   array_append(actx->toks, &tok, sizeof tok);
+   /* normal path */
+   return array_append(actx->toks, &tok, sizeof tok);
+
+ERR2:
+   free(tok.field);
+ERR1:
+   return false;
 }
 
-static void populate_as_shortflag(argp_ctx_t *actx) {
+static bool populate_as_shortflag(argp_ctx_t *actx) {
    argtok_t tok = {
       .kind = ArgtokShortFlag,
       .field = NULL,
@@ -344,18 +387,26 @@ static void populate_as_shortflag(argp_ctx_t *actx) {
       .md = NULL,
       .has_eq = false
    };
-   char flag;
    size_t arg_len;
+   bool ret = true;
 
    actx->arg++;  /* skips - */
    arg_len = strlen(actx->arg);
 
-   for (
-      /* empty */;
-      (flag = actx->arg[0]) != '\0';
-      actx->arg++, arg_len--
-   ) {
+   /* Advances actx->arg one letter at a time
+         -abcoa.out
+          0123^~~~~ */
+   for (char flag; (flag = actx->arg[0]) != '\0'; actx->arg++, arg_len--) {
+      /* Copies one letter as a string */
       tok.field = strndup(actx->arg, 1);
+
+      if (!tok.field) {
+         ret = false;
+         goto ERR1;
+      }
+
+      /* Looks up the option table to know whether this is
+         a value-taking option */
       tok.md = query_by_shortname(actx, flag);
 
       if (tok.md != NULL) {
@@ -366,17 +417,35 @@ static void populate_as_shortflag(argp_ctx_t *actx) {
                       ^~~~~~
                since -o is a value-taking option */
             tok.value = strdup(&actx->arg[1]);
+
+            if (!tok.value) {
+               ret = false;
+               goto ERR2;
+            }
          }
       }
 
-      array_append(actx->toks, &tok, sizeof tok);
+      if (!(ret = array_append(actx->toks, &tok, sizeof tok))) {
+         goto ERR3;
+      }
 
       /* if this flag were a value-taking option, the rest of 'arg'
          had been consumed as its value */
       if (tok.md != NULL && tok.md->reqv) {
-         return;
+         /* normal path #1: -abcdoa.out */
+         return true;
       }
    }
+
+ERR3:
+   free(tok.value);  /* safe, since it was NULL-init'ed */
+ERR2:
+   free(tok.field);  /* safe, also */
+ERR1:
+   /* Can be a happy path or an error path.
+      if happy path, it means like -abcd (all non-val-taking options)
+      if error path, had a problem with ERR1, ERR2, or ERR3 */
+   return ret;
 }
 
 static void populate_as_posarg(argp_ctx_t *actx) {
@@ -684,6 +753,9 @@ static array_t *find_opt_candidates(
    /* Evaluates distances */
    for (size_t i = 0; i < ctx->table_len; i++) {
       dists[i] = levenshtein_distance(tok->field, ctx->table[i].lname);
+      if (dists[i] == -1) {
+         return NULL;
+      }
    }
 
    size_t min = dists[0];
@@ -695,20 +767,34 @@ static array_t *find_opt_candidates(
       }
    }
 
-   array_t *results = array_create(NULL);
+   array_t *results;
+   bool stat;
+
+   results = array_create(NULL, NULL);
+   if (results == NULL) {
+      return NULL;
+   }
 
    /* Collects candidates which have the same distance with `min` */
    for (size_t i = 0; i < ctx->table_len; i++) {
       if (min == dists[i]) {
-         array_append(
+         stat = array_append(
             results,
             ctx->table[i].lname,
             strlen(ctx->table[i].lname) + 1  /* +1 for \0 */
          );
+         if (stat == false) {
+            goto cleanup;
+         }
       }
    }
 
+   /* normal path hits this return */
    return results;
+
+cleanup:
+   array_destroy(results);
+   return NULL;
 }
 
 /*** DEBUG ***/

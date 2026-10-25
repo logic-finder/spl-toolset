@@ -42,7 +42,7 @@ typedef struct config {
    bool w_bp;
 } config_t;
 
-void init_config(config_t *cfg);
+bool init_config(config_t *cfg);
 void destroy_config(config_t *cfg);
 void apply_config(config_t *cfg);
 

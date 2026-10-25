@@ -1,12 +1,17 @@
 #include "config.h"
 #include "config.internals.h"
 
-extern void init_config(config_t *cfg) {
-   cfg->source_files = array_create(NULL);
+extern bool init_config(config_t *cfg) {
+   cfg->source_files = array_create(NULL, NULL);
+   if (cfg->source_files == false) {
+      return false;
+   }
    cfg->vsn = 0;
    cfg->job = 1;
    cfg->std = StdoptSpl01;
    cfg->lng = LngoptEn;
+
+   return true;
 }
 
 extern void destroy_config(config_t *cfg) {

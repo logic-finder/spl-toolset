@@ -31,7 +31,6 @@ struct lex_ctx {
    char *buf;  /* a buffer */
    size_t idx;  /* column in buf */
    size_t max;  /* max size of buf */
-   jmp_buf env;  /* setjmp & longjmp */
    bool eoe;  /* end of everything */
    processor_t *process;
    checker_t *check;

@@ -2,6 +2,9 @@
 #define ARRAY_ADT_H
 
 #include <stddef.h>
+#include <stdbool.h>
+
+#include "arena.adt.h"
 
 /*==========*
  | TYPEDEFS |
@@ -14,12 +17,23 @@ typedef void array_destructor_t(void *item, size_t idx);
 /*============*
  | PROTOTYPES |
  *============*/
-array_t *array_create(array_destructor_t *destruct);
+[[nodiscard]]
+array_t *array_create(
+   array_destructor_t *destruct,
+   arena_t *arena
+);
+
 void array_destroy(array_t *a);
-void array_append(array_t *a, const void *item, size_t siz);
+
+[[nodiscard]]
+bool array_append(array_t *a, const void *item, size_t siz);
+
 void *array_peek(array_t *a, int idx);
+
 void array_foreach(array_t *a, array_iterator_t *iterate, void *ctx);
+
 size_t array_size(array_t *a);
+
 void array_sort(array_t *a, array_sorter_t *compare);
 
 #endif

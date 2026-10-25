@@ -3,6 +3,7 @@
 
 #include <ctype.h>
 #include <string.h>
+#include <stdbool.h>
 
 #include "msg.h"
 #include "lex.h"
@@ -24,8 +25,8 @@
 #include "iroptimize.h"
 #include "argp_drivers.h"
 
-static void compile(config_t *cfg);
-static void loadfile_talkative(compile_ctx_t *cctx, const char *filename);
+static bool compile(config_t *cfg);
+static bool loadfile_talkative(compile_ctx_t *cctx, const char *filename);
 static void checkif_argc1(
    int argc,
    optmd_t table[],

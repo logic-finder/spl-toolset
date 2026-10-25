@@ -11,16 +11,19 @@ extern bool ctxcheck(compile_ctx_t *cctx) {
       .cfg = cctx->cfg,
       .arena = cctx->arena,
       .ls = cctx->ls,
-      .errs = array_create(NULL),
       .errcnt = 0,
       .errcnt_max = 50,
-      .warns = array_create(NULL),
       .warncnt = 0,
       .warncnt_max = 50,
       .dp = tree_child(cctx->pt, 1),
       .nrtv = tree_child(cctx->pt, 2)
    };
    bool ret = true;
+
+   if ((octx.errs = array_create(NULL, cctx->arena)) == NULL)
+      goto OOM1;
+   if ((octx.warns = array_create(NULL, cctx->arena)) == NULL)
+      goto OOM2;
 
    if (cctx->cfg->vbs) safe_fputs(stdout, ENPREFIX "context-checking...");
 
@@ -45,12 +48,16 @@ report_errors:
    if (octx.errcnt > 0) {
       report_errors(&octx);
       ret = false;
-      goto cleanup;
    }
 
-   if (cctx->cfg->vbs) safe_vprintf(" " Cgreen "done!" Creset "\n");
+   if (ret && cctx->cfg->vbs) {
+      safe_vprintf(" " Cgreen "done!" Creset "\n");
+   }
 
-cleanup:
+   ;  /* octx.errs used arena */
+OOM2:
+   ;  /* octx.errs used arena */
+OOM1:
    return ret;
 }
 

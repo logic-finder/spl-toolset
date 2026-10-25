@@ -1,6 +1,8 @@
 #ifndef PARSE_H
 #define PARSE_H
 
+#include <stdbool.h>
+
 #include "splc.h"
 #include "tree.adt.h"
 #include "argparse.h"
@@ -107,7 +109,7 @@ typedef struct node {
    size_t lnum, lpos;
 } node_t;
 
-void parse(compile_ctx_t *cctx);
+bool parse(compile_ctx_t *cctx);
 
 [[maybe_unused]]
 void showpt(compile_ctx_t *cctx);

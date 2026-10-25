@@ -1,53 +1,64 @@
 #include "lex.h"
 #include "lex.internals.h"  /* contains typedefs & prototypes */
 
-extern void lex(compile_ctx_t *cctx) {
-   lex_ctx_t lctx = {0};
+extern bool lex(compile_ctx_t *cctx) {
+   lex_ctx_t lctx = {
+      .ls = cctx->ls,
+      .lc = cctx->lc,
+      .lnum = 0,
+      .lpos = 0,
+      .l = array_peek(cctx->ls, 0),
+      .max = 128,
+      .eoe = false,
+      .toks = NULL
+   };
+   bool ret = true;
 
-   lctx.toks = array_create(destruct_tok);
-   lctx.ls = cctx->ls;
-   lctx.lc = cctx->lc;
-   lctx.lnum = 0;
-   lctx.lpos = 0;
-   lctx.l = array_peek(lctx.ls, lctx.lnum);
-   lctx.max = 128;
+   lctx.toks = array_create(destruct_tok, cctx->arena);
+   if (lctx.toks == NULL) {
+      ret = false;
+      goto OOM1;
+   }
    lctx.buf = safe_malloc(lctx.max);
-   lctx.eoe = false;
+   if (lctx.buf == NULL) {
+      ret = false;
+      goto OOM2;
+   }
 
    if (cctx->cfg->vbs) safe_fputs(stdout, ENPREFIX "scanning...");
 
    /* Constructs a stream of tokens */
-   if (setjmp(lctx.env) == 0)
-      goto tokenize;
-   else
-      goto cleanup;
-
-tokenize:
    for (;;) {
-      lctx.eoe ? longjmp(lctx.env, 1)
-      : skip_space(&lctx);
+      if (lctx.eoe) break;
+      else skip_space(&lctx);
 
-      lctx.eoe ? longjmp(lctx.env, 2)
-      : save_state(&lctx),
-        read_token(&lctx),
-        store_token(&lctx);
+      if (lctx.eoe) break;
+      else {
+         save_state(&lctx);
+         read_token(&lctx);
+         store_token(&lctx);
+      }
 
-      lctx.eoe ? longjmp(lctx.env, 3)
-      : save_state(&lctx),
-        read_nchar(&lctx, 1),
-        store_punct(&lctx);
+      if (lctx.eoe) break;
+      else {
+         save_state(&lctx);
+         read_nchar(&lctx, 1);
+         store_punct(&lctx);
+      }
    }
-
-cleanup:
-   free(lctx.buf);
 
    if (cctx->cfg->vbs) safe_vprintf(" " Cgreen "done!" Creset
       "\t(total " Cbwhite "%zu" Creset " tokens)\n",
       array_size(lctx.toks)
    );
 
+   /* cleanup */
+   free(lctx.buf);
+OOM2:
+   ;  /* need to keep lctx.toks */
+OOM1:
    cctx->toks = lctx.toks;
-   return;
+   return ret;
 }
 
 static void destruct_tok(void *item, size_t idx) {

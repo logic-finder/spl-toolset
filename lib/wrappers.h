@@ -16,6 +16,12 @@ void safe_malloc_set_callback(safe_malloc_cb_t *cb);
 void *safe_malloc(size_t siz);
 
 /**
+ * @brief `safe_calloc` is a wrapper for `calloc`.
+ * @note exits in failure.
+ */
+void *safe_calloc(size_t n, size_t siz);
+
+/**
  * @brief `safe_realloc2x` is a wrapper for `realloc`.
  * @note exits in failure.
  */
@@ -26,11 +32,7 @@ inline void *safe_realloc2x(void *orig, size_t *siz);
  */
 void *safe_realloc2x_arr(void *orig_arr, size_t *cnt, size_t esiz);
 
-/**
- * @brief `safe_calloc` is a wrapper for `calloc`.
- * @note exits in failure.
- */
-void *safe_calloc(size_t n, size_t siz);
+void *realloc2xarr(void *orig_arr, size_t *cnt, size_t esiz);
 
 /**
  * @brief `safe_fopen` is a wrapper for `fopen`.
