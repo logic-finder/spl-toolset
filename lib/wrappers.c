@@ -37,14 +37,28 @@ extern void *safe_realloc2x_arr(void *orig_arr, size_t *cnt, size_t esiz) {
    size_t new_cnt;
    void *ret;
 
+   // TODO: overflow check; see realloc (3)
    new_cnt = (*cnt) * 2;
-   ret = realloc(orig_arr, new_cnt * esiz);
 
-   if (!ret) {
+   if (orig_arr == NULL) {
+      if (*cnt == 0 || esiz == 0) {
+         return NULL;
+      }
+      return safe_malloc(new_cnt * esiz);
+   }
+
+   /* orig_arr != NULL */
+
+   if (*cnt == 0 || esiz == 0) {
+      free(orig_arr);
+      return NULL;
+   }
+
+   /* both cnt and esiz are not 0 */
+   if ((ret = realloc(orig_arr, new_cnt * esiz)) == NULL) {
       fatal("realloc error");
    }
 
-   *cnt = new_cnt;
    return ret;
 }
 
