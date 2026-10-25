@@ -51,7 +51,7 @@ extern void *safe_realloc2x_arr(void *orig_arr, size_t *cnt, size_t esiz) {
 extern void *safe_calloc(size_t n, size_t siz) {
    void *ret;
 
-   if (siz == 0) {
+   if (n == 0 || siz == 0) {
       return NULL;
    }
 
