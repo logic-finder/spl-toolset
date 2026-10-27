@@ -9,7 +9,7 @@
 #include "common.h"
 #include "global.h"
 #include "wrappers.h"
-#include "strutils.h"
+#include "lib/strutils.h"
 #include "array.adt.h"
 #include "db.common.h"
 #include "readline.h"

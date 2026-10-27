@@ -94,7 +94,9 @@ static void handle_makopt(const char *arg) {
    size_t clen;
 
    arg += makopt_len + 1;
-   components = split(arg, ",", &clen);
+   if (!(components = split(arg, ",", &clen))) {
+      exit(1);  // fixme
+   }
    if (clen != 4)
       VERR("--make needs 4 comma-separated filenames;"
            "currently %d given", clen);

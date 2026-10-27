@@ -9,7 +9,14 @@ extern void irdump(compile_ctx_t *cctx) {
    ictx.irt = cctx->irt;
    ictx.nrtv = tree_child(ictx.irt, 1);
 
-   destname = make_destname("hello.spl", IR_EXTENSION);
+   destname = make_destname(cctx->sourcefile, IR_EXTENSION);
+   if (destname == cctx->sourcefile) {
+      printf("fatal: filename is empty\n");
+      return false;
+   }
+   if (!destname) {
+      return false;
+   }
    ictx.fp = safe_fopen(destname, "w");
 
    if (cctx->cfg->vbs) safe_vprintf(

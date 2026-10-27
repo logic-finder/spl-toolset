@@ -6,7 +6,7 @@
 #include "global.h"
 #include "tree.adt.h"
 #include "wrappers.h"
-#include "strutils.h"
+#include "lib/strutils.h"
 
 typedef struct {
    FILE *fp;

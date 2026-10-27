@@ -294,7 +294,9 @@ static void write_sect_type_B(
       if (llen > maxlen)
          VERR("%s entry #%d too long", sectname, ecnt + 1);
 
-      elems = split(ln, ",", &elen);
+      if (!(elems = split(ln, ",", &elen))) {
+         exit(1);  // fixme: later
+      }
       if (elen != 2)
          VERR("%s entry #%d has invalid form", sectname, ecnt + 1);
 
