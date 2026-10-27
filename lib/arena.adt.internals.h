@@ -1,10 +1,7 @@
 #ifndef ARENA_ADT_INTERNALS_H
 #define ARENA_ADT_INTERNALS_H
 
-#include <stdbool.h>
-
 #include "common.h"
-#include "wrappers.h"
 #include "list.adt.h"
 #include "arena.adt.h"
 
@@ -25,7 +22,11 @@ struct arena {
 };
 
 static void destruct_region(void *item, size_t idx);
+
+[[nodiscard]]
 static bool need_new_region(arena_t *arena, size_t req_siz);
-static void add_new_region(arena_t *arena, size_t req_siz);
+
+[[nodiscard]]
+static bool add_new_region(arena_t *arena, size_t req_siz);
 
 #endif

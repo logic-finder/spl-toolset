@@ -4,36 +4,56 @@
 /*================*
  | DEFINED INLINE |
  *================*/
+[[nodiscard]]
 extern void *arena_malloc_fallback(arena_t *arena, size_t siz);
+
+[[nodiscard]]
 extern void *arena_calloc_fallback(arena_t *arena, size_t nmemb, size_t siz);
+
+[[nodiscard]]
 extern void *arena_realloc2x(arena_t *arena, void *ptr, size_t *siz);
+
+[[nodiscard]]
 extern void *arena_realloc2x_arr_fallback(
    arena_t *arena,
    void *ptr,
    size_t *cnt,
    size_t esiz
 );
+
 extern void arena_free_fallback(arena_t *arena, void *ptr);
 
 /*======================*
  | EXTERNAL DEFINITIONS |
  *======================*/
+[[nodiscard]]
 extern arena_t *arena_create(void) {
    arena_t *arena;
 
-   arena = safe_malloc(sizeof *arena);
-   arena->regions = list_create(destruct_region);
+   if (!(arena = malloc(sizeof *arena))) {
+      goto err1;
+   }
+   if (!(arena->regions = list_create(destruct_region))) {
+      goto err2;
+   }
    arena->current = NULL;
    arena->align = sizeof (void *);  /* assumes not 0 */
 
    return arena;
+
+err2:
+   free(arena);
+err1:
+   return NULL;
 }
 
-extern void arena_info(const char *execname) {
-   safe_vprintf(
+[[nodiscard]]
+extern bool arena_info(const char *execname) {
+   int nchar = printf(
       "%s: default region size set " STR(ARENA_SIZ_DEFAULT) "\n",
       execname
    );
+   return (0 <= nchar) ? true : false;
 }
 
 extern void arena_cleanup(arena_t *arena) {
@@ -49,20 +69,24 @@ extern void arena_destroy(arena_t *arena) {
    free(arena);
 }
 
+[[nodiscard]]
 extern void *arena_malloc(arena_t *arena, size_t siz) {
    if (siz == 0) {
       return NULL;
    }
 
-   if (need_new_region(arena, siz)) {
-      add_new_region(arena, siz);
+   if (need_new_region(arena, siz) && !add_new_region(arena, siz)) {
+      return NULL;
    }
 
-   arena->current->last_alloc = (char *) arena->current->buf + arena->current->pos;
+   arena->current->last_alloc =
+      (char *) arena->current->buf + arena->current->pos;
    arena->current->pos += siz;
+
    return arena->current->last_alloc;
 }
 
+[[nodiscard]]
 extern void *arena_calloc(arena_t *arena, size_t nmemb, size_t siz) {
    char *ret;
 
@@ -82,6 +106,7 @@ extern void *arena_calloc(arena_t *arena, size_t nmemb, size_t siz) {
    return ret;
 }
 
+[[nodiscard]]
 extern void *arena_realloc2x_arr(
    arena_t *arena,
    void *ptr,
@@ -136,6 +161,7 @@ static void destruct_region(void *item, size_t idx) {
    free(region->buf);
 }
 
+[[nodiscard]]
 static bool need_new_region(arena_t *arena, size_t req_siz) {
    size_t rem;
 
@@ -161,14 +187,19 @@ static bool need_new_region(arena_t *arena, size_t req_siz) {
    return false;
 }
 
-static void add_new_region(arena_t *arena, size_t req_siz) {
+[[nodiscard]]
+static bool add_new_region(arena_t *arena, size_t req_siz) {
    arena_region_t region = {0};
 
+   if (!(region.buf = malloc(region.cap))) {
+      return false;
+   }
    region.cap = (req_siz > ARENA_SIZ_DEFAULT)
       ? req_siz
       : ARENA_SIZ_DEFAULT;
-   region.buf = safe_malloc(region.cap);
    region.last_alloc = NULL;
 
    arena->current = list_push(arena->regions, &region, sizeof region);
+
+   return true;
 }
