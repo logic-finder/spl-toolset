@@ -7,7 +7,6 @@
 
 #include "fatal.h"
 #include "common.h"
-#include "wrappers.h"
 #include "tree.adt.h"
 
 #define INIT_CMAX 2
@@ -23,7 +22,10 @@ struct tree {
 };
 
 static void prune_callback(tree_t *t);
+
 static bool tree_full(const tree_t *t);
-static void tree_enlarge(tree_t *t);
+
+[[nodiscard]]
+static bool tree_enlarge(tree_t *t);
 
 #endif

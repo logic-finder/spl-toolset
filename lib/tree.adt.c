@@ -1,15 +1,22 @@
 #include "tree.adt.h"
 #include "tree.adt.internals.h"
 
+// TODO: introuduce destructor
+
 extern tree_t *tree_plant(void *data, size_t dsiz, arena_t *arena) {
    tree_t *ret;  /* a little sapling! */
 
-   ret = arena_malloc_fallback(arena, sizeof *ret);
+   if (!(ret = arena_malloc_fallback(arena, sizeof *ret))) {
+      return NULL;
+   }
 
    ret->children = arena_malloc_fallback(
       arena,
       INIT_CMAX * ESIZ(ret->children)
    );
+   if (!ret->children) {
+      goto err1;
+   }
    ret->parent = NULL;
    ret->cmax = INIT_CMAX;
    ret->clen = 0;
@@ -17,12 +24,19 @@ extern tree_t *tree_plant(void *data, size_t dsiz, arena_t *arena) {
    ret->arena = arena;
 
    if (data) {
-      ret->dat = arena_malloc_fallback(arena, dsiz);
+      if (!(ret->dat = arena_malloc_fallback(arena, dsiz))) {
+         goto err2;
+      }
       memcpy(ret->dat, data, dsiz);
    }
    else ret->dat = NULL;
-
    return ret;
+
+err2:
+   arena_free_fallback(arena, ret->children);
+err1:
+   arena_free_fallback(arena, ret);
+   return NULL;
 }
 
 extern tree_t *tree_graft(
@@ -30,7 +44,9 @@ extern tree_t *tree_graft(
    tree_t * restrict in
 ) {
    if (tree_full(base)) {
-      tree_enlarge(base);
+      if (!tree_enlarge(base)) {
+         return NULL;
+      }
    }
 
    in->parent = base;
@@ -43,13 +59,14 @@ static bool tree_full(const tree_t *t) {
    return t->cmax == t->clen;
 }
 
-static void tree_enlarge(tree_t *t) {
-   t->children = arena_realloc2x_arr(
+static bool tree_enlarge(tree_t *t) {
+   t->children = arena_realloc2x_arr_fallback(
       t->arena,
       t->children,
       &t->cmax,
       ESIZ(t->children)
    );
+   return t->children ? true : false;
 }
 
 extern void tree_prune(tree_t *t) {
@@ -59,8 +76,9 @@ extern void tree_prune(tree_t *t) {
       return;
    }
 
-   for (size_t i = 0; i < t->clen; i++)
+   for (size_t i = 0; i < t->clen; i++) {
       tree_prune(t->children[i]);
+   }
 
    prune_callback(t);
 }
