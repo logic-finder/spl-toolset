@@ -34,13 +34,13 @@ extern array_t *loadfile(
    }
 
 err3:
-   ;  /* needs to keep `line_t`s  */
+   ;  /* needs to keep 'lines'  */
 err2:
    (void) fclose(fp);
 err1:
    if (lc != NULL) *lc = lcnt;
    if (wc != NULL) *wc = wcnt;
-   return lines;  /* line was initialized NULL */
+   return lines;  /* lines was initialized NULL */
 }
 
 static void destruct_line(void *item, size_t idx) {

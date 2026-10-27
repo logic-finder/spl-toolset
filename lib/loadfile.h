@@ -9,6 +9,7 @@ typedef struct line {
    size_t len, num;
 } line_t;
 
+[[nodiscard]]
 array_t *loadfile(
    arena_t *arena,
    const char *filename,
