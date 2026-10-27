@@ -10,8 +10,11 @@
  | TYPEDEFS |
  *===========*/
 typedef struct array array_t;
-typedef void array_iterator_t(void *item, size_t idx, void *ctx);
+
+typedef bool array_iterator_t(void *item, size_t idx, void *ctx);
+
 typedef int array_sorter_t(const void *d1, const void *d2);
+
 typedef void array_destructor_t(void *item, size_t idx);
 
 /*============*
@@ -30,7 +33,7 @@ bool array_append(array_t *a, const void *item, size_t siz);
 
 void *array_peek(array_t *a, int idx);
 
-void array_foreach(array_t *a, array_iterator_t *iterate, void *ctx);
+size_t array_foreach(array_t *a, array_iterator_t *iterate, void *ctx);
 
 size_t array_size(array_t *a);
 

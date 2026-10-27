@@ -12,34 +12,32 @@
  * Once done, replace array to vector if appropriate
  */
 
-[[nodiscard]]
 extern array_t *array_create(
    array_destructor_t *destruct,
    arena_t *arena
 ) {
-   array_t *a = NULL;
+   array_t *a;
 
-   a = arena_malloc_fallback(arena, sizeof *a);
-   if (a == NULL)
-      goto OOM1;
+   if (!(a = arena_malloc_fallback(arena, sizeof *a))) {
+      return NULL;  /* nothing to cleanup yet; early exit */
+   }
 
    a->container = arena_malloc_fallback(
       arena,
       INIT_MAX * ESIZ(a->container)
    );
-   if (a->container == NULL)
-      goto OOM2;
+   if (a->container == NULL) {
+      goto cleanup;
+   }
 
    a->len = 0;
    a->max = INIT_MAX;
    a->destruct = destruct;
    a->arena = arena;
-
    return a;
 
-OOM2:
+cleanup:
    free(a);
-OOM1:
    return NULL;
 }
 
@@ -58,7 +56,6 @@ extern void array_destroy(array_t *a) {
    free(a);
 }
 
-[[nodiscard]]
 extern bool array_append(array_t *a, const void *item, size_t siz) {
    void *p;
 
@@ -79,10 +76,16 @@ extern void *array_peek(array_t *a, int idx) {
    return a->container[idx];
 }
 
-extern void array_foreach(array_t *a, array_iterator_t *iterate, void *ctx) {
-   for (size_t i = 0; i < a->len; i++) {
-      (*iterate)(a->container[i], i, ctx);
+extern size_t array_foreach(array_t *a, array_iterator_t *iterate, void *ctx) {
+   size_t i;
+
+   for (i = 0; i < a->len; i++) {
+      if (!(*iterate)(a->container[i], i, ctx)) {
+         return i;
+      }
    }
+
+   return i;
 }
 
 extern size_t array_size(array_t *a) {
@@ -94,7 +97,7 @@ extern void array_sort(array_t *a, array_sorter_t *compare) {
 }
 
 static inline bool array_full(array_t *a) {
-   return a->len == a->max;
+   return (a->len == a->max);
 }
 
 static bool array_enlarge(array_t *a) {

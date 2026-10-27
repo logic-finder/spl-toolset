@@ -16,6 +16,7 @@ struct array {
 };
 
 static inline bool array_full(array_t *a);
+
 static bool array_enlarge(array_t *a);
 
 #endif
