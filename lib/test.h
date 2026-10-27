@@ -6,13 +6,15 @@
 
 #define DIE() \
    do { \
-      safe_vprintf("%s%s%s: assertion failed [%s:%zu]\n", \
+      (void) printf( \
+         "%s%s%s: assertion failed [%s:%zu]\n", \
          Cbcyan, __func__, Creset, __FILE__, __LINE__ \
       ); \
       flag = false; \
    } while (0)
 
 void test_title(const char *filename);
+
 void test_result(size_t nfail);
 
 #endif
