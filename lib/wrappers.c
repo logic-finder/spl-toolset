@@ -4,7 +4,10 @@
 /************
  * stdlib.h *
  ************/
+
 /* inline */
+
+[[deprecated]]
 extern void *safe_realloc2x(void *orig, size_t *siz);
 
 extern void safe_malloc_set_callback(safe_malloc_cb_t *cb) {
