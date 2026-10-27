@@ -42,7 +42,9 @@ typedef uint64_t spl_uint_t;
 #endif
 
 bool isle(void);
+
 size_t min(size_t a, size_t b);
+
 size_t min3(size_t a, size_t b, size_t c);
 
 inline uint32_t endrev32(uint32_t v) {
