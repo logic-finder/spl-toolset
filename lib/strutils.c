@@ -50,11 +50,15 @@ extern char *basename(const char *src) {
    dpos = (dpos != NULL) ? dpos + 1 : src;
 
    /* case 3 & 4 */
-   if (*dpos == '\0')
-      return NULL;
+   if (*dpos == '\0') {
+      return src;
+   }
 
    /* case 1 & 2 */
-   dest = safe_malloc(len + 1);  /* max size */
+   dest = malloc(len + 1); /* max size */
+   if (!dest) {
+      return NULL;
+   }
    strcpy(dest, dpos);
 
    return dest;
@@ -64,8 +68,13 @@ extern char *stem(const char *src) {
    char *ret, *cpos;
 
    ret = basename(src);
-   if (!ret)
+   if (ret == src) {
+      return src;
+   }
+   if (!ret) {
       return NULL;
+   }
+
 
    cpos = strrchr(ret, '.');
    if (cpos)
@@ -103,13 +112,17 @@ extern char **split(
    const char *ini, *fin;
    ptrdiff_t diff;
 
-   char *buf;  /* a buffer to copy a substring */
-   size_t rest;    /* a length of a string */
+   /* a buffer to copy a substring */
+   char *buf = NULL;
+   /* a length of a string */
+   size_t rest;
 
    /* Prepares an array of strings */
    siz = 0;
    max = 2;
-   arr = safe_malloc(max * ESIZ(arr));
+   if (!(arr = malloc(max * ESIZ(arr)))) {
+      return NULL;  /* nothing to cleanup yet; early exit */
+   }
 
    /* Parsing */
    ini = src;
@@ -122,13 +135,19 @@ extern char **split(
          /* since there is no more mark, copies
             the rest of the string into buf */
          rest = strlen(ini);
-         buf = safe_malloc(rest + 1);
+         if (!(buf = malloc(rest + 1))) {
+            goto err1;
+         }
          memcpy(buf, ini, rest + 1);  /* includes \0 */
       }
       else {
          /* Copies the substring into buf */
          diff = fin - ini;  /* equals the token length */
-         buf = safe_malloc(diff + 1);  /* +1 for \0 */
+
+         /* +1 for \0 */
+         if (!(buf = malloc(diff + 1))) {
+            goto err1;
+         }
          memcpy(buf, ini, diff);
          buf[diff] = '\0';
 
@@ -138,13 +157,20 @@ extern char **split(
 
       /* Stores the buffer into the array */
       if (siz == max) {
-         arr = safe_realloc2x_arr(arr, &max, ESIZ(arr));
+         if (!(arr = realloc2xarr(arr, &max, ESIZ(arr)))) {
+            goto err2;
+         }
       }
       arr[siz++] = buf;
    } while (fin);
 
    *retsiz = siz;
    return arr;
+
+err2:
+   free(buf);
+err1:
+   return NULL;
 }
 
 extern void trim(char *src) {
@@ -206,13 +232,22 @@ extern char *make_destname(
    size_t tempsiz;
 
    temp = stem(orig);
-   if (!temp)
-      fatal("filename is empty");
+   if (orig == temp) {
+      return orig;
+   }
+   if (!temp) {
+      return NULL;
+   }
+
    tempsiz = strlen(temp);
-   buf = safe_malloc(tempsiz + strlen(ext) + 1);
+   buf = malloc(tempsiz + strlen(ext) + 1);
+   if (!buf) {
+      goto cleanup;
+   }
    strcpy(buf, temp);
    strcat(buf, ext);
 
+cleanup:
    free(temp);
 
    return buf;
@@ -239,7 +274,10 @@ extern char *tolower_str(const char *orig) {
    char *dest;
 
    bufsiz = strlen(orig);
-   dest = safe_malloc(bufsiz + 1);  /* +1 for \0 */
+   /* +1 for \0 */
+   if (!(dest = safe_malloc(bufsiz + 1))) {
+      return NULL;
+   }
 
    for (size_t i = 0; i < bufsiz; i++) {
       dest[i] = tolower((unsigned char) orig[i]);
@@ -254,9 +292,10 @@ extern char *strdup(const char *src) {
    size_t siz;
 
    siz = strlen(src);
-   buf = malloc(siz + 1);  /* +1 for \0 */
-   if (!buf)
+   /* +1 for \0 */
+   if (!(buf = malloc(siz + 1))) {
       return NULL;
+   }
    memcpy(buf, src, siz + 1);  /* \0 copied */
 
    return buf;
@@ -273,9 +312,10 @@ extern char *strndup(const char *src, size_t n) {
    }
 
    len = idx;
-   buf = malloc(len + 1);  /* +1 for \0 */
-   if (!buf)
+   /* +1 for \0 */
+   if (!(buf = malloc(len + 1))) {
       return NULL;
+   }
    memcpy(buf, src, len);
    buf[len] = '\0';
 

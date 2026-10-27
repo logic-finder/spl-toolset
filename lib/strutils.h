@@ -4,7 +4,7 @@
 #include <string.h>
 #include <stdbool.h>
 
-typedef struct {
+typedef struct [[nodiscard]] {
    const char **alikes;
    size_t nmemb;
 } find_alikes_ret_t;
@@ -25,11 +25,14 @@ size_t match_str_case(
 );
 
 /* need to free the return value later */
+[[nodiscard]]
 char *basename(const char *src);
 
 /* need to free the return value later */
+[[nodiscard]]
 char *stem(const char *src);
 
+[[nodiscard]]
 char **split(
    const char * restrict src,
    const char * restrict mark,
@@ -48,6 +51,7 @@ void translate(
 /* modifies src */
 void normalize(char *src);
 
+[[nodiscard]]
 char *make_destname(
    const char * restrict orig,
    const char * restrict ext
@@ -55,16 +59,23 @@ char *make_destname(
 
 int strcasecmp(const char *s1, const char *s2);
 
+[[nodiscard]]
 char *tolower_str(const char *orig);
 
+[[nodiscard]]
 char *strdup(const char *src);
+
+[[nodiscard]]
 char *strndup(const char *src, size_t n);
 
 bool is_rnum(const char *rnum);
 
 unsigned int interpret_romnum(const char *romnum);
 
+[[nodiscard]]
 int levenshtein_distance(const char *s, const char *t);
+
+[[nodiscard]]
 find_alikes_ret_t find_alikes(
    const char *src,
    const void **targets,
