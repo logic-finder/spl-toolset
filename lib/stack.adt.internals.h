@@ -4,9 +4,6 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#include "fatal.h"
-#include "wrappers.h"
-
 typedef struct stack_node stack_node_t;
 
 struct stack_node {
