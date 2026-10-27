@@ -43,6 +43,7 @@ struct argerr {
    size_t ctx_siz;
 };
 
+[[nodiscard]]
 bool parse_argv(
    int argc,
    const char *argv[],
@@ -51,12 +52,14 @@ bool parse_argv(
    array_t *sourcefiles
 );
 
+[[nodiscard]]
 bool usage(
    optmd_t table[],
    size_t table_len,
    const char *intro
 );
 
+[[nodiscard]]
 opt_errhandler_t argp_errhandle_default;
 
 #endif

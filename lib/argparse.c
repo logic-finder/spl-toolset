@@ -74,6 +74,7 @@ cleanup:
    array_destroy(err_infos);
    array_destroy(toks);
    arena_destroy(arena);
+
    return parse_ret;
 }
 
