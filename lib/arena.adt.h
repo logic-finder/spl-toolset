@@ -54,12 +54,12 @@ inline void arena_free_fallback(arena_t *arena, void *ptr);
  *====================*/
 [[nodiscard]]
 inline void *arena_malloc_fallback(arena_t *arena, size_t siz) {
-   return arena ? arena_malloc(arena, siz) : safe_malloc(siz);
+   return arena ? arena_malloc(arena, siz) : malloc(siz);
 }
 
 [[nodiscard]]
 inline void *arena_calloc_fallback(arena_t *arena, size_t nmemb, size_t siz) {
-   return arena ? arena_calloc(arena, nmemb, siz) : safe_calloc(nmemb, siz);
+   return arena ? arena_calloc(arena, nmemb, siz) : calloc(nmemb, siz);
 }
 
 [[nodiscard]]
@@ -76,7 +76,7 @@ inline void *arena_realloc2x_arr_fallback(
 ) {
    return arena
       ? arena_realloc2x_arr(arena, ptr, cnt, esiz)
-      : safe_realloc2x_arr(ptr, cnt, esiz);
+      : realloc2xarr(ptr, cnt, esiz);
 }
 
 inline void arena_free_fallback(arena_t *arena, void *ptr) {
