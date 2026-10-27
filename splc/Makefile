@@ -4,10 +4,12 @@ LIBDIR := ../lib
 SHELL := /bin/sh
 
 CC := gcc
-CFLAGS := -Wall -W -pedantic
-CFLAGS += -O0 -g --std=c2x
-# CFLAGS += -fsanitize=address -fsanitize=leak -fsanitize=undefined
+CFLAGS := -W -Wall -Werror -Wextra -pedantic
 CFLAGS += -MMD -MP
+CFLAGS += -g
+CFLAGS += -O0
+CFLAGS += --std=c2x
+CFLAGS += -fsanitize=undefined #-fsanitize=leak,address
 CPPFLAGS = -I $(LIBDIR)
 
 SOURCES = $(wildcard *.c)

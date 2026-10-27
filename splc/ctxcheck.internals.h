@@ -10,9 +10,10 @@
 #include "array.adt.h"
 
 typedef enum {
-   CtxcheckStatcodeOk,
-   CtxcheckStatcodeErrcntMax,
-   CtxcheckStatcodeWarncntMax
+   CtxcheckStatOk,
+   CtxcheckStatErr,
+   CtxcheckStatErrcntMax,
+   CtxcheckStatWarncntMax
 } ctxcheck_statcode_t;
 
 typedef struct ctxcheck_ctx ctxcheck_ctx_t;

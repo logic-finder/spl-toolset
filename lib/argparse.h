@@ -9,11 +9,11 @@
 typedef struct argtok argtok_t;
 typedef struct argerr argerr_t;
 typedef bool opt_driver_t(argtok_t *tok, argerr_t *err);
-typedef void opt_errhandler_t(argtok_t *tok, const char *reason, void *ctx);
+typedef bool opt_errhandler_t(argtok_t *tok, const char *reason, void *ctx);
 
 typedef struct {
-   char sname;  /* short name */
-   const char *lname;  /* long name */
+   const char *lname;  /* MUST be the 1st member */
+   char sname;
    opt_driver_t *drive;
    bool reqv;
    const char *help;
@@ -43,7 +43,7 @@ struct argerr {
    size_t ctx_siz;
 };
 
-void parse_argv(
+bool parse_argv(
    int argc,
    const char *argv[],
    optmd_t table[],
@@ -51,7 +51,7 @@ void parse_argv(
    array_t *sourcefiles
 );
 
-void usage(
+bool usage(
    optmd_t table[],
    size_t table_len,
    const char *intro

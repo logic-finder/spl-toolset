@@ -42,6 +42,9 @@ extern void arena_cleanup(arena_t *arena) {
 }
 
 extern void arena_destroy(arena_t *arena) {
+   if (!arena) {
+      return;
+   }
    list_destroy(arena->regions);
    free(arena);
 }

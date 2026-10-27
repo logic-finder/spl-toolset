@@ -365,7 +365,10 @@ extern int levenshtein_distance(const char *s, const char *t) {
       sl = the number of rows
       tl = the number of columns */
 
-   d = safe_calloc((sl + 1) * (tl + 1), sizeof (size_t));
+   d = calloc((sl + 1) * (tl + 1), sizeof *d);
+   if (!d) {
+      return -2;
+   }
 
    #define D(r, c) d[(r) * ((tl) + 1) + (c)]
 
@@ -409,7 +412,10 @@ extern find_alikes_ret_t find_alikes(
       return ret;  /* early exit */
    }
 
-   size_t *dists = safe_malloc(targets_len * sizeof (size_t));
+   size_t *dists = malloc(targets_len * sizeof (size_t));
+   if (!dists) {
+      return ret;
+   }
 
    /* Note. targets should be like:
          accept_set[] = { { "spl01", ... }, { "cor27", ... } }
@@ -424,12 +430,13 @@ extern find_alikes_ret_t find_alikes(
 
    /* Evaluates distances */
    for (size_t i = 0; i < targets_len; i++) {
-      dists[i] = levenshtein_distance(
+      int ld_ret = levenshtein_distance(
          src, GETSTR(i)
       );
-      if (dists[i] == -1) {
+      if (ld_ret < 0) {
          goto cleanup;
       }
+      dists[i] = (size_t) ld_ret;  /* safe, as 0 <= ld_ret <= 255 */
    }
 
    size_t min = dists[0];
@@ -450,7 +457,10 @@ extern find_alikes_ret_t find_alikes(
       }
    }
 
-   const char **results = safe_malloc(results_len * sizeof *results);
+   const char **results = malloc(results_len * sizeof *results);
+   if (!results) {
+      goto cleanup;
+   }
 
    /* Collects candidates which have the same distance with `min` */
    for (size_t i = 0, idx = 0; i < targets_len; i++) {

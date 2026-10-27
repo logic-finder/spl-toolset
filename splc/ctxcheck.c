@@ -25,10 +25,12 @@ extern bool ctxcheck(compile_ctx_t *cctx) {
    if ((octx.warns = array_create(NULL, cctx->arena)) == NULL)
       goto OOM2;
 
-   if (cctx->cfg->vbs) safe_fputs(stdout, ENPREFIX "context-checking...");
+   if (cctx->cfg->vbs) {
+      safe_fputs(stdout, ENPREFIX "context-checking...");
+   }
 
    /* Warnings */
-   if (check_unused_dp(&octx) != CtxcheckStatcodeOk)
+   if (check_unused_dp(&octx) != CtxcheckStatOk)
       goto report_warns;
 
 report_warns:
@@ -37,11 +39,11 @@ report_warns:
    }
 
    /* Errors */
-   if (check_invalid_goto(&octx) != CtxcheckStatcodeOk)
+   if (check_invalid_goto(&octx) != CtxcheckStatOk)
       goto report_errors;
-   if (check_empty_scene(&octx) != CtxcheckStatcodeOk)
+   if (check_empty_scene(&octx) != CtxcheckStatOk)
       goto report_errors;
-   if (check_empty_line(&octx) != CtxcheckStatcodeOk)
+   if (check_empty_line(&octx) != CtxcheckStatOk)
       goto report_errors;
 
 report_errors:
@@ -62,24 +64,28 @@ OOM1:
 }
 
 static ctxcheck_statcode_t regerr(ctxcheck_ctx_t *octx) {
-   array_append(octx->errs, &octx->err, sizeof octx->err);
+   if (!array_append(octx->errs, &octx->err, sizeof octx->err)) {
+      return CtxcheckStatErr;
+   }
 
    octx->errcnt++;
 
    return (octx->errcnt < octx->errcnt_max)
-      ? CtxcheckStatcodeOk
-      : CtxcheckStatcodeErrcntMax;
+      ? CtxcheckStatOk
+      : CtxcheckStatErrcntMax;
 }
 
 static ctxcheck_statcode_t regwarn(ctxcheck_ctx_t *octx) {
    /* Note: octx->err is intended */
-   array_append(octx->warns, &octx->warn, sizeof octx->warn);
+   if (!array_append(octx->warns, &octx->warn, sizeof octx->warn)) {
+      return CtxcheckStatErr;
+   }
 
    octx->warncnt++;
 
    return (octx->warncnt < octx->warncnt_max)
-      ? CtxcheckStatcodeOk
-      : CtxcheckStatcodeWarncntMax;
+      ? CtxcheckStatOk
+      : CtxcheckStatWarncntMax;
 }
 
 static void report_errors(ctxcheck_ctx_t *octx) {
@@ -123,12 +129,12 @@ static inline bool route_scene(ctxcheck_ctx_t *octx) {
 static ctxcheck_statcode_t check_invalid_goto(ctxcheck_ctx_t *octx) {
    bool ret;
 
-   octx->status = CtxcheckStatcodeOk;
+   octx->status = CtxcheckStatOk;
    ret = tree_pre_traverse(octx->nrtv, check_invalid_goto_route, 0, octx);
 
    return ret
-      ? CtxcheckStatcodeOk
-      : CtxcheckStatcodeErrcntMax;
+      ? CtxcheckStatOk
+      : CtxcheckStatErrcntMax;
 }
 
 static bool check_invalid_goto_route(tree_t *t, size_t lv, void *ctx) {
@@ -219,12 +225,8 @@ static bool check_invalid_goto_target_act(ctxcheck_ctx_t *octx) {
       .handle = ctxcheck_errhandle_invalid_goto
    };
    octx->status = regerr(octx);
-   if (octx->status == CtxcheckStatcodeErrcntMax) {
-      goto cleanup;
-   }
 
-cleanup:
-   return (octx->status == CtxcheckStatcodeOk)
+   return (octx->status == CtxcheckStatOk)
       ? true
       : false;
 }
@@ -269,20 +271,16 @@ static bool check_invalid_goto_target_scene(ctxcheck_ctx_t *octx) {
       .handle = ctxcheck_errhandle_invalid_goto
    };
    octx->status = regerr(octx);
-   if (octx->status == CtxcheckStatcodeErrcntMax) {
-      goto cleanup;
-   }
 
-cleanup:
-   return (octx->status == CtxcheckStatcodeOk)
+   return (octx->status == CtxcheckStatOk)
       ? true
       : false;
 }
 
 static ctxcheck_statcode_t check_empty_scene(ctxcheck_ctx_t *octx) {
+   ctxcheck_statcode_t status = CtxcheckStatErr;
    size_t nact, nscn;
    tree_t *act, *scn;
-   ctxcheck_statcode_t status = CtxcheckStatcodeOk;
 
    /* nrtv
       -> act
@@ -311,12 +309,13 @@ static ctxcheck_statcode_t check_empty_scene(ctxcheck_ctx_t *octx) {
             .reason = NULL,
             .handle = ctxcheck_errhandle_empty_scene
          };
-         status = regerr(octx);
-         if (status == CtxcheckStatcodeErrcntMax) {
+         if ((status = regerr(octx)) != CtxcheckStatOk) {
             goto cleanup;
          }
       }
    }
+
+   status = CtxcheckStatOk;
 
 cleanup:
    return status;
@@ -325,12 +324,12 @@ cleanup:
 static ctxcheck_statcode_t check_empty_line(ctxcheck_ctx_t *octx) {
    bool ret;
 
-   octx->status = CtxcheckStatcodeOk;
+   octx->status = CtxcheckStatOk;
    ret = tree_pre_traverse(octx->nrtv, check_empty_line_route, 0, octx);
 
    return ret
-      ? CtxcheckStatcodeOk
-      : CtxcheckStatcodeErrcntMax;
+      ? CtxcheckStatOk
+      : CtxcheckStatErrcntMax;
 }
 
 static bool check_empty_line_route(tree_t *t, size_t lv, void *ctx) {
@@ -379,19 +378,15 @@ static bool check_empty_line_target(ctxcheck_ctx_t *octx) {
       .handle = ctxcheck_errhandle_default
    };
    octx->status = regerr(octx);
-   if (octx->status == CtxcheckStatcodeErrcntMax) {
-      goto cleanup;
-   }
 
-cleanup:
-   return (octx->status == CtxcheckStatcodeOk)
+   return (octx->status == CtxcheckStatOk)
       ? true
       : false;
 }
 
 static ctxcheck_statcode_t check_unused_dp(ctxcheck_ctx_t *octx) {
    size_t dp_clen;
-   ctxcheck_statcode_t status = CtxcheckStatcodeOk;
+   ctxcheck_statcode_t status = CtxcheckStatOk;
 
    dp_clen = tree_clen(octx->dp);
    octx->dp_counters = arena_calloc_fallback(
@@ -416,7 +411,7 @@ static ctxcheck_statcode_t check_unused_dp(ctxcheck_ctx_t *octx) {
          .handle = ctxcheck_warnhandle_unused_dp
       };
       status = regwarn(octx);
-      if (status == CtxcheckStatcodeWarncntMax) {
+      if (status == CtxcheckStatWarncntMax) {
          goto cleanup;
       }
    }

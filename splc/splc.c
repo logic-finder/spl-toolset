@@ -38,8 +38,12 @@ static void checkif_argc1(
       "\t" EXECNAME " (-v | -vv | --version)";
 
    if (argc == 1) {
-      usage(table, table_len, intro);
-      exit(EXIT_SUCCESS);  /* early exit */
+      if (usage(table, table_len, intro)) {
+         exit(EXIT_SUCCESS);  /* early exit */
+      }
+      else {
+         exit(EXIT_FAILURE);
+      }
    }
 }
 
@@ -49,10 +53,11 @@ static bool compile(config_t *cfg) {
       .arena = NULL
    };
    size_t total = array_size(cfg->source_files);
-   bool ret = true;
+   bool ret = false;
 
-   if ((cctx.arena = arena_create()) == NULL)
+   if ((cctx.arena = arena_create()) == NULL) {
       return false;
+   }
 
    arena_info(EXECNAME);
 
@@ -79,40 +84,49 @@ static bool compile(config_t *cfg) {
       else
          assemble(&cctx);
 
-cleanup:
-      arena_cleanup(cctx.arena);
       array_destroy(cctx.toks);
       array_destroy(cctx.ls);
+      arena_cleanup(cctx.arena);
+
+      cctx.toks = NULL;
+      cctx.ls = NULL;
    }
+
+cleanup:
+   array_destroy(cctx.toks);
+   array_destroy(cctx.ls);
    arena_destroy(cctx.arena);
 
    return ret;
 }
 
 static bool loadfile_talkative(compile_ctx_t *cctx, const char *filename) {
+   int nchar;
+
    cctx->ls = loadfile(cctx->arena, filename, &cctx->lc, &cctx->wc);
    if (cctx->ls == NULL) {
-      safe_fprintf(stderr, "fatal: failed to load: %s\n", cctx->sourcefile);
+      (void) fprintf(stderr, "fatal: failed to load: %s\n", cctx->sourcefile);
       return false;
    }
+
    if (cctx->lc == 0) {
-      safe_fprintf(stderr, "fatal: empty file: %s\n", cctx->sourcefile);
-      return false;
+      (void) fprintf(stderr, "fatal: empty file: %s\n", cctx->sourcefile);
+      return false;  /* cleanup takes place in compile() */
    }
 
-   if (!cctx->cfg->vbs) {
-      return true;
+   if (cctx->cfg->vbs) {
+      nchar = printf(
+         "\n"
+         ENPREFIX "loaded the source file " Cbyellow "%s" Creset,
+         filename
+      );
+      if (nchar < 0) return false;
    }
 
-   safe_vprintf(
-      "\n"
-      ENPREFIX "loaded the source file " Cbyellow "%s" Creset,
-      filename
-   );
-   safe_vprintf(
+   nchar = printf(
       " (total " Cbwhite "%zu" Creset " lines, " Cbwhite "%zu" Creset " chars)\n",
       cctx->lc, cctx->wc
    );
 
-   return true;
+   return (0 <= nchar) ? true : false;
 }

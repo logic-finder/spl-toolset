@@ -7,7 +7,6 @@
 
 #include "config.h"
 #include "common.h"
-#include "wrappers.h"
 #include "colorcodes.h"
 #include "argp_drivers.h"
 #include "../lib/strutils.h"

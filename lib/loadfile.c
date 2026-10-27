@@ -13,15 +13,15 @@ extern array_t *loadfile(
    char *run;
    size_t run_len, lcnt, wcnt;
 
-   /* init */
+   /* Init */
    lines = NULL;
    wcnt = 0;  /* word count */
    lcnt = 0;  /* line count */
 
    if ((fp = fopen(filename, "r")) == NULL)
-      goto ERR1;
+      goto err1;
    if ((lines = array_create(destruct_line, arena)) == NULL)
-      goto ERR2;
+      goto err2;
 
    while (!readln(fp, &run, &run_len)) {
       line.len = run_len;
@@ -29,15 +29,15 @@ extern array_t *loadfile(
       line.num = ++lcnt;
       wcnt += run_len;
       if (!array_append(lines, &line, sizeof line)) {
-         goto ERR3;
+         goto err3;
       }
    }
 
-ERR3:
-   if (!arena) array_destroy(lines);
-ERR2:
+err3:
+   ;  /* needs to keep `line_t`s  */
+err2:
    (void) fclose(fp);
-ERR1:
+err1:
    if (lc != NULL) *lc = lcnt;
    if (wc != NULL) *wc = wcnt;
    return lines;  /* line was initialized NULL */

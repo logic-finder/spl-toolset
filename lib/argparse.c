@@ -8,97 +8,113 @@ Improvement Ideas
       -O3 => uses 3 as its value
 */
 
-extern void parse_argv(
+extern bool parse_argv(
    int argc,
    const char *argv[],
    optmd_t table[],
    size_t table_len,
    array_t *sourcefiles
 ) {
+   bool parse_ret = false;
+   arena_t *arena = NULL;
+   array_t *toks = NULL;
+   array_t *err_infos = NULL;
    argp_ctx_t *actx;
 
-   if ((actx = malloc(sizeof *actx)) == NULL)
-      goto OOM1;
-   if ((actx->arena = arena_create()) == NULL)
-      goto OOM2;
-   actx->toks = array_create(destruct_argtok, actx->arena);
-   if (actx->toks == NULL)
-      goto OOM3;
-   actx->err_infos = array_create(destruct_errinfo, actx->arena);
-   if (actx->err_infos == NULL)
-      goto OOM4;
+   /* Inits actx */
+   if (!(arena = arena_create()))
+      goto cleanup;
+   if (!(actx = arena_malloc(arena, sizeof *actx)))
+      goto cleanup;
+   if (!(toks = array_create(destruct_argtok, arena)))
+      goto cleanup;
+   if (!(err_infos = array_create(destruct_errinfo, arena)))
+      goto cleanup;
+
+   actx->arena = arena;
    actx->argc = argc;
    actx->argv = argv;
+   actx->arg = NULL;
+   actx->toks = toks;
+   actx->tok = NULL;
+   actx->toks_len = 0;
    actx->idx = 0;
    actx->eoe = false;
+   actx->table = table;
+   actx->table_len = table_len;
+   actx->sourcefiles = sourcefiles;
+   actx->errcnt = 0;
+   actx->errcnt_max = 20;
    actx->err = (argerr_t) {
       .errhandle = argp_errhandle_default,
       .reason = "none",
       .ctx = NULL,
       .ctx_siz = 0
    };
-   actx->errcnt = 0;
-   actx->errcnt_max = 10;
-   actx->table = table;
-   actx->table_len = table_len;
-   actx->sourcefiles = sourcefiles;
+   actx->err_infos = err_infos;
+   actx->lookahead_ret = false;
+   actx->preprocess_ret = false;
 
-   if (setjmp(actx->env) != 0) {
-      goto report_error;
-   }
-
-   if (validate_schemas(actx) == false)
+   /* Main logic */
+   if (validate_schemas(actx) != ArgpStatOk)
       goto cleanup;
-   tokenize_argv(actx);
-   parse_argtoks(actx);
+   if (tokenize_argv(actx) != ArgpStatOk)
+      goto cleanup;
+   if (parse_argtoks(actx) != ArgpStatOk)
+      goto cleanup;
 
-   // showargtoks(actx, true);
-
-report_error:
    if (actx->errcnt > 0) {
-      report_errors(actx);
-      exit(EXIT_FAILURE);  // fixme: this is technically a resource leak
+      if (!report_errors(actx)) {
+         goto cleanup;
+      }
    }
+   else parse_ret = true;
 
 cleanup:
-   // since this wouldn't be invoked;
-   // rewrite the logic and do not use setjmp / longjmp
-   // the idea is: collect all resources even with a error path
-   // the same thing applies to parse.c / lex.c
-   array_destroy(actx->err_infos);
-OOM4:
-   array_destroy(actx->toks);
-OOM3:
-   arena_destroy(actx->arena);
-OOM2:
-   free(actx);
-OOM1:
-   return;
+   array_destroy(err_infos);
+   array_destroy(toks);
+   arena_destroy(arena);
+   return parse_ret;
 }
 
-extern void usage(
+extern bool usage(
    optmd_t table[],
    size_t table_len,
    const char *intro
 ) {
-   safe_vprintf("%s\n\n", intro);
+   int nchar;
 
-   safe_vprintf("OPTIONS\n");
+   nchar = printf("%s\n\n", intro);
+   if (nchar < 0) return false;
+
+   nchar = printf("OPTIONS\n");
+   if (nchar < 0) return false;
+
    for (size_t i = 0; i < table_len; i++) {
-      safe_vprintf("\t" Cyellow);
-      if (table[i].sname != '\0' && table[i].lname == NULL)
-         safe_vprintf("-%c" Creset, table[i].sname);
+      nchar = printf("\t" Cyellow);
+      if (nchar < 0) return false;
+
+      if (table[i].sname != '\0' && table[i].lname == NULL) {
+         nchar = printf("-%c" Creset, table[i].sname);
+         if (nchar < 0) return false;
+      }
       else
-      if (table[i].sname == '\0' && table[i].lname != NULL)
-         safe_vprintf("--%s" Creset, table[i].lname);
-      else
-         safe_vprintf(
+      if (table[i].sname == '\0' && table[i].lname != NULL) {
+         nchar = printf("--%s" Creset, table[i].lname);
+         if (nchar < 0) return false;
+      }
+      else {
+         nchar = printf(
             "-%c" Creset ", " Cyellow "--%s" Creset,
             table[i].sname, table[i].lname);
-      safe_vprintf("\n\t\t%s\n", table[i].help);
+         if (nchar < 0) return false;
+      }
+
+      nchar = printf("\n\t\t%s\n", table[i].help);
+      if (nchar < 0) return false;
    }
 
-   safe_vprintf(
+   nchar = printf(
       "\n"
       "tip: short flags can be specified in a"
          " row like " Ccyan "-xvf" Creset "\n"
@@ -108,18 +124,21 @@ extern void usage(
          " the same as " Ccyan "-fvalue" Creset "\n"
       "tip: use " Ccyan "--" Creset " to specify the end of option\n"
    );
+   if (nchar < 0) return false;
 }
 
-static bool validate_schemas(argp_ctx_t *actx) {
-   size_t i, j;
-   optmd_t *subject, *against;
+static argp_stat_t validate_schemas(argp_ctx_t *actx) {
    size_t errcnt = 0;
-   bool ret;
+   optmd_t *subject, *against;
+   size_t i, j;
+   int nchar;
 
    /* option table is empty? */
    if (actx->table_len == 0) {
-      safe_vprintf("the option table is empty.\n");
-      errcnt++;
+      (void) printf("the option table is empty.\n");
+      /* whether this printf is successful or not,
+         this path returns Err always */
+      return ArgpStatErr;
    }
 
    /* duplication check for short flags */
@@ -132,7 +151,9 @@ static bool validate_schemas(argp_ctx_t *actx) {
          if (against->sname == '\0')
             continue;
          if (subject->sname == against->sname) {
-            safe_vprintf("md[%zu] has the same short name with md[%zu].\n", i, j);
+            nchar = printf(
+               "md[%zu] has the same short name with md[%zu].\n", i, j);
+            if (nchar < 0) return ArgpStatErr;
             errcnt++;
          }
       }
@@ -142,7 +163,8 @@ static bool validate_schemas(argp_ctx_t *actx) {
    for (i = 0; i < actx->table_len; i++) {
       subject = &actx->table[i];
       if (subject->lname == NULL) {
-         safe_vprintf("no long name is given for md[%zu].\n", i);
+         nchar = printf("no long name is given for md[%zu].\n", i);
+         if (nchar < 0) return ArgpStatErr;
          errcnt++;
       }
    }
@@ -161,71 +183,73 @@ static bool validate_schemas(argp_ctx_t *actx) {
          if (against->lname == NULL)
             continue;
          if (!strcmp(subject->lname, against->lname)) {
-            safe_vprintf("md[%zu] has the same long name with md[%zu].\n", i, j);
+            nchar = printf(
+               "md[%zu] has the same long name with md[%zu].\n", i, j);
+            if (nchar < 0) return ArgpStatErr;
             errcnt++;
          }
       }
    }
 
-   if (errcnt == 0) {
-      ret = true;
-   }
-   else {
-      ret = false;
+   if (errcnt > 0) {
       /* No choice but to kill it! */
-      safe_fputs(
-         stdout,
+      (void) printf(
          "Currently the program has a problematic option table. "
          "Terminating.\n"
       );
+      return ArgpStatErr;
    }
-
-cleanup:
-   return ret;
+   else {
+      return ArgpStatOk;
+   }
 }
 
-static void tokenize_argv(argp_ctx_t *actx) {
-   bool ret = true;
-
+static argp_stat_t tokenize_argv(argp_ctx_t *actx) {
    /* Note: begins from 1 to skip the program name */
    for (int i = 1; i < actx->argc; i++) {
       actx->arg = actx->argv[i];
 
       if (actx->eoe) {
-         populate_as_posarg(actx);
+         if (!populate_as_posarg(actx)) {
+            return ArgpStatErr;
+         }
          continue;
       }
 
       if (!strcmp(actx->arg, "--")) {
          actx->eoe = true;
-         if (!(ret = populate_as_dashdash(actx)))
-            goto cleanup;
+         if (!populate_as_dashdash(actx)) {
+            return ArgpStatErr;
+         }
       }
       else
       if (!strncmp(actx->arg, "--", 2)) {
-         if (!(ret = populate_as_longflag(actx)))
-            goto cleanup;
+         if (!populate_as_longflag(actx)) {
+            return ArgpStatErr;
+         }
       }
       else
       if (actx->arg[0] == '-' && actx->arg[1] != '\0') {
-         if (!(ret = populate_as_shortflag(actx)))
-            goto cleanup;
+         if (!populate_as_shortflag(actx)) {
+            return ArgpStatErr;
+         }
       }
       else {
-         populate_as_posarg(actx);
+         if (!populate_as_posarg(actx)) {
+            return ArgpStatErr;
+         }
       }
    }
-
    actx->toks_len = array_size(actx->toks);
 
-cleanup:
-   return ret;
+   return ArgpStatOk;
 }
 
-static void parse_argtoks(argp_ctx_t *actx) {
+static argp_stat_t parse_argtoks(argp_ctx_t *actx) {
+   argp_stat_t stat;
    argtok_t *tok;
-   bool preproc_result, parse_result;
-   bool ret = true;
+   bool parse_result;
+
 
    /* Note: toks has at least one element since argc > 1 supposed */
    /* Did not use gettok() on purpose; since it advances actx->idx,
@@ -240,8 +264,9 @@ static void parse_argtoks(argp_ctx_t *actx) {
 
       /* positional argument? */
       if (tok->kind == ArgtokPosArg) {
-         if (!(ret = handle_posarg(actx)))
-            goto cleanup;
+         if (!handle_posarg(actx)) {
+            return ArgpStatErr;
+         }
          goto next;
       }
 
@@ -253,7 +278,9 @@ static void parse_argtoks(argp_ctx_t *actx) {
             .table_len = actx->table_len
          };
          actx->err.ctx_siz = sizeof (errhandle_unrecognized_ctx_t);
-         regerr(actx, tok);
+         if ((stat = regerr(actx, tok)) != ArgpStatOk) {
+            return stat;  /* Err or ErrcntFull */
+         }
          goto next;
       }
 
@@ -265,25 +292,31 @@ static void parse_argtoks(argp_ctx_t *actx) {
          actx->err.errhandle = errhandle_seen_multiple;
          actx->err.ctx = tok->md;
          actx->err.ctx_siz = sizeof *tok->md;
-         regerr(actx, tok);
+         if ((stat = regerr(actx, tok)) != ArgpStatOk) {
+            return stat;
+         }
          goto next;
       }
 
       switch (tok->kind) {
          /* to be accepted: "-j" | "-j4" | "-j 4" */
-         case ArgtokShortFlag:
-            preproc_result = preprocess_shortflag(actx);
-         break;
+         case ArgtokShortFlag: {
+            if ((stat = preprocess_shortflag(actx)) != ArgpStatOk) {
+               return stat;
+            }
+         }
 
          /* to be accepted: "--job" | "--job=4" | "--job 4" */
-         case ArgtokLongFlag:
-            preproc_result = preprocess_longflag (actx);
-         break;
+         case ArgtokLongFlag: {
+            if ((stat = preprocess_longflag (actx)) != ArgpStatOk) {
+               return stat;
+            }
+         }
 
          /* control never reaches default */
          default: ;
       }
-      if (preproc_result == false) {
+      if (actx->preprocess_ret == false) {
          goto next;
       }
 
@@ -293,25 +326,31 @@ static void parse_argtoks(argp_ctx_t *actx) {
       parse_result = (*tok->md->drive)(tok, &actx->err);
       if (parse_result == false) {
          /* err has been filled by drive() */
-         regerr(actx, tok);
+         if ((stat = regerr(actx, tok)) != ArgpStatOk) {
+            return stat;
+         }
       }
 
    next:
       if (actx->idx == actx->toks_len - 1) {
-         return;  /* end of token */
+         break;  /* end of token */
       }
-      tok = gettok(actx);
+      if ((stat = gettok(actx)) != ArgpStatOk) {
+         return stat;
+      }
    }
 
    /* Collects the remanining positional arguments after -- as filenames */
    while (actx->idx < actx->toks_len - 1) {
-      gettok(actx);
-      if (!(ret = handle_posarg(actx)))
-         goto cleanup;
+      if ((stat = gettok(actx)) != ArgpStatOk) {
+         return stat;
+      }
+      if (!handle_posarg(actx)) {
+         return ArgpStatErr;
+      }
    }
 
-cleanup:
-   return ret;
+   return ArgpStatOk;
 }
 
 static bool handle_posarg(argp_ctx_t *actx) {
@@ -355,7 +394,7 @@ static bool populate_as_longflag(argp_ctx_t *actx) {
 
    tok.field = strndup(actx->arg, eq_pos);
    if (!tok.field) {
-      goto ERR1;
+      goto err1;
    }
    tok.md = query_by_longname(actx, tok.field);
 
@@ -365,7 +404,7 @@ static bool populate_as_longflag(argp_ctx_t *actx) {
       if (arg_len - eq_pos > 1) {
          tok.value = strdup(&actx->arg[eq_pos + 1]);
          if (!tok.value) {
-            goto ERR2;
+            goto err2;
          }
       }
    }
@@ -373,9 +412,9 @@ static bool populate_as_longflag(argp_ctx_t *actx) {
    /* normal path */
    return array_append(actx->toks, &tok, sizeof tok);
 
-ERR2:
+err2:
    free(tok.field);
-ERR1:
+err1:
    return false;
 }
 
@@ -388,7 +427,6 @@ static bool populate_as_shortflag(argp_ctx_t *actx) {
       .has_eq = false
    };
    size_t arg_len;
-   bool ret = true;
 
    actx->arg++;  /* skips - */
    arg_len = strlen(actx->arg);
@@ -399,10 +437,8 @@ static bool populate_as_shortflag(argp_ctx_t *actx) {
    for (char flag; (flag = actx->arg[0]) != '\0'; actx->arg++, arg_len--) {
       /* Copies one letter as a string */
       tok.field = strndup(actx->arg, 1);
-
       if (!tok.field) {
-         ret = false;
-         goto ERR1;
+         goto err1;
       }
 
       /* Looks up the option table to know whether this is
@@ -414,41 +450,37 @@ static bool populate_as_shortflag(argp_ctx_t *actx) {
             /* Treats the rest of 'arg' as this short flag's value.
                For example:
                   -abcoa.out
-                      ^~~~~~
+                      ^^~~~~
                since -o is a value-taking option */
             tok.value = strdup(&actx->arg[1]);
-
             if (!tok.value) {
-               ret = false;
-               goto ERR2;
+               goto err2;
             }
          }
       }
 
-      if (!(ret = array_append(actx->toks, &tok, sizeof tok))) {
-         goto ERR3;
+      if (!array_append(actx->toks, &tok, sizeof tok)) {
+         goto err3;
       }
 
       /* if this flag were a value-taking option, the rest of 'arg'
          had been consumed as its value */
       if (tok.md != NULL && tok.md->reqv) {
-         /* normal path #1: -abcdoa.out */
-         return true;
+         return true;  /* happy path: -abcoa.out */
       }
    }
 
-ERR3:
+   return true;  /* happy path: -abc */
+
+err3:
    free(tok.value);  /* safe, since it was NULL-init'ed */
-ERR2:
-   free(tok.field);  /* safe, also */
-ERR1:
-   /* Can be a happy path or an error path.
-      if happy path, it means like -abcd (all non-val-taking options)
-      if error path, had a problem with ERR1, ERR2, or ERR3 */
-   return ret;
+err2:
+   free(tok.field);  /* safe, also. */
+err1:
+   return false;
 }
 
-static void populate_as_posarg(argp_ctx_t *actx) {
+static bool populate_as_posarg(argp_ctx_t *actx) {
    argtok_t tok = {
       .kind = ArgtokPosArg,
       .field = strdup(actx->arg),
@@ -457,7 +489,7 @@ static void populate_as_posarg(argp_ctx_t *actx) {
       .has_eq = false
    };
 
-   array_append(actx->toks, &tok, sizeof tok);
+   return array_append(actx->toks, &tok, sizeof tok);
 }
 
 static optmd_t *query_by_shortname(argp_ctx_t *actx, char flag) {
@@ -492,17 +524,24 @@ static optmd_t *query_by_longname(argp_ctx_t *actx, const char *flag) {
    return NULL;
 }
 
-static argtok_t *gettok(argp_ctx_t *actx) {
+[[nodiscard]]
+static argp_stat_t gettok(argp_ctx_t *actx) {
+   argp_stat_t stat;
+
+   /* reached end of token? */
    if (actx->idx == actx->toks_len - 1) {
       actx->err.errhandle = errhandle_out_of_tok;
-      regerr(actx, actx->tok);  /* dummy tok */
-      longjmp(actx->env, 1);
+      /* Note: actx->tok is meaningless -- just placeholder */
+      if ((stat = regerr(actx, actx->tok)) != ArgpStatOk) {
+         return stat;
+      }
+      return ArgpStatErr;  /* end of token */
    }
 
    actx->idx++;
    actx->tok = array_peek(actx->toks, actx->idx);
 
-   return actx->tok;
+   return ArgpStatOk;
 }
 
 static void ungettok(argp_ctx_t *actx) {
@@ -510,98 +549,131 @@ static void ungettok(argp_ctx_t *actx) {
    actx->tok = array_peek(actx->toks, actx->idx);
 }
 
-static bool preprocess_shortflag(argp_ctx_t *actx) {
-   argtok_t *tok;
+static argp_stat_t preprocess_shortflag(argp_ctx_t *actx) {
+   argp_stat_t stat;
+   argtok_t *tok = actx->tok;
 
-   tok = actx->tok;
-
-   /* this option doesn't take a value */
+   /* This option doesn't take a value */
    if (tok->md->reqv == false) {
       /* Note: tok->value must be NULL in this case
          due to the logic of populate_as_shortflag() */
-      return true;
+      actx->preprocess_ret = true;
+      return ArgpStatOk;
    }
 
    /* e.g. -j4 */
    if (tok->value != NULL) {
-      return true;
+      actx->preprocess_ret = true;
+      return ArgpStatOk;
    }
 
    /* e.g. -j 4 */
-   if (lookahead(actx)) {
-      return true;
+   if ((stat = lookahead(actx)) != ArgpStatOk) {
+      return stat;
+   }
+   if (actx->lookahead_ret) {
+      actx->preprocess_ret = true;
+      return ArgpStatOk;
    }
 
-   /* error path! */
+   /* Expected one, but no positional argument existed */
+   actx->preprocess_ret = false;
    ungettok(actx);
+
    actx->err.errhandle = argp_errhandle_default;
    actx->err.reason = "no positional argument follows";
-   regerr(actx, actx->tok);
-   return false;
+
+   return regerr(actx, actx->tok);
 }
 
-static bool preprocess_longflag(argp_ctx_t *actx) {
-   argtok_t *tok;
+static argp_stat_t preprocess_longflag(argp_ctx_t *actx) {
+   argp_stat_t stat;
+   argtok_t *tok = actx->tok;
 
-   tok = actx->tok;
-
-   /* this option doesn't take a value */
+   /* This option doesn't take a value */
    if (tok->md->reqv == false) {
-      /* error path! */
       if (tok->value != NULL) {
+         actx->preprocess_ret = false;
          actx->err.errhandle = argp_errhandle_default;
          actx->err.reason = "doesn't require a value but given one";
-         regerr(actx, tok);
-         return false;
+         if ((stat = regerr(actx, tok)) != ArgpStatOk) {
+            return stat;
+         }
+         return ArgpStatOk;
       }
       if (tok->has_eq) {
+         actx->preprocess_ret = false;
          actx->err.errhandle = argp_errhandle_default;
          actx->err.reason = "'=' is used with a non-value-taking option";
-         regerr(actx, tok);
-         return false;
+         if ((stat = regerr(actx, tok)) != ArgpStatOk) {
+            return stat;
+         }
+         return ArgpStatOk;
       }
-      /* a valid non-value-taking option */
-      return true;
+      /* A valid non-value-taking option */
+      actx->preprocess_ret = true;
+      return ArgpStatOk;
    }
 
    if (tok->has_eq) {
-      /* error path! */
+      /* e.g. --job= */
       if (tok->value == NULL) {
+         actx->preprocess_ret = false;
          actx->err.errhandle = argp_errhandle_default;
          actx->err.reason = "value not given after '='";
-         regerr(actx, tok);
-         return false; /* e.g. --job= */
+         if ((stat = regerr(actx, tok)) != ArgpStatOk) {
+            return stat;
+         }
+         return ArgpStatOk;
       }
-      else
-         return true;  /* e.g. --job=4 */
+      /* e.g. --job=4 */
+      else {
+         actx->preprocess_ret = true;
+         return ArgpStatOk;
+      }
    }
 
    /* e.g. --job 4 */
-   if (lookahead(actx)) {
-      return true;
+   if ((stat = lookahead(actx)) != ArgpStatOk) {
+      return stat;
+   }
+   if (actx->lookahead_ret) {
+      actx->preprocess_ret = true;
+      return ArgpStatOk;
    }
 
-   /* error path! */
+   /* Expected one, but no positional argument existed */
+   actx->preprocess_ret = false;
    ungettok(actx);
+
    actx->err.errhandle = argp_errhandle_default;
    actx->err.reason = "no positional argument follows";
-   regerr(actx, actx->tok);
-   return false;
+
+   return regerr(actx, actx->tok);
 }
 
-static bool lookahead(argp_ctx_t *actx) {
+static argp_stat_t lookahead(argp_ctx_t *actx) {
+   argp_stat_t stat;
    argtok_t *curr, *lookahead;
 
    curr = actx->tok;
-   lookahead = gettok(actx);
+   if ((stat = gettok(actx)) != ArgpStatOk) {
+      return stat;
+   }
+   lookahead = actx->tok;
 
    if (lookahead->kind == ArgtokPosArg) {
       /* tok->value is NULL, thus okay to overwrite */
-      curr->value = strdup(lookahead->field);
-      return true;
+      if (!(curr->value = strdup(lookahead->field))) {
+         return ArgpStatErr;
+      }
+      actx->lookahead_ret = true;
+   }
+   else {
+      actx->lookahead_ret = false;
    }
 
-   return false;
+   return ArgpStatOk;
 }
 
 static void destruct_argtok(void *item, size_t idx) {
@@ -620,80 +692,118 @@ static void destruct_errinfo(void *item, size_t idx) {
    ei = item;
    free(ei->tok.field);
    free(ei->tok.value);
-   free(ei->ctx);
 }
 
-extern void argp_errhandle_default(argtok_t *tok, const char *reason, void *ctx) {
+extern bool argp_errhandle_default(argtok_t *tok, const char *reason, void *ctx) {
    /* Note: for short flag and long flag, whose tok is fully filled */
+   int nchar;
+
    (void) ctx;
-   safe_vprintf("%s: %s\n", tok->field, reason);
+   nchar = printf("%s: %s\n", tok->field, reason);
+
+   return (0 <= nchar) ? true : false;
 }
 
-static void errhandle_seen_multiple(argtok_t *tok, const char *reason, void *ctx) {
+static bool errhandle_seen_multiple(argtok_t *tok, const char *reason, void *ctx) {
    /* Note: for short flag and long flag, whose tok is fully filled */
+   int nchar;
    optmd_t *md;
 
    (void) reason;
-
    md = ctx;
-   safe_vprintf(
+
+   nchar = printf(
       "%s: already specified %zu times\n",
       tok->field,
       md->seen
    );
+
+   return (0 <= nchar) ? true : false;
 }
 
-static void errhandle_unrecognized(argtok_t *tok, const char *reason, void *ctx) {
+static bool errhandle_unrecognized(argtok_t *tok, const char *reason, void *ctx) {
    /* Note: only tok.field is available since this is not a valid option */
    static bool once = false;
    static const char *err_short = "unrecognized short flag";
    static const char *err_long  = "unrecognized long flag";
 
-   errhandle_unrecognized_ctx_t *ectx;
-   array_t *candidates;
+   errhandle_unrecognized_ctx_t *ectx = ctx;
+   find_alikes_ret_t ret = { .alikes = NULL };
+   bool handle_ret = false;
+   int nchar;
 
    (void) reason;
-   ectx = ctx;
-   candidates = find_opt_candidates(tok, ectx);
+   ret = find_alikes(
+      tok->field,
+      ectx->table,
+      ectx->table_len,
+      sizeof ESIZ(ectx->table)
+   );
+   if (!ret.alikes) {
+      return false;
+   }
 
    if (tok->kind == ArgtokShortFlag) {
-      safe_vprintf("%s: %s\n", tok->field, err_short);
+      nchar = printf("%s: %s\n", tok->field, err_short);
+      if (nchar < 0) goto cleanup;
    }
    else /* long flag */ {
-      safe_vprintf("%s: %s. Do you mean ", tok->field, err_long);
+      nchar = printf("%s: %s. Do you mean ", tok->field, err_long);
+      if (nchar < 0) goto cleanup;
+
       /* at least one exists */
-      if (array_size(candidates) == 1) {
-         safe_vprintf(Cbgreen "--%s" Creset "?\n", array_peek(candidates, 0));
+      if (ret.nmemb == 1) {
+         nchar = printf(Cbgreen "--%s" Creset "?\n", ret.alikes[0]);
+         if (nchar < 0) goto cleanup;
       }
       else {
-         safe_vprintf("one of the following?\n\t" Cbgreen);
-         for (size_t i = 0; i < array_size(candidates); i++) {
-            safe_vprintf("%s  ", array_peek(candidates, i));
+         nchar = printf("one of the following?\n\t" Cbgreen);
+         if (nchar < 0) goto cleanup;
+
+         for (size_t i = 0; i < ret.nmemb; i++) {
+            nchar = printf("%s  ", ret.alikes[i]);
+            if (nchar < 0) goto cleanup;
          }
-         safe_vprintf(Creset "\n");
+         nchar = printf(Creset "\n");
+         if (nchar < 0) goto cleanup;
       }
-      array_destroy(candidates);
    }
 
    if (!once) {
-      safe_vprintf(
+      nchar = printf(
          "* Note: should this be a filename, specify '"
          Cbwhite "--" Creset "' first\n"
          "* Note: type "
          Cbmagenta "-h" Creset " or "
          Cbmagenta "--help" Creset " to see the manual page\n"
       );
+      if (nchar < 0) goto cleanup;
       once = true;
    }
+
+   handle_ret = true;
+
+cleanup:
+   free(ret.alikes);
+
+   return handle_ret;
 }
 
-static void errhandle_out_of_tok(argtok_t *tok, const char *reason, void *ctx) {
+static bool errhandle_out_of_tok(argtok_t *tok, const char *reason, void *ctx) {
+   int nchar;
+
    /* Note: can't use tok in this context */
    (void) tok, (void) reason, (void) ctx;
-   safe_vprintf("argparse: ran out of command line arguments, having expected one\n");
+
+   nchar = printf(
+      "argparse: ran out of command line arguments, "
+      "having expected one\n"
+   );
+
+   return (0 <= nchar) ? true : false;
 }
 
-static void regerr(argp_ctx_t *actx, argtok_t *tok) {
+static argp_stat_t regerr(argp_ctx_t *actx, argtok_t *tok) {
    errinfo_t ei = {
       .tok = *tok,
       .err = actx->err,  /* structs are copied */
@@ -701,100 +811,74 @@ static void regerr(argp_ctx_t *actx, argtok_t *tok) {
    };
 
    /* Inits ei.tok */
-   if (tok->field != NULL) ei.tok.field = strdup(tok->field);
-   if (tok->value != NULL) ei.tok.value = strdup(tok->value);
+   if (tok->field != NULL) {
+      if (!(ei.tok.field = strdup(tok->field))) {
+         goto err1;
+      }
+   }
+   if (tok->value != NULL) {
+      if (!(ei.tok.value = strdup(tok->value))) {
+         goto err2;
+      }
+   }
 
    /* Inits ei.ctx */
    if (actx->err.ctx != NULL) {
-      ei.ctx = safe_malloc(actx->err.ctx_siz);
+      if (!(ei.ctx = arena_malloc(actx->arena, actx->err.ctx_siz))) {
+         goto err3;
+      }
       memcpy(ei.ctx, actx->err.ctx, actx->err.ctx_siz);
    }
 
+   if (!array_append(actx->err_infos, &ei, sizeof ei)) {
+      goto err4;
+   }
    actx->errcnt++;
-   array_append(actx->err_infos, &ei, sizeof ei);
 
-   /* cleanup the error structure */
+   /* Resets .ctx */
    actx->err.ctx = NULL;
 
    if (actx->errcnt == actx->errcnt_max) {
-      longjmp(actx->env, 1);
+      return ArgpStatErrcntFull;
    }
+   else {
+      return ArgpStatOk;
+   }
+
+err4:
+   ;  /* ei.ctx used arena */
+err3:
+   free(ei.tok.value);
+err2:
+   free(ei.tok.field);
+err1:
+   return ArgpStatErr;
 }
 
-static void report_errors(argp_ctx_t *actx) {
+static bool report_errors(argp_ctx_t *actx) {
    size_t len;
    errinfo_t *ei;
+   int nchar;
 
    len = array_size(actx->err_infos);
 
    for (size_t i = 0; i < len; i++) {
       ei = array_peek(actx->err_infos, i);
-      ei->err.errhandle(&ei->tok, ei->err.reason, ei->ctx);
+      if (!ei->err.errhandle(&ei->tok, ei->err.reason, ei->ctx)) {
+         return false;
+      }
    }
 
    if (actx->errcnt < actx->errcnt_max) {
-      return;
+      return true;
    }
 
-   safe_vprintf("error count reached max."
+   nchar = printf("error count reached max."
       " Aborting argv parsing at idx = %zu.\n",
       actx->idx
    );
-}
 
-// fixme: find_alikes로 대체하기
-// 그러려면 우선 옵션 배열 구조체에서 lname을 맨 위로 옮겨놔야 함 (optmds는 .lname=으로 정의되어 있으니까 수정할 필요 x)
-static array_t *find_opt_candidates(
-   argtok_t *tok,
-   errhandle_unrecognized_ctx_t *ctx
-) {
-   size_t dists[ctx->table_len];  /* assumes table is not empty */
-
-   /* Evaluates distances */
-   for (size_t i = 0; i < ctx->table_len; i++) {
-      dists[i] = levenshtein_distance(tok->field, ctx->table[i].lname);
-      if (dists[i] == -1) {
-         return NULL;
-      }
-   }
-
-   size_t min = dists[0];
-
-   /* Finds the smallest distance */
-   for (size_t i = 1; i < ctx->table_len; i++) {
-      if (min > dists[i]) {
-         min = dists[i];
-      }
-   }
-
-   array_t *results;
-   bool stat;
-
-   results = array_create(NULL, NULL);
-   if (results == NULL) {
-      return NULL;
-   }
-
-   /* Collects candidates which have the same distance with `min` */
-   for (size_t i = 0; i < ctx->table_len; i++) {
-      if (min == dists[i]) {
-         stat = array_append(
-            results,
-            ctx->table[i].lname,
-            strlen(ctx->table[i].lname) + 1  /* +1 for \0 */
-         );
-         if (stat == false) {
-            goto cleanup;
-         }
-      }
-   }
-
-   /* normal path hits this return */
-   return results;
-
-cleanup:
-   array_destroy(results);
-   return NULL;
+   return (0 <= nchar) ? true : false;
 }
 
 /*** DEBUG ***/

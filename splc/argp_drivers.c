@@ -228,35 +228,57 @@ static bool drive_warning(argtok_t *tok, argerr_t *err) {
    return false;
 }
 
-static void errhandle_unrecognized_value(argtok_t *tok, const char *reason, void *ctx) {
-   find_alikes_ret_t ret;
-   errhandle_unrecognized_value_ctx_t *ectx;
+static bool errhandle_unrecognized_value(
+   argtok_t *tok,
+   const char *reason,
+   void *ctx
+) {
+   errhandle_unrecognized_value_ctx_t *ectx = ctx;
+   find_alikes_ret_t ret = { .alikes = NULL };
+   bool handle_ret = false;
+   int nchar;
 
    (void) reason;
-   ectx = ctx;
-
    ret = find_alikes(
       tok->value,
       ectx->targets,
       ectx->targets_len,
       ectx->target_siz
    );
+   if (!ret.alikes) {
+      return false;
+   }
 
-   safe_vprintf(
+   nchar = printf(
       "%s: unrecognized value " Cbwhite "'%s'" Creset ".",
       tok->field, tok->value
    );
-   safe_vprintf(" Do you mean ");
+   if (nchar < 0) goto cleanup;
+
+   nchar = printf(" Do you mean ");
+   if (nchar < 0) goto cleanup;
+
    if (ret.nmemb == 1) {
-      safe_vprintf(Cbgreen "'%s'" Creset "?\n", ret.alikes[0]);
+      nchar = printf(Cbgreen "'%s'" Creset "?\n", ret.alikes[0]);
+      if (nchar < 0) goto cleanup;
    }
    else {
-      safe_vprintf("one of the following?\n\t" Cbgreen);
+      nchar = printf("one of the following?\n\t" Cbgreen);
+      if (nchar < 0) goto cleanup;
+
       for (size_t i = 0; i < ret.nmemb; i++) {
-         safe_vprintf("%s  ", ret.alikes[i]);
+         nchar = printf("%s  ", ret.alikes[i]);
+         if (nchar < 0) goto cleanup;
       }
-      safe_vprintf(Creset "\n");
+
+      nchar = printf(Creset "\n");
+      if (nchar < 0) goto cleanup;
    }
 
+   handle_ret = true;
+
+cleanup:
    free(ret.alikes);
+
+   return handle_ret;
 }
