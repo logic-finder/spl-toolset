@@ -4,7 +4,9 @@
 extern list_t *list_create(list_destructor_t *destruct) {
    list_t *list;
 
-   list = safe_malloc(sizeof *list);
+   if (!(list = malloc(sizeof *list))) {
+      return NULL;
+   }
 
    list->head = NULL;
    list->tail = NULL;
@@ -16,7 +18,7 @@ extern list_t *list_create(list_destructor_t *destruct) {
 
 extern void list_cleanup(list_t *list) {
    if (list->destruct != NULL) {
-      list_foreach(list, list->destruct);
+      list_foreach(list, list->destruct, NULL);
    }
 
    while (list_pop(list, NULL) == ListStatcodeOk)
@@ -36,7 +38,11 @@ extern void *list_push(list_t *list, void *item, size_t item_size) {
       AFTER
       node <--> new_node --> NULL
                 (tail) */
-   node_t *new_node = make_node(item, item_size);
+   node_t *new_node;
+
+   if (!(new_node = make_node(item, item_size))) {
+      return NULL;
+   }
 
    if (list->size == 0) {
       list->tail = new_node;
@@ -63,7 +69,11 @@ extern void *list_unshift(list_t *list, void *item, size_t item_size) {
       AFTER
       NULL <-- new_node <--> node
                (head) */
-   node_t *new_node = make_node(item, item_size);
+   node_t *new_node;
+
+   if (!(new_node = make_node(item, item_size))) {
+      return NULL;
+   }
 
    if (list->size == 0) {
       list->tail = new_node;
@@ -101,7 +111,9 @@ extern void *list_insert(list_t *list, size_t index, void *item, size_t item_siz
    }
 
    prev_node = get_node(list, index - 1);
-   new_node = make_node(item, item_size);
+   if (!(new_node = make_node(item, item_size))) {
+      return NULL;
+   }
    next_node = prev_node->next;
 
    new_node->next = next_node;
@@ -227,7 +239,7 @@ extern size_t list_size(list_t *list) {
 }
 
 extern bool list_empty(list_t *list) {
-   return list->size == 0 ? true : false;
+   return (list->size == 0) ? true : false;
 }
 
 extern bool list_full(list_t *list) {
@@ -253,8 +265,7 @@ extern size_t list_indexof(list_t *list, void *data) {
    return i;
 }
 
-// fixme: callback을 typedef로 빼기
-extern void list_foreach(list_t *list, void (*callback)(void *data, size_t index)) {
+extern size_t list_foreach(list_t *list, list_iterator_t *cb, void *ctx) {
    node_t *n;
    size_t idx;
 
@@ -262,23 +273,37 @@ extern void list_foreach(list_t *list, void (*callback)(void *data, size_t index
    idx = 0;
 
    while (n != NULL) {
-      callback(n->data, idx++);
+      if (!(*cb)(n->data, idx, ctx)) {
+         return idx;
+      }
+      idx++;
       n = n->next;
    }
+
+   return idx;
 }
 
 static node_t *make_node(void *item, size_t item_size) {
-   node_t *n;
+   node_t *n = NULL;
    void *dup;
 
-   n = safe_malloc(sizeof *n);
-   dup = safe_malloc(item_size);
+   if (!(n = malloc(sizeof *n))) {
+      goto err1;
+   }
+   if (!(dup = malloc(item_size))) {
+      goto err2;
+   }
 
    memcpy(dup, item, item_size);
    n->data = dup;
    n->data_size = item_size;
 
    return n;
+
+err2:
+   free(n);
+err1:
+   return NULL;
 }
 
 static node_t *get_node(list_t *list, size_t index) {

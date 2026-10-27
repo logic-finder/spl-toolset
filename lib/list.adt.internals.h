@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "wrappers.h"
 #include "list.adt.h"
 
 /*
@@ -47,6 +46,7 @@ struct list {
  * @param item_size the size of the object to be copied; it must not be 0.
  * @return a pointer to a `node_t` object whose data is copied from `item`.
  */
+[[nodiscard]]
 static node_t *make_node(void *item, size_t item_size);
 
 /**

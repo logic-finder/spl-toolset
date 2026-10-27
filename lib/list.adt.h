@@ -26,7 +26,9 @@ typedef enum list_statcode {
    ListStatcodeOk
 } list_statcode_t;
 
-typedef void list_destructor_t(void *item, size_t idx);
+typedef bool list_iterator_t(void *item, size_t idx, void *ctx);
+
+typedef list_iterator_t list_destructor_t;
 
 /* < Table of Contents >
 
@@ -64,6 +66,7 @@ Note: HEAD means the first item of a list, meanwhile
  * @return the pointer to the list having been created.
  * @note In failure, this function stops the program.
  */
+[[nodiscard]]
 list_t *list_create(list_destructor_t *destruct);
 
 /**
@@ -86,6 +89,7 @@ void list_destroy(list_t *list);
  * @return the pointer to the copied item
  * @note In failure, this function stops the program.
  */
+[[nodiscard]]
 void *list_push(list_t *list, void *item, size_t item_size);
 
 /**
@@ -96,6 +100,7 @@ void *list_push(list_t *list, void *item, size_t item_size);
  * @return the pointer to the copied item
  * @note In failure, this function stops the program.
  */
+[[nodiscard]]
 void *list_unshift(list_t *list, void *item, size_t item_size);
 
 /**
@@ -107,6 +112,7 @@ void *list_unshift(list_t *list, void *item, size_t item_size);
  * @return the pointer to the copied item
  * @note In failure, this function stops the program.
  */
+[[nodiscard]]
 void *list_insert(list_t *list, size_t index, void *item, size_t item_size);
 
 /**
@@ -116,6 +122,7 @@ void *list_insert(list_t *list, size_t index, void *item, size_t item_size);
  * @return a status code indicating whether this operation has been successful
  * @note If `dest` is `NULL`, it doesn't store the item.
  */
+[[nodiscard]]
 list_statcode_t list_pop(list_t *list, void *dest);
 
 /**
@@ -125,6 +132,7 @@ list_statcode_t list_pop(list_t *list, void *dest);
  * @return a status code indicating whether this operation has been successful
  * @note If `dest` is `NULL`, it doesn't store the item.
  */
+[[nodiscard]]
 list_statcode_t list_shift(list_t *list, void *dest);
 
 /**
@@ -135,6 +143,7 @@ list_statcode_t list_shift(list_t *list, void *dest);
  * @return a status code indicating whether this operation has been successful
  * @note If `dest` is `NULL`, it doesn't store the item.
  */
+[[nodiscard]]
 list_statcode_t list_erase(list_t *list, size_t index, void *dest);
 
 /**
@@ -197,6 +206,7 @@ size_t list_indexof(list_t *list, void *data);
  *    parameters. (1) `data` is the data of an element. (2) `index` is
  *    the index of that element.
  */
-void list_foreach(list_t *list, void (*callback)(void *data, size_t index));
+[[nodiscard]]
+size_t list_foreach(list_t *list, list_iterator_t *cb, void *ctx);
 
 #endif
