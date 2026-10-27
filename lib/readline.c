@@ -7,46 +7,58 @@ extern int readln(FILE *fp, char **line, size_t *len) {
    char *buf;
 
    /* First of all, checks whether there is nothing to read */
-   ch = safe_fgetc(fp);
-
-   if (ch == EOF) {
+   if ((ch = fgetc(fp)) == EOF) {
       *line = NULL;
       if (len != NULL) *len = 0;
-      return 1;
+      return READLINE_ERR;
    }
    else ungetc(ch, fp);
 
    bufsiz = READLINE_UNIT;
-   buf = safe_malloc(bufsiz);
+   if (!(buf = malloc(bufsiz))) {
+      return READLINE_ERR;
+   }
    pos = 0;
 
    /* Reads the file, one line at a time */
    for (;;) {
-      ch = safe_fgetc(fp);
+      ch = fgetc(fp);
 
-      if (ch == EOF || ch == '\n')
+      if (ch == EOF || ch == '\n') {
          break;
-      if (ch == '\r')
+      }
+      if (ch == '\r') {
          continue;
+      }
 
       buf[pos] = ch;
 
       if (bufsiz - pos == 1) {
-         buf = safe_realloc2x(buf, &bufsiz);
+         if (!(buf = realloc2xarr(buf, &bufsiz, ESIZ(buf)))) {
+            goto cleanup;
+         }
       }
 
       pos++;
    }
+   if (ferror(fp)) {
+      goto cleanup;
+   }
 
    /* Stores \n\0 at the end */
    if (bufsiz - pos == 1) {
-      buf = safe_realloc2x(buf, &bufsiz);
+      if (!(buf = realloc2xarr(buf, &bufsiz, ESIZ(buf)))) {
+         goto cleanup;
+      }
    }
-
    buf[pos++] = '\n';
    buf[pos] = '\0';
 
    *line = buf;
    if (len != NULL) *len = pos;
-   return 0;
+   return READLINE_OK;
+
+cleanup:
+   free(buf);
+   return READLINE_ERR;
 }
