@@ -6,23 +6,20 @@
 
 extern bool parse(compile_ctx_t *cctx) {
    parse_ctx_t *pctx;
-   bool ret = true;
+   bool ret = false;
 
    /* Initializes pctx struct */
-   if ((pctx = arena_malloc(cctx->arena, sizeof *pctx)) == NULL) {
-      ret = false;
-      goto OOM1;
+   if (!(pctx = arena_malloc(cctx->arena, sizeof *pctx))) {
+      return false;
    }
-
    pctx->arena = cctx->arena;
-   if ((pctx->pt = plant_tree(pctx, NULL, 0, NODEKIND_ROOT, 0, 0)) == NULL) {
-      ret = false;
-      goto OOM2;
+
+   if (!(pctx->pt = plant_tree(pctx, NULL, 0, NODEKIND_ROOT, 0, 0))) {
+      goto cleanup;
    }
 
-   if ((pctx->errs = array_create(NULL, cctx->arena)) == NULL) {
-      ret = false;
-      goto OOM3;
+   if (!(pctx->errs = array_create(NULL, cctx->arena))) {
+      goto cleanup;
    }
 
    pctx->cfg = cctx->cfg;
@@ -82,27 +79,25 @@ EOE: ;
    /* Reports collected syntax errors, if any */
 report_error:
    if (pctx->errcnt > 0) {
-      ret = false;
       report_syntax_errors(pctx);
    }
-
-   if (ret && cctx->cfg->vbs) {
-      safe_vprintf(
-         " " Cgreen "done!" Creset
-         "\t(total " Cbwhite "%zu" Creset " nodes)\n",
-         count_tree_node(pctx->pt)
-      );
+   else {
+      if (cctx->cfg->vbs) {
+         int nchar = printf(
+            " " Cgreen "done!" Creset
+            "\t(total " Cbwhite "%zu" Creset " nodes)\n",
+            count_tree_node(pctx->pt)
+         );
+         if (nchar < 0) goto cleanup;
+      }
+      cctx->pt = pctx->pt;
+      ret = true;
    }
 
+cleanup:
+   /* pctx->errs and pctx->pt used arena
+      and will be freed later at one fell swoop */
 
-   ;  /* pctx->errs used arena */
-OOM3:
-   ;  /* need to keep pt */
-OOM2:
-   ;  /* cctx->arena will be cleared in the caller of parse */
-OOM1:
-   /* Registers the parse tree into cctx */
-   cctx->pt = pctx->pt;
    return ret;
 }
 
@@ -1343,7 +1338,10 @@ static int parse_noun_phrase(parse_ctx_t *pctx, tree_t *cnst) {
 
    // TODO: it'd be nice to have arena_strcat with separator
    bufsiz = prev_tok->len + 1 + pctx->tok->len;
-   buf = arena_malloc_fallback(pctx->arena, bufsiz + 1);  /* +1 for \0 */
+   /* +1 for \0 */
+   if (!(buf = arena_malloc(pctx->arena, bufsiz + 1))) {
+      return 0;
+   }
    memcpy(
       buf,
       prev_tok->run,
@@ -2101,7 +2099,10 @@ static tree_t *plant_tree(
 
    if (run) {
       // TODO: it'd be nice to have arena_strdup
-      buf = arena_malloc_fallback(pctx->arena, len + 1);  /* +1 for \0 */
+      /* +1 for \0 */
+      if (!(buf = arena_malloc(pctx->arena, len + 1))) {
+         return NULL;
+      }
       memcpy(buf, run, len + 1);  /* \0 copied */
    }
    else buf = NULL;

@@ -63,7 +63,7 @@ extern bool array_append(array_t *a, const void *item, size_t siz) {
       return false;
    }
 
-   if ((p = arena_malloc(a->arena, siz)) == NULL) {
+   if ((p = arena_malloc_fallback(a->arena, siz)) == NULL) {
       return false;
    }
    memcpy(p, item, siz);
@@ -101,7 +101,8 @@ static inline bool array_full(array_t *a) {
 }
 
 static bool array_enlarge(array_t *a) {
-   a->container = realloc2xarr(
+   a->container = arena_realloc2x_arr_fallback(
+      a->arena,
       a->container,
       &a->max,
       ESIZ(a->container)

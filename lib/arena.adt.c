@@ -97,7 +97,9 @@ extern void *arena_calloc(arena_t *arena, size_t nmemb, size_t siz) {
       return NULL;
    }
 
-   ret = arena_malloc(arena, nmemb * siz);
+   if (!(ret = arena_malloc(arena, nmemb * siz))) {
+      return NULL;
+   }
 
    for (size_t i = 0; i < nmemb * siz; i++) {
       ret[i] = 0;  /* sizeof char == 1 */
@@ -148,7 +150,9 @@ extern void *arena_realloc2x_arr(
       }
    }
 
-   ret = arena_malloc(arena, new_siz);
+   if (!(ret = arena_malloc(arena, new_siz))) {
+      return NULL;
+   }
    memcpy(ret, ptr, old_siz);
    return ret;
 }

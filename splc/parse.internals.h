@@ -5,6 +5,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <setjmp.h>
+#include <stdlib.h>
 
 #include "msg.h"
 #include "lex.h"

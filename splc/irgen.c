@@ -691,7 +691,10 @@ static tree_t *plant_tree(
    char *buf;
 
    if (run) {
-      buf = arena_malloc_fallback(ictx->arena, len + 1);  /* +1 for \0 */
+      /* +1 for \0 */
+      if (!(buf = arena_malloc_fallback(ictx->arena, len + 1))) {
+         return NULL;
+      }
       memcpy(buf, run, len + 1);  /* \0 copied */
    }
    else buf = NULL;

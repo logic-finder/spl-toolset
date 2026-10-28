@@ -386,14 +386,17 @@ static bool check_empty_line_target(ctxcheck_ctx_t *octx) {
 
 static ctxcheck_statcode_t check_unused_dp(ctxcheck_ctx_t *octx) {
    size_t dp_clen;
-   ctxcheck_statcode_t status = CtxcheckStatOk;
+   ctxcheck_statcode_t status;
 
    dp_clen = tree_clen(octx->dp);
-   octx->dp_counters = arena_calloc_fallback(
+   octx->dp_counters = arena_calloc(
       octx->arena,
       dp_clen,
       sizeof *octx->dp_counters
    );
+   if (!octx->dp_counters) {
+      return CtxcheckStatErr;
+   }
 
    tree_pre_traverse(octx->nrtv, check_unused_dp_route, 0, octx);
 
@@ -415,6 +418,8 @@ static ctxcheck_statcode_t check_unused_dp(ctxcheck_ctx_t *octx) {
          goto cleanup;
       }
    }
+
+   status = CtxcheckStatOk;
 
 cleanup:
    arena_free_fallback(octx->arena, octx->dp_counters);

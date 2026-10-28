@@ -58,8 +58,9 @@ static bool compile(config_t *cfg) {
    if ((cctx.arena = arena_create()) == NULL) {
       return false;
    }
-
-   arena_info(EXECNAME);
+   if (!arena_info(EXECNAME)) {
+      return false;
+   }
 
    for (size_t i = 0; i < total; i++) {
       cctx.sourcefile = array_peek(cfg->source_files, i);

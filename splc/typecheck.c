@@ -255,7 +255,10 @@ static void coalesce_childstr(typecheck_ctx_t *tctx, tree_t *t) {
    }
    bufsiz--;  /* -1 not to count \0 */
 
-   buf = arena_malloc_fallback(tctx->arena, bufsiz + 1);  /* +1 for \0 */
+   /* +1 for \0 */
+   if (!(buf = arena_malloc_fallback(tctx->arena, bufsiz + 1))) {
+      return false;
+   }
 
    offset = 0;
    for (size_t i = 0; i < clen; i++) {
