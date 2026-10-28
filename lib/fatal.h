@@ -11,6 +11,7 @@
  *    The string "fatal: " is prepended. A newline is appended at EOL.
  * @param msg an error message
  */
+[[deprecated]]
 void fatal(const char *msg);
 
 /**
@@ -19,6 +20,7 @@ void fatal(const char *msg);
  * @param msg a format string
  * @param va variable number of arguments
  */
+[[deprecated]]
 void vfatal(const char *msg, ...);
 
 #endif

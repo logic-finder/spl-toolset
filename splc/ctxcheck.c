@@ -20,10 +20,10 @@ extern bool ctxcheck(compile_ctx_t *cctx) {
    };
    bool ret = true;
 
-   if ((octx.errs = array_create(NULL, cctx->arena)) == NULL)
-      goto OOM1;
-   if ((octx.warns = array_create(NULL, cctx->arena)) == NULL)
-      goto OOM2;
+   if (!(octx.errs = array_create(NULL, cctx->arena)))
+      goto err1;
+   if (!(octx.warns = array_create(NULL, cctx->arena)))
+      goto err2;
 
    if (cctx->cfg->vbs) {
       safe_fputs(stdout, ENPREFIX "context-checking...");
@@ -57,9 +57,9 @@ report_errors:
    }
 
    ;  /* octx.errs used arena */
-OOM2:
+err2:
    ;  /* octx.errs used arena */
-OOM1:
+err1:
    return ret;
 }
 

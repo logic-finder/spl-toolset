@@ -21,8 +21,9 @@ extern void list_cleanup(list_t *list) {
       list_foreach(list, list->destruct, NULL);
    }
 
-   while (list_pop(list, NULL) == ListStatcodeOk)
+   while (list_pop(list, NULL) == ListStatcodeOk) {
       /* empty */ ;
+   }
 }
 
 extern void list_destroy(list_t *list) {

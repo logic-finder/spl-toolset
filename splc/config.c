@@ -2,8 +2,7 @@
 #include "config.internals.h"
 
 extern bool init_config(config_t *cfg) {
-   cfg->source_files = array_create(NULL, NULL);
-   if (cfg->source_files == false) {
+   if (!(cfg->source_files = array_create(NULL, NULL))) {
       return false;
    }
    cfg->vsn = 0;

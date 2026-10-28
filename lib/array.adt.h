@@ -15,8 +15,7 @@ typedef bool array_iterator_t(void *item, size_t idx, void *ctx);
 
 typedef int array_sorter_t(const void *d1, const void *d2);
 
-// fixme: array_iterator_t 로 통합
-typedef void array_destructor_t(void *item, size_t idx);
+typedef array_iterator_t array_destructor_t;
 
 /*============*
  | PROTOTYPES |

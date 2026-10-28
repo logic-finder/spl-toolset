@@ -48,7 +48,7 @@ extern void array_destroy(array_t *a) {
 
    for (size_t i = 0; i < a->len; i++) {
       if (a->destruct != NULL) {
-         a->destruct(a->container[i], i);
+         a->destruct(a->container[i], i, NULL);
       }
       free(a->container[i]);
    }

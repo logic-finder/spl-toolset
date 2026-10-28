@@ -10,19 +10,15 @@ extern bool lex(compile_ctx_t *cctx) {
       .l = array_peek(cctx->ls, 0),
       .max = 128,
       .eoe = false,
-      .toks = NULL
+      .buf = NULL
    };
-   bool ret = true;
+   bool ret = false;
 
-   lctx.toks = array_create(destruct_tok, cctx->arena);
-   if (lctx.toks == NULL) {
-      ret = false;
-      goto OOM1;
+   if (!(lctx.toks = array_create(destruct_tok, cctx->arena))) {
+      return false;
    }
-   lctx.buf = safe_malloc(lctx.max);
-   if (lctx.buf == NULL) {
-      ret = false;
-      goto OOM2;
+   if (!(lctx.buf = malloc(lctx.max))) {
+      goto cleanup;
    }
 
    if (cctx->cfg->vbs) safe_fputs(stdout, ENPREFIX "scanning...");
@@ -46,18 +42,17 @@ extern bool lex(compile_ctx_t *cctx) {
          store_punct(&lctx);
       }
    }
+   ret = true;
+   cctx->toks = lctx.toks;
 
    if (cctx->cfg->vbs) safe_vprintf(" " Cgreen "done!" Creset
       "\t(total " Cbwhite "%zu" Creset " tokens)\n",
       array_size(lctx.toks)
    );
 
-   /* cleanup */
+cleanup:
    free(lctx.buf);
-OOM2:
-   ;  /* need to keep lctx.toks */
-OOM1:
-   cctx->toks = lctx.toks;
+
    return ret;
 }
 
