@@ -6,16 +6,24 @@
 
 typedef struct hashtable hashtable_t;
 
+[[nodiscard]]
 hashtable_t *ht_create(void);
+
 void ht_destroy(hashtable_t *ht);
-void ht_set(
+
+[[nodiscard]]
+bool ht_set(
    hashtable_t *ht,
    const char *key,
    void *val,
    size_t siz
 );
+
+[[nodiscard]]
 void *ht_get(hashtable_t *ht, const char *key);
+
 int ht_size(hashtable_t *ht);
+
 bool ht_full(hashtable_t *ht);
 
 #endif

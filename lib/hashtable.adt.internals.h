@@ -3,9 +3,7 @@
 
 #include <string.h>
 
-#include "fatal.h"
 #include "common.h"
-#include "wrappers.h"
 
 #define HASHTABLE_SIZ 1249  /* prime */
 
