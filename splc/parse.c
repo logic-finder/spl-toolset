@@ -1993,16 +1993,19 @@ static inline void rewind_tokstate(parse_ctx_t *pctx, size_t orig_idx) {
    pctx->tok = array_peek(pctx->toks, pctx->idx);
 }
 
-static void regerr(parse_ctx_t *pctx) {
+static bool regerr(parse_ctx_t *pctx) {
    synerr_t err;
 
    err.etok = pctx->etok;
    err.reason = pctx->reason;
 
-   array_append(pctx->errs, &err, sizeof err);
+   if (!array_append(pctx->errs, &err, sizeof err)) {
+      return false;
+   }
 
    pctx->errcnt++;
 
+   // fixme: GET RID OF SETJMP
    if (pctx->errcnt == pctx->errcnt_max) {
       longjmp(pctx->env_parse, NODEKIND__FINALE);
    }

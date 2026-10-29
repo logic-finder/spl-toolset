@@ -60,6 +60,8 @@ static processor_t process_read;
 static checker_t check_space;
 static checker_t check_cntlessthan;
 static checker_t check_token;
-static void store_string(lex_ctx_t *lctx, tokkind_t kind);
+
+[[nodiscard]]
+static bool store_string(lex_ctx_t *lctx, tokkind_t kind);
 
 #endif

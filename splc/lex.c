@@ -187,14 +187,17 @@ static void store_punct(lex_ctx_t *lctx) {
    store_string(lctx, TOKKIND_PNT);
 }
 
-static void store_string(lex_ctx_t *lctx, tokkind_t kind) {
+static bool store_string(lex_ctx_t *lctx, tokkind_t kind) {
    token_t tok;
    char *buf;
    size_t bufsiz;
 
    lctx->buf[lctx->idx] = '\0';
    bufsiz = lctx->idx;
-   buf = safe_malloc(bufsiz + 1);  /* +1 for \0 */
+   /* +1 for \0 */
+   if (!(buf = malloc(bufsiz + 1))) {
+      return false;
+   }
    memcpy(buf, lctx->buf, bufsiz + 1);  /* \0 copied */
 
    tok.run = buf;
@@ -203,7 +206,14 @@ static void store_string(lex_ctx_t *lctx, tokkind_t kind) {
    tok.lnum = lctx->real_lnum;
    tok.lpos = lctx->real_lpos;
 
-   array_append(lctx->toks, &tok, sizeof tok);
+   if (!array_append(lctx->toks, &tok, sizeof tok)) {
+      goto cleanup;
+   }
+   return true;
+
+cleanup:
+   free(buf);
+   return false;
 }
 
 /*** DEBUG ***/

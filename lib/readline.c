@@ -1,7 +1,7 @@
 #include "readline.h"
 #include "readline.internals.h"
 
-extern int readln(FILE *fp, char **line, size_t *len) {
+extern bool readln(FILE *fp, char **line, size_t *len) {
    int ch;
    size_t pos, bufsiz;
    char *buf;
@@ -10,13 +10,13 @@ extern int readln(FILE *fp, char **line, size_t *len) {
    if ((ch = fgetc(fp)) == EOF) {
       *line = NULL;
       if (len != NULL) *len = 0;
-      return READLINE_ERR;
+      return false;
    }
    else ungetc(ch, fp);
 
    bufsiz = READLINE_UNIT;
    if (!(buf = malloc(bufsiz))) {
-      return READLINE_ERR;
+      return false;
    }
    pos = 0;
 
@@ -56,9 +56,9 @@ extern int readln(FILE *fp, char **line, size_t *len) {
 
    *line = buf;
    if (len != NULL) *len = pos;
-   return READLINE_OK;
+   return true;
 
 cleanup:
    free(buf);
-   return READLINE_ERR;
+   return false;
 }

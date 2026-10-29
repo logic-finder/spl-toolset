@@ -12,17 +12,27 @@ extern array_t *loadfile(
    line_t line;
    char *run;
    size_t run_len, lcnt, wcnt;
+   bool fclosed;
 
-   /* Init */
+   /* Inits locals */
    lines = NULL;
    wcnt = 0;  /* word count */
    lcnt = 0;  /* line count */
+   fclosed = false;
 
-   if ((fp = fopen(filename, "r")) == NULL)
+   /* Opens the file to read */
+   if (!(fp = fopen(filename, "r"))) {
       goto err1;
-   if ((lines = array_create(destruct_line, arena)) == NULL)
-      goto err2;
+   }
 
+   /* Makes an array to contain lines */
+   if (!(lines = array_create(destruct_line, arena))) {
+      goto err2;
+   }
+
+   /* Until the end of file,
+         - reads a line
+         - stores it in the array */
    while (!readln(fp, &run, &run_len)) {
       line.len = run_len;
       line.run = run;
@@ -33,14 +43,22 @@ extern array_t *loadfile(
       }
    }
 
+   if (fclose(fp) == EOF) {
+      fclosed = true;
+      goto err4;
+   }
+   if (lc) *lc = lcnt;
+   if (wc) *wc = wcnt;
+   return lines;
+
+err4:
+   ;
 err3:
-   ;  /* needs to keep 'lines'  */
+   arena_free_fallback(arena, lines);
 err2:
-   (void) fclose(fp);
+   if (!fclosed) (void) fclose(fp);
 err1:
-   if (lc != NULL) *lc = lcnt;
-   if (wc != NULL) *wc = wcnt;
-   return lines;  /* lines was initialized NULL */
+   return NULL;
 }
 
 static void destruct_line(void *item, size_t idx) {

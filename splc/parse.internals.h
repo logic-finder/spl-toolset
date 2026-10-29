@@ -185,7 +185,7 @@ static void resyncbf(parse_ctx_t *pctx, resync_bitfield_t bf);
 static inline void resyncbf_all(parse_ctx_t *pctx);
 static void resyncfs(parse_ctx_t *pctx, const char *follow_set[]);
 
-static void regerr(parse_ctx_t *pctx);
+static bool regerr(parse_ctx_t *pctx);
 static array_iterator_t print_syntax_error;
 static void report_syntax_errors(parse_ctx_t *pctx);
 

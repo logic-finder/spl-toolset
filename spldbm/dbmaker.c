@@ -154,6 +154,7 @@ static void write_sect_type_A(
    int dt_s_len,
    array_sorter_t *compare
 ) {
+   bool fclosed = false;
    FILE *src;
    fpos_t ecnt_pos, eos_pos;
    char *ln;
@@ -162,13 +163,13 @@ static void write_sect_type_A(
    array_t *records;
    record_A_t temp, *r;
 
-   src = fopen(ov.mak[sectkind], "rb");
-   if (src == NULL)
-      goto ERR1;
+   if (!(src = fopen(ov.mak[sectkind], "rb"))) {
+      return false;
+   }
 
-   records = array_create(destruct_record_A, NULL);
-   if (records == NULL)
-      goto ERR2;
+   if (!(records = array_create(destruct_record_A, NULL))) {
+      goto cleanup;
+   }
 
    ecnt = 0;
 
@@ -193,7 +194,9 @@ static void write_sect_type_A(
       temp.len = llen;
       temp.run = ln;
       temp.lnum = ecnt;
-      array_append(records, &temp, sizeof temp);
+      if (!array_append(records, &temp, sizeof temp)) {
+         goto cleanup;
+      }
    }
    if (!ecnt) VERR("empty %s file", sectname);
 
@@ -223,12 +226,15 @@ static void write_sect_type_A(
    // Prepare the next section
    safe_fsetpos(fp, &eos_pos);
 
-   // Clean up
+   if (fclose(fp) == EOF) {
+      fclosed = true;
+      goto cleanup;
+   }
+
+cleanup:
+   if (!fclosed) (void) fclose(fp);
    array_destroy(records);
-ERR2:
-   (void) fclose(fp);
-ERR1:
-   ;  // fixme: return ret
+   return false;
 }
 
 static void write_sect_type_B(
@@ -243,6 +249,7 @@ static void write_sect_type_B(
    int dt_s_len,
    array_sorter_t *compare
 ) {
+   bool fclosed = false;
    FILE *src;
    fpos_t ecnt_pos, eos_pos;
    char
@@ -262,13 +269,13 @@ static void write_sect_type_B(
    array_t *records;
    record_B_t temp, *r;
 
-   src = safe_fopen(ov.mak[sectkind], "rb");
-   if (src == NULL)
-      goto ERR1;
+   if (!(src = safe_fopen(ov.mak[sectkind], "rb"))) {
+      return false;
+   }
 
-   records = array_create(destruct_record_B, NULL);
-   if (records == NULL)
-      goto ERR2;
+   if (!(records = array_create(destruct_record_B, NULL))) {
+      goto cleanup;
+   }
 
    maxlen =
       dt_s_len     // 64
@@ -312,7 +319,9 @@ static void write_sect_type_B(
       temp.len = slen;
       temp.run = str;  /* to be freed later */
       temp.lnum = ecnt;
-      array_append(records, &temp, sizeof temp);
+      if (!array_append(records, &temp, sizeof temp)) {
+         goto cleanup;
+      }
 
       free(kind);
       free(elems);
@@ -347,12 +356,15 @@ static void write_sect_type_B(
    // Prepare the next section
    safe_fsetpos(fp, &eos_pos);
 
-   // Clean up
+   if (fclose(fp) == EOF) {
+      fclosed = true;
+      goto cleanup;
+   }
+
+cleanup:
+   if (!fclosed) (void) fclose(fp);
    array_destroy(records);
-ERR2:
-   (void) fclose(fp);
-ERR1:
-   ;  // fixme: return ret
+   return false;
 }
 
 static void write_namesect(FILE *fp) {

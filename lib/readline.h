@@ -2,9 +2,10 @@
 #define READLINE_H
 
 #include <stdio.h>
+#include <stdbool.h>
 
-#define READLINE_UNIT   64
+#define READLINE_UNIT 128
 
-int readln(FILE *fp, char **line, size_t *len);
+bool readln(FILE *fp, char **line, size_t *len);
 
 #endif
