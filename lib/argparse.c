@@ -6,6 +6,9 @@ Improvement Ideas
    - argument taking optional value
       -O => uses its default value
       -O3 => uses 3 as its value
+   - support aliases
+      .lname = { "message", "msg" }
+      .sname = { 'm', 'M' }
 */
 
 extern bool parse_argv(
