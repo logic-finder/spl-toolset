@@ -236,7 +236,7 @@ static void codegen_push(cg2c_ctx_t *gctx) {
 
    /* "PUSH teller|hearer|const" is only possible */
    safe_vfprintf(gctx->fp,
-      "%sstack_push(rctx->s, %s);\n",
+      "%sif (!stack_push(rctx->s, %s)) goto cleanup;\n",
       indent,
       resolve_var(p1->dat.ui));
 }
@@ -250,17 +250,17 @@ static void codegen_pop(cg2c_ctx_t *gctx) {
       case IrvarHearer:
          safe_vfprintf(gctx->fp, "%sset_hearer(rctx);\n", indent);
          safe_vfprintf(gctx->fp,
-            "%sstack_pop(rctx->s, &rctx->dp[rctx->h]);\n", indent);
+            "%sif (!stack_pop(rctx->s, &rctx->dp[rctx->h])) goto cleanup;\n", indent);
       break;
 
       case IrvarOperandL:
          safe_vfprintf(gctx->fp,
-            "%sstack_pop(rctx->s, &rctx->ol);\n", indent);
+            "%sif (!stack_pop(rctx->s, &rctx->ol)) goto cleanup;\n", indent);
       break;
 
       case IrvarOperandR:
          safe_vfprintf(gctx->fp,
-            "%sstack_pop(rctx->s, &rctx->or);\n", indent);
+            "%sif (!stack_pop(rctx->s, &rctx->or)) goto cleanup;\n", indent);
       break;
 
       default: ;  /* control never reaches default */

@@ -179,13 +179,20 @@ static void write_sect_type_A(
    safe_fgetpos(fp, &ecnt_pos);
 
    // Store entries
-   while (!readln(src, &ln, &llen)) {
+   for (;;) {
+      if (!readln(src, &ln, &llen)) {
+         goto cleanup;
+      }
+      if (ln == NULL) {
+         break;
+      }
       if (lastch(ln) == '\n') {
          llen--;  /* why -1? since ln has \n */
          ln[llen] = '\0';
       }
-      if (!llen)
+      if (!llen) {
          continue;  /* skips empty line */
+      }
 
       if (llen > dt_s_len)
          VERR("%s entry #%d too long", sectname, ecnt + 1);
@@ -289,13 +296,20 @@ static void write_sect_type_B(
    safe_fgetpos(fp, &ecnt_pos);
 
    // Store entries
-   while (!readln(src, &ln, &llen)) {
+   for (;;) {
+      if (!readln(src, &ln, &llen)) {
+         goto cleanup;
+      }
+      if (ln == NULL) {
+         break;
+      }
       if (lastch(ln) == '\n') {
          llen--;
          ln[llen] = '\0';  /* overwrite \n */
       }
-      if (!llen)
+      if (!llen) {
          continue;  /* skips empty line */
+      }
 
       // fixme: replace all VERRs in this file with dberr function (use stdout, not stderr)
       if (llen > maxlen)

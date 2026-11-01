@@ -92,6 +92,7 @@ static bool one_person(parse_ctx_t *pctx) {
    tree_t *mock_base, *enterlike;
    token_t mock_tok = {0};
 
+   /* Assumes every failable call doesn't fail */
    mock_base = tree_plant(NULL, 0, pctx->arena);
    enterlike = graft_tree_n(pctx, mock_base, 0, NODEKIND_ENTER, &mock_tok);
 
@@ -133,6 +134,7 @@ static bool two_person(parse_ctx_t *pctx) {
    tree_t *mock_base, *enterlike;
    token_t mock_tok = {0};
 
+   /* Assumes every failable call doesn't fail */
    mock_base = tree_plant(NULL, 0, pctx->arena);
    enterlike = graft_tree_n(pctx, mock_base, 0, NODEKIND_ENTER, &mock_tok);
 

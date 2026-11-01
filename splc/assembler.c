@@ -31,7 +31,9 @@ extern void assemble(compile_ctx_t *cctx) {
    actx.nrtv = tree_child(cctx->irt, 1);
    actx.ls = cctx->ls;
 
-   destname = strdup(cctx->cfg->out);
+   if (!(destname = strdup(cctx->cfg->out))) {
+      return false;
+   }
    actx.fp = safe_fopen(destname, "w");
 
    if (cctx->cfg->vbs) safe_vprintf(

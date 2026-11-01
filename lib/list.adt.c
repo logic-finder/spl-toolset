@@ -18,7 +18,8 @@ extern list_t *list_create(list_destructor_t *destruct) {
 
 extern void list_cleanup(list_t *list) {
    if (list->destruct != NULL) {
-      list_foreach(list, list->destruct, NULL);
+      /* Assumes the call will not fail */
+      (void) list_foreach(list, list->destruct, NULL);
    }
 
    while (list_pop(list, NULL) == ListStatcodeOk) {

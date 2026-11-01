@@ -70,6 +70,7 @@ static bool type_a(parse_ctx_t *pctx) {
       "lying", "stupid", "coward"
    };
 
+   /* Assumes every failable call doesn't fail */
    mock_stmt = tree_plant(NULL, 0, pctx->arena);
 
    regtok(pctx, "You");

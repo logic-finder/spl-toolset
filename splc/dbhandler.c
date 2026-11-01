@@ -93,7 +93,9 @@ extern bool query_adj_lower(const char *key) {
    char *tmp;
    bool query_status;
 
-   tmp = tolower_str(key);
+   if (!(tmp = tolower_str(key))) {
+      return false;  /* fixme: bool 을 리턴할게 아니라 int를 리턴해야 할듯 -1 */
+   }
    query_status = query_adj(tmp);
    free(tmp);
 
@@ -104,7 +106,9 @@ extern bool query_comp_lower(const char *key, int *ret) {
    char *tmp;
    bool query_status;
 
-   tmp = tolower_str(key);
+   if (!(tmp = tolower_str(key))) {
+      return false;  /* fixme: bool 을 리턴할게 아니라 int를 리턴해야 할듯 -1 */
+   }
    query_status = query_comp(tmp, ret);
    free(tmp);
 

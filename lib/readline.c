@@ -10,7 +10,7 @@ extern bool readln(FILE *fp, char **line, size_t *len) {
    if ((ch = fgetc(fp)) == EOF) {
       *line = NULL;
       if (len != NULL) *len = 0;
-      return false;
+      return true;
    }
    else ungetc(ch, fp);
 

@@ -497,11 +497,11 @@ static void gen_push(tree_t *t) {
 
    safe_vfprintf(fp, INDENT "assert_onlytwo(stage);\n");
    safe_vfprintf(fp,
-      INDENT "stack_push(memories[stage_whoareyou(stage, %d)], ",
+      INDENT "if (!stack_push(memories[stage_whoareyou(stage, %d)], ",
       speaker
    );
    eval_const(cnst);
-   safe_fputs(fp, INDENT ");\n");
+   safe_fputs(fp, INDENT ")) goto cleanup;\n");
 }
 
 static void gen_pop(tree_t *_) {
@@ -509,7 +509,7 @@ static void gen_pop(tree_t *_) {
    safe_vfprintf(fp, INDENT "assert_onlytwo(stage);\n");
    safe_vfprintf(fp,
       INDENT "personae[stage_whoareyou(stage, %d)] = "
-      "stack_pop(memories[stage_whoareyou(stage, %d)];\n",
+      "if (!stack_pop(memories[stage_whoareyou(stage, %d)])) goto cleanup;\n",
       speaker, speaker
    );
 }

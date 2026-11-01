@@ -204,6 +204,12 @@ static bool add_new_region(arena_t *arena, size_t req_siz) {
    region.last_alloc = NULL;
 
    arena->current = list_push(arena->regions, &region, sizeof region);
-
+   if (arena->current == NULL) {
+      goto err;
+   }
    return true;
+
+err:
+   free(region.buf);
+   return false;
 }

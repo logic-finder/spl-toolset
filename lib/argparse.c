@@ -487,11 +487,14 @@ err1:
 static bool populate_as_posarg(argp_ctx_t *actx) {
    argtok_t tok = {
       .kind = ArgtokPosArg,
-      .field = strdup(actx->arg),
+      .field = NULL,
       .value = NULL,
       .md = NULL,
       .has_eq = false
    };
+   if (!(tok.field = strdup(actx->arg))) {
+      return false;
+   }
 
    return array_append(actx->toks, &tok, sizeof tok);
 }

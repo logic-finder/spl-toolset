@@ -46,7 +46,9 @@ extern void apply_config(config_t *cfg) {
 
    /* --output: the output file name defaults to a.out */
    if (!cfg->out) {
-      cfg->out = strdup("a.out");
+      if (!(cfg->out = strdup("a.out"))) {
+         return false;
+      }
    }
 }
 

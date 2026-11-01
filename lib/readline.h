@@ -6,6 +6,7 @@
 
 #define READLINE_UNIT 128
 
+[[nodiscard]]
 bool readln(FILE *fp, char **line, size_t *len);
 
 #endif

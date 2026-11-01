@@ -11,7 +11,9 @@ extern rt_ctx_t *init_runtime(size_t dpsz) {
    rctx->dpsz = dpsz;
    rctx->mem = init_mem(dpsz);
    rctx->st = stage_create(dpsz);
-   rctx->s = stack_create();
+   if (!(rctx->s = stack_create())) {
+      return NULL;
+   }
 
    setvbuf(stdout, NULL, _IONBF, 0);
 
@@ -193,12 +195,16 @@ extern void io_outc(rt_ctx_t *rctx) {
 
 extern void rememb(rt_ctx_t *rctx, spl_int_t v) {
    set_hearer(rctx);
-   stack_push(rctx->mem[rctx->h], v);
+   if (!stack_push(rctx->mem[rctx->h], v)) {
+      return false;
+   }
 }
 
 extern void recall(rt_ctx_t *rctx) {
    set_hearer(rctx);
-   stack_pop(rctx->mem[rctx->h], &rctx->dp[rctx->h]);
+   if (!stack_pop(rctx->mem[rctx->h], &rctx->dp[rctx->h])) {
+      return false;
+   }
 }
 
 extern void assert_offstage(rt_ctx_t *rctx, size_t charidx) {
@@ -219,8 +225,11 @@ static stack_t **init_mem(size_t dpsz) {
    stack_t **ret;
 
    ret = safe_malloc(dpsz * ESIZ(ret));  /* stack_t * [] */
-   for (size_t i = 0; i < dpsz; i++)
-      ret[i] = stack_create();
+   for (size_t i = 0; i < dpsz; i++) {
+      if (!(ret[i] = stack_create())) {
+         return NULL;
+      }
+   }
 
    return ret;
 }

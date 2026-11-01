@@ -102,7 +102,9 @@ static void fold_const(iroptmiz_ctx_t *zctx) {
 
          for (size_t n = 0; n < scenesiz; n++) {
             block = tree_child(scene, n);
-            new_block = tree_plant(NULL, 0, zctx->arena);
+            if (!(new_block = tree_plant(NULL, 0, zctx->arena))) {
+               return false; // fixme
+            }
 
             tree_setparent(new_block, tree_parent(block));
             /* reuse block->dat */
@@ -176,7 +178,9 @@ static void fold_const_work(iroptmiz_ctx_t *zctx, tree_t *block, tree_t *new_blo
       i = j - 1;  /* fast-forwards i */
 
    graft:
-      tree_graft(new_block, op);
+      if (!tree_graft(new_block, op)) {
+         return false; // fixme
+      }
    }
 }
 

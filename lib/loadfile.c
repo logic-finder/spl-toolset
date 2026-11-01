@@ -33,27 +33,38 @@ extern array_t *loadfile(
    /* Until the end of file,
          - reads a line
          - stores it in the array */
-   while (!readln(fp, &run, &run_len)) {
+   for (;;) {
+      if (!readln(fp, &run, &run_len)) {
+         goto err3;
+      }
+      if (run == NULL) {
+         break;
+      }
       line.len = run_len;
       line.run = run;
       line.num = ++lcnt;
       wcnt += run_len;
       if (!array_append(lines, &line, sizeof line)) {
-         goto err3;
+         goto err4;
       }
    }
 
+   /* Cleanup */
    if (fclose(fp) == EOF) {
       fclosed = true;
-      goto err4;
+      goto err5;
    }
+
    if (lc) *lc = lcnt;
    if (wc) *wc = wcnt;
    return lines;
 
+err5:
+   ;
 err4:
    ;
 err3:
+   /* Only effective if arena is not used */
    arena_free_fallback(arena, lines);
 err2:
    if (!fclosed) (void) fclose(fp);

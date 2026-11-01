@@ -20,7 +20,7 @@ extern bool stack_empty(stack_t *s) {
 
 extern void stack_destroy(stack_t *s) {
    while (!stack_empty(s)) {
-      stack_pop(s, NULL);
+      (void) stack_pop(s, NULL);
    }
    free(s);
 }

@@ -87,7 +87,9 @@ static bool drive_job(argtok_t *tok, argerr_t *err) {
 
 static bool drive_output(argtok_t *tok, argerr_t *err) {
    (void) err;
-   cfg.out = strdup(tok->value);
+   if (!(cfg.out = strdup(tok->value))) {
+      return false;
+   }
    return true;
 }
 

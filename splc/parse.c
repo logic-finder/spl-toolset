@@ -2153,7 +2153,9 @@ static tree_t *graft_tree_n(
    node.kind = kind;
    node.lnum = tok->lnum;
    node.lpos = tok->lpos;
-   sub = tree_plant(&node, sizeof node, pctx->arena);
+   if (!(sub = tree_plant(&node, sizeof node, pctx->arena))) {
+      return NULL;
+   }
 
    return tree_graft(base, sub);
 }
