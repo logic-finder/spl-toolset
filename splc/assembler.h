@@ -17,6 +17,6 @@
 #define OBJFILE_DI_ET_SP 4
 #define OBJFILE_DI_ETSIZ (OBJFILE_DI_ET_OP + OBJFILE_DI_ET_SL + OBJFILE_DI_ET_SP)
 
-void assemble(compile_ctx_t *cctx);
+bool assemble(compile_ctx_t *cctx);
 
 #endif

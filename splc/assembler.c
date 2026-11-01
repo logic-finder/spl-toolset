@@ -1,7 +1,7 @@
 #include "assembler.h"
 #include "assembler.internals.h"
 
-extern void assemble(compile_ctx_t *cctx) {
+extern bool assemble(compile_ctx_t *cctx) {
    /* OBJECT FILE STRUCTURE
          Section 0 - Header      : total 21 bytes
             format indicator     - 4 bytes; BE; contains "SPLO"
@@ -22,10 +22,12 @@ extern void assemble(compile_ctx_t *cctx) {
                src file pos      - 4 bytes;
 
          Section 3 - Source File : (optional section) variable size
-            text data...         - variable size */
+            text data...         - variable size
+    */
 
    asm_ctx_t actx;
    char *destname;
+   int nchar;
 
    actx.le = isle(), actx.be = !actx.le;
    actx.nrtv = tree_child(cctx->irt, 1);
@@ -34,18 +36,28 @@ extern void assemble(compile_ctx_t *cctx) {
    if (!(destname = strdup(cctx->cfg->out))) {
       return false;
    }
-   actx.fp = safe_fopen(destname, "w");
+   if (!(actx.fp = fopen(destname, "w"))) {
+      goto err;
+   }
 
-   if (cctx->cfg->vbs) safe_vprintf(
-      ENPREFIX "generating object file " Cbyellow "\"%s\"" Creset "...", destname
-   );
+   if (cctx->cfg->vbs) {
+      nchar = printf(
+         ENPREFIX "generating object file " Cbyellow "\"%s\"" Creset "...",
+         destname
+      );
+      if (nchar < 0) goto err;
+   }
 
    /* Fills opcode.offset field first */
    actx.offset = OBJFILE_HDSIZ;
-   tree_pre_traverse(actx.nrtv, setoffset_route, 0, &actx.offset);
+   if (!tree_pre_traverse(actx.nrtv, setoffset_route, 0, &actx.offset)) {
+      goto err;
+   }
 
    /* Writes the code section */
-   tree_pre_traverse(actx.nrtv, write_route, 0, &actx);
+   if (!tree_pre_traverse(actx.nrtv, write_route, 0, &actx)) {
+      goto err;
+   }
 
    /* Writes the debug info & source file section */
    actx.s2p = actx.offset;
@@ -75,6 +87,9 @@ extern void assemble(compile_ctx_t *cctx) {
       safe_remove(destname);
 
    free(destname);
+
+err:
+   free(destname);
 }
 
 static bool setoffset_route(tree_t *t, size_t lv, void *ctx) {
@@ -82,7 +97,8 @@ static bool setoffset_route(tree_t *t, size_t lv, void *ctx) {
          opcode  - 1 byte
          var     - 1 byte
          person  - SPL_INT_SIZ bytes
-         const   - SPL_INT_SIZ bytes */
+         const   - SPL_INT_SIZ bytes
+    */
 
    irnode_t *n;
    spl_uint_t *offset;
@@ -90,42 +106,59 @@ static bool setoffset_route(tree_t *t, size_t lv, void *ctx) {
    (void) lv;
    n = tree_dat(t);
 
-   if (n->kind != IrnodekindOpcode && n->kind != IrnodekindEop)
+   if (n->kind != IrnodekindOpcode && n->kind != IrnodekindEop) {
       return true;
+   }
 
    /* Writes the offset of the current node */
    offset = ctx;
    n->offset = *offset;
 
-   if (n->kind == IrnodekindEop)
+   if (n->kind == IrnodekindEop) {
       return true;
+   }
 
    /* Calculates the offset of the next node */
    *offset += SPL_OPCODE_SIZ;
+
    switch (n->dat.ui) {
-      case IropcodeSet    : *offset += SPL_VAR_SIZ + SPL_CONST_SIZ; break;
-      case IropcodeAsgn   : *offset += 2 * SPL_VAR_SIZ; break;
-      case IropcodeEnter  : /* fall-through */
-      case IropcodeExit   : /* fall-through */
-      case IropcodeSpeak  : *offset += SPL_PERSON_SIZ; break;
-      case IropcodePush   : /* fall-through */
-      case IropcodePop    : *offset += SPL_VAR_SIZ; break;
-      case IropcodeSum    : /* fall-through */
-      case IropcodeDiff   : /* fall-through */
-      case IropcodeProd   : /* fall-through */
-      case IropcodeQuot   : /* fall-through */
-      case IropcodeRem    : *offset += 3 * SPL_VAR_SIZ; break;
-      case IropcodeSqrt   : /* fall-through */
-      case IropcodeSqur   : /* fall-through */
-      case IropcodeCube   : /* fall-through */
-      case Iropcode2x     : /* fall-through */
-      case IropcodeFact   : /* fall-through */
-      case IropcodeEq     : /* fall-through */
-      case IropcodeGt     : /* fall-through */
-      case IropcodeLt     : *offset += 2 * SPL_VAR_SIZ; break;
-      case IropcodeGoto   : /* fall-through */
-      case IropcodeJumpT  : /* fall-through */
-      case IropcodeJumpF  : *offset += SPL_ADDR_SIZ; break;
+      case IropcodeSet    : *offset += SPL_VAR_SIZ + SPL_CONST_SIZ;
+                            break;
+
+      case IropcodeAsgn   : *offset += 2 * SPL_VAR_SIZ;
+                            break;
+
+      case IropcodeEnter  : [[fallthrough]];
+      case IropcodeExit   : [[fallthrough]];
+      case IropcodeSpeak  : *offset += SPL_PERSON_SIZ;
+                            break;
+
+      case IropcodePush   : [[fallthrough]];
+      case IropcodePop    : *offset += SPL_VAR_SIZ;
+                            break;
+
+      case IropcodeSum    : [[fallthrough]];
+      case IropcodeDiff   : [[fallthrough]];
+      case IropcodeProd   : [[fallthrough]];
+      case IropcodeQuot   : [[fallthrough]];
+      case IropcodeRem    : *offset += 3 * SPL_VAR_SIZ;
+                            break;
+
+      case IropcodeSqrt   : [[fallthrough]];
+      case IropcodeSqur   : [[fallthrough]];
+      case IropcodeCube   : [[fallthrough]];
+      case Iropcode2x     : [[fallthrough]];
+      case IropcodeFact   : [[fallthrough]];
+      case IropcodeEq     : [[fallthrough]];
+      case IropcodeGt     : [[fallthrough]];
+      case IropcodeLt     : *offset += 2 * SPL_VAR_SIZ;
+                            break;
+
+      case IropcodeGoto   : [[fallthrough]];
+      case IropcodeJumpT  : [[fallthrough]];
+      case IropcodeJumpF  : *offset += SPL_ADDR_SIZ;
+                            break;
+
       default: ;  /* opcodes with no parameter fall here */
    }
 
@@ -136,46 +169,62 @@ static bool write_route(tree_t *t, size_t lv, void *ctx) {
    asm_ctx_t *actx;
 
    (void) lv;
-
    actx = ctx;
    actx->t = t;
    actx->n = tree_dat(actx->t);
 
-   if (actx->n->kind != IrnodekindOpcode)
+   if (actx->n->kind != IrnodekindOpcode) {
       return true;
+   }
 
    switch (actx->n->dat.ui) {
-      case IropcodeSet    : write_set(actx); break;
-      case IropcodeEnter  : /* fall-through */
-      case IropcodeExit   : /* fall-through */
-      case IropcodeSpeak  : write_enterlike(actx); break;
-      case IropcodeOutN   : /* fall-through */
-      case IropcodeOutC   : /* fall-through */
-      case IropcodeInN    : /* fall-through */
-      case IropcodeInC    : /* fall-through */
-      case IropcodeRecall : /* fall-through */
-      case IropcodeNegate : /* fall-through */
-      case IropcodeExeunt : write_paramless_opcode(actx); break;
-      case IropcodeRememb : /* fall-through */
-      case IropcodePush   : /* fall-through */
-      case IropcodePop    : write_pushlike(actx); break;
-      case IropcodeSum    : /* fall-through */
-      case IropcodeDiff   : /* fall-through */
-      case IropcodeProd   : /* fall-through */
-      case IropcodeQuot   : /* fall-through */
-      case IropcodeRem    : write_binary_op(actx); break;
-      case IropcodeSqrt   : /* fall-through */
-      case IropcodeSqur   : /* fall-through */
-      case IropcodeCube   : /* fall-through */
-      case Iropcode2x     : /* fall-through */
-      case IropcodeFact   : /* fall-through */
-      case IropcodeEq     : /* fall-through */
-      case IropcodeGt     : /* fall-through */
-      case IropcodeLt     : /* fall-through */
-      case IropcodeAsgn   : write_unary_op(actx); break;
-      case IropcodeGoto   : write_goto(actx); break;
-      case IropcodeJumpT  : /* fall-through */
-      case IropcodeJumpF  : write_jumplike(actx); break;
+      case IropcodeSet    : write_set(actx);
+                            break;
+
+      case IropcodeEnter  : [[fallthrough]];
+      case IropcodeExit   : [[fallthrough]];
+      case IropcodeSpeak  : write_enterlike(actx);
+                            break;
+
+      case IropcodeOutN   : [[fallthrough]];
+      case IropcodeOutC   : [[fallthrough]];
+      case IropcodeInN    : [[fallthrough]];
+      case IropcodeInC    : [[fallthrough]];
+      case IropcodeRecall : [[fallthrough]];
+      case IropcodeNegate : [[fallthrough]];
+      case IropcodeExeunt : write_paramless_opcode(actx);
+                            break;
+
+      case IropcodeRememb : [[fallthrough]];
+      case IropcodePush   : [[fallthrough]];
+      case IropcodePop    : write_pushlike(actx);
+                            break;
+
+      case IropcodeSum    : [[fallthrough]];
+      case IropcodeDiff   : [[fallthrough]];
+      case IropcodeProd   : [[fallthrough]];
+      case IropcodeQuot   : [[fallthrough]];
+      case IropcodeRem    : write_binary_op(actx);
+                            break;
+
+      case IropcodeSqrt   : [[fallthrough]];
+      case IropcodeSqur   : [[fallthrough]];
+      case IropcodeCube   : [[fallthrough]];
+      case Iropcode2x     : [[fallthrough]];
+      case IropcodeFact   : [[fallthrough]];
+      case IropcodeEq     : [[fallthrough]];
+      case IropcodeGt     : [[fallthrough]];
+      case IropcodeLt     : [[fallthrough]];
+      case IropcodeAsgn   : write_unary_op(actx);
+                            break;
+
+      case IropcodeGoto   : write_goto(actx);
+                            break;
+
+      case IropcodeJumpT  : [[fallthrough]];
+      case IropcodeJumpF  : write_jumplike(actx);
+                            break;
+
       default: ;  /* control never reaches default */
    }
 
