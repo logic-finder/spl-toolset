@@ -61,6 +61,11 @@ static bool drive_job(argtok_t *tok, argerr_t *err) {
    char *end;
    unsigned long ret;
 
+   /* --job 128
+            ^~~
+            tok->value
+    */
+
    errno = 0;
    ret = strtoul(tok->value, &end, 10);
 
@@ -68,28 +73,30 @@ static bool drive_job(argtok_t *tok, argerr_t *err) {
 
    if (errno == ERANGE || ret > ULONG_MAX) {
       err->reason = "a value out of range";
-      return false;
+      return false;  /* parsing failed */
    }
    else
    if (end == tok->value) {
       err->reason = "conversion not performed";
-      return false;
+      return false;  /* parsing failed */
    }
    else
    if (end[0] != '\0') {
       err->reason = "value not fully consumed";
-      return false;
+      return false;  /* parsing failed */
    }
 
    cfg.job = ret;
-   return true;
+   return true;  /* parsing ok */
 }
 
 static bool drive_output(argtok_t *tok, argerr_t *err) {
    (void) err;
+
    if (!(cfg.out = strdup(tok->value))) {
       return false;
    }
+
    return true;
 }
 
@@ -151,7 +158,15 @@ static bool drive_language(argtok_t *tok, argerr_t *err) {
    }
 
    /* error path */
+   static const errhandle_unrecognized_value_ctx_t ctx = {
+      .targets = (const void **) &accept_set,
+      .targets_len = accept_set_len,
+      .target_siz = ESIZ(accept_set)
+   };
+
    err->errhandle = errhandle_unrecognized_value;
+   err->ctx = &ctx;
+   err->ctx_siz = sizeof ctx;
    return false;
 }
 
@@ -181,7 +196,15 @@ static bool drive_target(argtok_t *tok, argerr_t *err) {
    }
 
    /* error path */
+   static const errhandle_unrecognized_value_ctx_t ctx = {
+      .targets = (const void **) &accept_set,
+      .targets_len = accept_set_len,
+      .target_siz = ESIZ(accept_set)
+   };
+
    err->errhandle = errhandle_unrecognized_value;
+   err->ctx = &ctx;
+   err->ctx_siz = sizeof ctx;
    return false;
 }
 
@@ -226,7 +249,15 @@ static bool drive_warning(argtok_t *tok, argerr_t *err) {
    }
 
    /* error path */
+   static const errhandle_unrecognized_value_ctx_t ctx = {
+      .targets = (const void **) &accept_set,
+      .targets_len = accept_set_len,
+      .target_siz = ESIZ(accept_set)
+   };
+
    err->errhandle = errhandle_unrecognized_value;
+   err->ctx = &ctx;
+   err->ctx_siz = sizeof ctx;
    return false;
 }
 
@@ -248,7 +279,7 @@ static bool errhandle_unrecognized_value(
       ectx->target_siz
    );
    if (!ret.alikes) {
-      return false;
+      return false;  /* something wrong -- size or alloc issue */
    }
 
    nchar = printf(
