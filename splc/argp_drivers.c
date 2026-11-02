@@ -102,7 +102,7 @@ static bool drive_output(argtok_t *tok, argerr_t *err) {
 
 static bool drive_standard(argtok_t *tok, argerr_t *err) {
    typedef struct {
-      const char *spec;  /* MUST be the first member! */
+      const char *spec;
       stdopt_t enum_val;
    } mapper_t;
 
@@ -124,9 +124,10 @@ static bool drive_standard(argtok_t *tok, argerr_t *err) {
 
    /* error path */
    static const errhandle_unrecognized_value_ctx_t ctx = {
-      .targets = (const void **) &accept_set,
-      .targets_len = accept_set_len,
-      .target_siz = ESIZ(accept_set)
+      .arr = accept_set,
+      .nmemb = accept_set_len,
+      .esiz = ESIZ(accept_set),
+      .offset = offsetof(mapper_t, spec)
    };
 
    err->errhandle = errhandle_unrecognized_value;
@@ -159,9 +160,10 @@ static bool drive_language(argtok_t *tok, argerr_t *err) {
 
    /* error path */
    static const errhandle_unrecognized_value_ctx_t ctx = {
-      .targets = (const void **) &accept_set,
-      .targets_len = accept_set_len,
-      .target_siz = ESIZ(accept_set)
+      .arr = accept_set,
+      .nmemb = accept_set_len,
+      .esiz = ESIZ(accept_set),
+      .offset = offsetof(mapper_t, lang)
    };
 
    err->errhandle = errhandle_unrecognized_value;
@@ -197,9 +199,10 @@ static bool drive_target(argtok_t *tok, argerr_t *err) {
 
    /* error path */
    static const errhandle_unrecognized_value_ctx_t ctx = {
-      .targets = (const void **) &accept_set,
-      .targets_len = accept_set_len,
-      .target_siz = ESIZ(accept_set)
+      .arr = accept_set,
+      .nmemb = accept_set_len,
+      .esiz = ESIZ(accept_set),
+      .offset = offsetof(mapper_t, target)
    };
 
    err->errhandle = errhandle_unrecognized_value;
@@ -250,9 +253,10 @@ static bool drive_warning(argtok_t *tok, argerr_t *err) {
 
    /* error path */
    static const errhandle_unrecognized_value_ctx_t ctx = {
-      .targets = (const void **) &accept_set,
-      .targets_len = accept_set_len,
-      .target_siz = ESIZ(accept_set)
+      .arr = accept_set,
+      .nmemb = accept_set_len,
+      .esiz = ESIZ(accept_set),
+      .offset = offsetof(mapper_t, request)
    };
 
    err->errhandle = errhandle_unrecognized_value;
@@ -274,9 +278,10 @@ static bool errhandle_unrecognized_value(
    (void) reason;
    ret = find_alikes(
       tok->value,
-      ectx->targets,
-      ectx->targets_len,
-      ectx->target_siz
+      ectx->arr,
+      ectx->nmemb,
+      ectx->esiz,
+      ectx->offset
    );
    if (!ret.alikes) {
       return false;  /* something wrong -- size or alloc issue */

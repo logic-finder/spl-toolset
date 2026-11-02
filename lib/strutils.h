@@ -78,9 +78,10 @@ int levenshtein_distance(const char *s, const char *t);
 [[nodiscard]]
 find_alikes_ret_t find_alikes(
    const char *src,
-   const void **targets,
-   size_t targets_len,
-   size_t target_siz
+   const void *arr,
+   size_t nmemb,
+   size_t esiz,
+   size_t offset
 );
 
 /* Inline Functions */

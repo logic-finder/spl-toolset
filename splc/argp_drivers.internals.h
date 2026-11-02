@@ -12,9 +12,10 @@
 #include "../lib/strutils.h"
 
 typedef struct {
-   const void **targets;
-   size_t targets_len;
-   size_t target_siz;
+   const void *arr;
+   size_t nmemb;
+   size_t esiz;
+   size_t offset;
 } errhandle_unrecognized_value_ctx_t;
 
 static opt_driver_t drive_help;

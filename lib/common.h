@@ -54,4 +54,14 @@ inline uint32_t endrev32(uint32_t v) {
          | (v & 0xFF000000) >> 24;
 }
 
+inline void *getaddr(
+   const void *arr,
+   size_t idx,
+   size_t esiz,
+   size_t offset
+) {
+   /* BEWARE: this function doesn't bound-check */
+   return (const char *) arr + (idx * esiz) + offset;
+}
+
 #endif

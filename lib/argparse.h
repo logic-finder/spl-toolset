@@ -12,8 +12,8 @@ typedef bool opt_driver_t(argtok_t *tok, argerr_t *err);
 typedef bool opt_errhandler_t(argtok_t *tok, const char *reason, void *ctx);
 
 typedef struct {
-   const char *lname;  /* MUST be the 1st member */
    char sname;
+   const char *lname;
    opt_driver_t *drive;
    bool reqv;
    const char *help;

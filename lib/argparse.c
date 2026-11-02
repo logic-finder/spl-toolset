@@ -744,7 +744,8 @@ static bool errhandle_unrecognized(argtok_t *tok, const char *reason, void *ctx)
       tok->field,
       ectx->table,
       ectx->table_len,
-      sizeof ESIZ(ectx->table)
+      sizeof ESIZ(ectx->table),
+      offsetof(optmd_t, lname)
    );
    if (!ret.alikes) {
       return false;

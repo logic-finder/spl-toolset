@@ -2,6 +2,13 @@
 
 extern uint32_t endrev32(uint32_t v);
 
+extern void *getaddr(
+   const void *arr,
+   size_t idx,
+   size_t esiz,
+   size_t offset
+);
+
 extern bool isle(void) {
    int v = 1;
    return ((char *) &v)[0];

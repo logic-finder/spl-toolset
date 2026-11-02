@@ -439,39 +439,29 @@ extern int levenshtein_distance(const char *s, const char *t) {
 
 extern find_alikes_ret_t find_alikes(
    const char *src,
-   const void **targets,
-   size_t targets_len,
-   size_t target_siz
+   const void *arr,
+   size_t nmemb,
+   size_t esiz,
+   size_t offset
 ) {
    find_alikes_ret_t ret = {
       .alikes = NULL,
       .nmemb = 0
    };
 
-   if (targets_len == 0) {
+   if (nmemb == 0) {
       return ret;  /* early exit */
    }
 
-   size_t *dists = malloc(targets_len * sizeof (size_t));
+   size_t *dists = malloc(nmemb * ESIZ(dists));
    if (!dists) {
       return ret;
    }
 
-   /* Note. targets should be like:
-         accept_set[] = { { "spl01", ... }, { "cor27", ... } }
-         optmds[] = { "help", ... }, { "version", ... } }
-
-      What GETSTR() does is to find each string in the array
-      of unknown types. It assumes the string member is the first
-      field in each struct! */
-
-   /* Note: sizeof (char) = 1 */
-   #define GETSTR(i) (* (char **) (((char *) targets) + (i) * (target_siz)))
-
    /* Evaluates distances */
-   for (size_t i = 0; i < targets_len; i++) {
+   for (size_t i = 0; i < nmemb; i++) {
       int ld_ret = levenshtein_distance(
-         src, GETSTR(i)
+         src, getaddr(arr, i, esiz, offset)
       );
       if (ld_ret < 0) {
          goto cleanup;
@@ -482,7 +472,7 @@ extern find_alikes_ret_t find_alikes(
    size_t min = dists[0];
 
    /* Finds the smallest distance */
-   for (size_t i = 1; i < targets_len; i++) {
+   for (size_t i = 1; i < nmemb; i++) {
       if (min > dists[i]) {
          min = dists[i];
       }
@@ -491,21 +481,21 @@ extern find_alikes_ret_t find_alikes(
    size_t results_len = 0;
 
    /* Counts the total length of the result array */
-   for (size_t i = 0; i < targets_len; i++) {
+   for (size_t i = 0; i < nmemb; i++) {
       if (min == dists[i]) {
          results_len++;
       }
    }
 
-   const char **results = malloc(results_len * sizeof *results);
+   const char **results = malloc(results_len * ESIZ(results));
    if (!results) {
       goto cleanup;
    }
 
    /* Collects candidates which have the same distance with `min` */
-   for (size_t i = 0, idx = 0; i < targets_len; i++) {
+   for (size_t i = 0, idx = 0; i < nmemb; i++) {
       if (min == dists[i]) {
-         results[idx++] = GETSTR(i);
+         results[idx++] = getaddr(arr, i, esiz, offset);
       }
    }
 
@@ -514,7 +504,6 @@ extern find_alikes_ret_t find_alikes(
 
 cleanup:
    free(dists);
-   #undef GETSTR
 
    return ret;
 }
