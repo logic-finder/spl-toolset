@@ -64,7 +64,9 @@ extern bool assemble(compile_ctx_t *cctx) {
    actx.s3p = 0;
 
    if (cctx->cfg->dbg) {
-      write_debug_info(&actx);
+      if (!write_debug_info(&actx)) {
+         goto err;
+      }
       actx.s3p = actx.offset;
       write_srcfile(&actx);
    }
@@ -386,22 +388,42 @@ static tree_t *find_nearest_opcode(tree_t *root, size_t a, size_t s, size_t b) {
    return NULL;
 }
 
-static void write_debug_info(asm_ctx_t *actx) {
+static bool write_debug_info(asm_ctx_t *actx) {
    fpos_t ecnt_pos, eos_pos;
    spl_uint_t before, diff;
    uint32_t ecnt;
 
-   safe_fgetpos(actx->fp, &ecnt_pos);
+   if (fgetpos(actx->fp, &ecnt_pos)) {
+      return false;
+   }
+
    actx->offset += OBJFILE_DI_EC;
    before = actx->offset;
-   tree_pre_traverse(actx->nrtv, write_dbginfo_route, 0, actx);
-   safe_fgetpos(actx->fp, &eos_pos);
+
+   if (!tree_pre_traverse(actx->nrtv, write_dbginfo_route, 0, actx)) {
+      return false;
+   }
+   if (fgetpos(actx->fp, &eos_pos)) {
+      return false;
+   }
+
    diff = actx->offset - before;
    ecnt = diff / OBJFILE_DI_ETSIZ;
-   safe_fsetpos(actx->fp, &ecnt_pos);
-   if (actx->be) ecnt = endrev32(ecnt);
-   safe_fwrite(&ecnt, OBJFILE_DI_EC, 1, actx->fp);
-   safe_fsetpos(actx->fp, &eos_pos);
+
+   if (fsetpos(actx->fp, &ecnt_pos)) {
+      return false;
+   }
+   if (actx->be) {
+      ecnt = endrev32(ecnt);
+   }
+   if (1 > fwrite(&ecnt, OBJFILE_DI_EC, 1, actx->fp)) {
+      return false;
+   }
+   if (fsetpos(actx->fp, &eos_pos)) {
+      return false;
+   }
+
+   return true;
 }
 
 static bool write_dbginfo_route(tree_t *t, size_t lv, void *ctx) {

@@ -8,6 +8,7 @@
 #include "wrappers.h"
 #include "strutils.h"
 #include "typecheck.h"
+#include "assembler.h"
 
 #define SPL_OPCODE_SIZ 1
 #define SPL_VAR_SIZ    1
@@ -43,7 +44,7 @@ static writer_t write_jumplike;
 
 static tree_t *find_nearest_opcode(tree_t *root, size_t a, size_t s, size_t b);
 
-static void write_debug_info(asm_ctx_t *actx);
+static bool write_debug_info(asm_ctx_t *actx);
 static void write_srcfile(asm_ctx_t *actx);
 static void write_header(bool debug_flag, asm_ctx_t *actx);
 

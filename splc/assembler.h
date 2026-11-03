@@ -1,6 +1,8 @@
 #ifndef ASSEMBLER_H
 #define ASSEMBLER_H
 
+#include <stdbool.h>
+
 #include "splc.h"
 #include "global.h"
 
