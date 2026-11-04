@@ -284,9 +284,8 @@ static bool write_enterlike(asm_ctx_t *actx) {
 }
 
 static bool write_paramless_opcode(asm_ctx_t *actx) {
-   return (1 > fwrite(&actx->n->dat.i, SPL_OPCODE_SIZ, 1, actx->fp))
-      ? false
-      : true;
+   size_t nmemb = fwrite(&actx->n->dat.i, SPL_OPCODE_SIZ, 1, actx->fp);
+   return (1 == nmemb) ? true : false;
 }
 
 static bool write_pushlike(asm_ctx_t *actx) {
