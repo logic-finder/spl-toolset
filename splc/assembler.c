@@ -31,10 +31,12 @@ extern bool assemble(compile_ctx_t *cctx) {
    char *destname;
    int nchar;
 
+   /* Inits actx */
    actx.le = isle(), actx.be = !actx.le;
    actx.nrtv = tree_child(cctx->irt, 1);
    actx.ls = cctx->ls;
 
+   /* Creates a destination file */
    if (!(destname = strdup(cctx->cfg->out))) {
       return false;
    }
@@ -42,6 +44,7 @@ extern bool assemble(compile_ctx_t *cctx) {
       goto cleanup;
    }
 
+   /* Notifies the start of the work */
    if (cctx->cfg->vbs) {
       nchar = printf(
          ENPREFIX "generating object file " Cbyellow "\"%s\"" Creset "...",
@@ -75,13 +78,14 @@ extern bool assemble(compile_ctx_t *cctx) {
       }
    }
 
+   /* Finally, writes the header section */
    rewind(actx.fp);
 
-   /* Finally, writes the header section */
    if (!write_header(1, &actx)) {
       goto cleanup;
    }
 
+   /* Notifies the end of the work */
    if (cctx->cfg->vbs) {
       nchar = printf(
          " " Cgreen "done!" Creset
