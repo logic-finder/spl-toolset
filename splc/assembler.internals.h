@@ -27,7 +27,7 @@ typedef struct {
    irnode_t *n;
 } asm_ctx_t;
 
-typedef void writer_t(asm_ctx_t *actx);
+typedef bool writer_t(asm_ctx_t *actx);
 
 static tree_callback_t setoffset_route;
 static tree_callback_t write_route;
@@ -45,7 +45,7 @@ static writer_t write_jumplike;
 static tree_t *find_nearest_opcode(tree_t *root, size_t a, size_t s, size_t b);
 
 static bool write_debug_info(asm_ctx_t *actx);
-static void write_srcfile(asm_ctx_t *actx);
-static void write_header(bool debug_flag, asm_ctx_t *actx);
+static bool write_srcfile(asm_ctx_t *actx);
+static bool write_header(bool debug_flag, asm_ctx_t *actx);
 
 #endif

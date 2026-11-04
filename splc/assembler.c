@@ -25,6 +25,8 @@ extern bool assemble(compile_ctx_t *cctx) {
             text data...         - variable size
     */
 
+   bool assemble_stat = false;
+   bool fclosed = false;
    asm_ctx_t actx;
    char *destname;
    int nchar;
@@ -37,7 +39,7 @@ extern bool assemble(compile_ctx_t *cctx) {
       return false;
    }
    if (!(actx.fp = fopen(destname, "w"))) {
-      goto err;
+      goto cleanup;
    }
 
    if (cctx->cfg->vbs) {
@@ -45,18 +47,18 @@ extern bool assemble(compile_ctx_t *cctx) {
          ENPREFIX "generating object file " Cbyellow "\"%s\"" Creset "...",
          destname
       );
-      if (nchar < 0) goto err;
+      if (nchar < 0) goto cleanup;
    }
 
    /* Fills opcode.offset field first */
    actx.offset = OBJFILE_HDSIZ;
    if (!tree_pre_traverse(actx.nrtv, setoffset_route, 0, &actx.offset)) {
-      goto err;
+      goto cleanup;
    }
 
    /* Writes the code section */
    if (!tree_pre_traverse(actx.nrtv, write_route, 0, &actx)) {
-      goto err;
+      goto cleanup;
    }
 
    /* Writes the debug info & source file section */
@@ -65,33 +67,50 @@ extern bool assemble(compile_ctx_t *cctx) {
 
    if (cctx->cfg->dbg) {
       if (!write_debug_info(&actx)) {
-         goto err;
+         goto cleanup;
       }
       actx.s3p = actx.offset;
-      write_srcfile(&actx);
+      if (!write_srcfile(&actx)) {
+         goto cleanup;
+      }
    }
 
    rewind(actx.fp);
 
    /* Finally, writes the header section */
-   write_header(1, &actx);
+   if (!write_header(1, &actx)) {
+      goto cleanup;
+   }
 
-   if (cctx->cfg->vbs) safe_vprintf(
-      " " Cgreen "done!" Creset
-      " (total " Cbwhite "%" SPL_UINT_FMTSPC Creset " bytes) \n",
-      actx.offset
-   );
+   if (cctx->cfg->vbs) {
+      nchar = printf(
+         " " Cgreen "done!" Creset
+         " (total " Cbwhite "%" SPL_UINT_FMTSPC Creset " bytes) \n",
+         actx.offset
+      );
+      if (nchar < 0) goto cleanup;
+   }
 
    /* Cleans up */
-   safe_fclose(actx.fp);
+   if (fclose(actx.fp) == EOF) {
+      fclosed = true;
+      goto cleanup;
+   }
 
-   if (cctx->cfg->drn)
-      safe_remove(destname);
+   if (cctx->cfg->drn) {
+      if (remove(destname)) {
+         goto cleanup;
+      }
+   }
 
+   /* Everything was successful */
+   assemble_stat = true;
+
+cleanup:
+   if (!fclosed) (void) fclose(actx.fp);
    free(destname);
 
-err:
-   free(destname);
+   return assemble_stat;
 }
 
 static bool setoffset_route(tree_t *t, size_t lv, void *ctx) {
@@ -180,13 +199,11 @@ static bool write_route(tree_t *t, size_t lv, void *ctx) {
    }
 
    switch (actx->n->dat.ui) {
-      case IropcodeSet    : write_set(actx);
-                            break;
+      case IropcodeSet    : return write_set(actx);
 
       case IropcodeEnter  : [[fallthrough]];
       case IropcodeExit   : [[fallthrough]];
-      case IropcodeSpeak  : write_enterlike(actx);
-                            break;
+      case IropcodeSpeak  : return write_enterlike(actx);
 
       case IropcodeOutN   : [[fallthrough]];
       case IropcodeOutC   : [[fallthrough]];
@@ -194,20 +211,17 @@ static bool write_route(tree_t *t, size_t lv, void *ctx) {
       case IropcodeInC    : [[fallthrough]];
       case IropcodeRecall : [[fallthrough]];
       case IropcodeNegate : [[fallthrough]];
-      case IropcodeExeunt : write_paramless_opcode(actx);
-                            break;
+      case IropcodeExeunt : return write_paramless_opcode(actx);
 
       case IropcodeRememb : [[fallthrough]];
       case IropcodePush   : [[fallthrough]];
-      case IropcodePop    : write_pushlike(actx);
-                            break;
+      case IropcodePop    : return write_pushlike(actx);
 
       case IropcodeSum    : [[fallthrough]];
       case IropcodeDiff   : [[fallthrough]];
       case IropcodeProd   : [[fallthrough]];
       case IropcodeQuot   : [[fallthrough]];
-      case IropcodeRem    : write_binary_op(actx);
-                            break;
+      case IropcodeRem    : return write_binary_op(actx);
 
       case IropcodeSqrt   : [[fallthrough]];
       case IropcodeSqur   : [[fallthrough]];
@@ -217,80 +231,118 @@ static bool write_route(tree_t *t, size_t lv, void *ctx) {
       case IropcodeEq     : [[fallthrough]];
       case IropcodeGt     : [[fallthrough]];
       case IropcodeLt     : [[fallthrough]];
-      case IropcodeAsgn   : write_unary_op(actx);
-                            break;
+      case IropcodeAsgn   : return write_unary_op(actx);
 
-      case IropcodeGoto   : write_goto(actx);
-                            break;
+      case IropcodeGoto   : return write_goto(actx);
 
       case IropcodeJumpT  : [[fallthrough]];
-      case IropcodeJumpF  : write_jumplike(actx);
-                            break;
+      case IropcodeJumpF  : return write_jumplike(actx);
 
-      default: ;  /* control never reaches default */
+      default: break;  /* control never reaches default */
    }
 
+   /* control never reaches here */
    return true;
 }
 
-static void write_set(asm_ctx_t *actx) {
+static bool write_set(asm_ctx_t *actx) {
    irnode_t *p1, *p2;
 
    p1 = tree_chdat(actx->t, 0);
    p2 = tree_chdat(actx->t, 1);
 
-   safe_fwrite(&actx->n->dat.i, SPL_OPCODE_SIZ, 1, actx->fp);
-   safe_fwrite(&p1->dat.i, SPL_VAR_SIZ, 1, actx->fp);
-   safe_fwrite(&p2->dat.i, SPL_CONST_SIZ, 1, actx->fp);
+   if (1 > fwrite(&actx->n->dat.i, SPL_OPCODE_SIZ, 1, actx->fp)) {
+      return false;
+   }
+   if (1 > fwrite(&p1->dat.i, SPL_VAR_SIZ, 1, actx->fp)) {
+      return false;
+   }
+   if (1 > fwrite(&p2->dat.i, SPL_CONST_SIZ, 1, actx->fp)) {
+      return false;
+   }
+
+   return true;
 }
 
-static void write_enterlike(asm_ctx_t *actx) {
+static bool write_enterlike(asm_ctx_t *actx) {
    irnode_t *p1;
 
    p1 = tree_chdat(actx->t, 0);
 
-   safe_fwrite(&actx->n->dat.i, SPL_OPCODE_SIZ, 1, actx->fp);
-   safe_fwrite(&p1->dat.i, SPL_PERSON_SIZ, 1, actx->fp);
+   if (1 > fwrite(&actx->n->dat.i, SPL_OPCODE_SIZ, 1, actx->fp)) {
+      return false;
+   }
+   if (1 > fwrite(&p1->dat.i, SPL_PERSON_SIZ, 1, actx->fp)) {
+      return false;
+   }
+
+   return true;
 }
 
-static void write_paramless_opcode(asm_ctx_t *actx) {
-   safe_fwrite(&actx->n->dat.i, SPL_OPCODE_SIZ, 1, actx->fp);
+static bool write_paramless_opcode(asm_ctx_t *actx) {
+   return (1 > fwrite(&actx->n->dat.i, SPL_OPCODE_SIZ, 1, actx->fp))
+      ? false
+      : true;
 }
 
-static void write_pushlike(asm_ctx_t *actx) {
+static bool write_pushlike(asm_ctx_t *actx) {
    irnode_t *p1;
 
    p1 = tree_chdat(actx->t, 0);
 
-   safe_fwrite(&actx->n->dat.i, SPL_OPCODE_SIZ, 1, actx->fp);
-   safe_fwrite(&p1->dat.i, SPL_VAR_SIZ, 1, actx->fp);
+   if (1 > fwrite(&actx->n->dat.i, SPL_OPCODE_SIZ, 1, actx->fp)) {
+      return false;
+   }
+   if (1 > fwrite(&p1->dat.i, SPL_VAR_SIZ, 1, actx->fp)) {
+      return false;
+   }
+
+   return true;
 }
 
-static void write_binary_op(asm_ctx_t *actx) {
+static bool write_binary_op(asm_ctx_t *actx) {
    irnode_t *p1, *p2, *p3;
 
    p1 = tree_chdat(actx->t, 0);
    p2 = tree_chdat(actx->t, 1);
    p3 = tree_chdat(actx->t, 2);
 
-   safe_fwrite(&actx->n->dat.i, SPL_OPCODE_SIZ, 1, actx->fp);
-   safe_fwrite(&p1->dat.i, SPL_VAR_SIZ, 1, actx->fp);
-   safe_fwrite(&p2->dat.i, SPL_VAR_SIZ, 1, actx->fp);
-   safe_fwrite(&p3->dat.i, SPL_VAR_SIZ, 1, actx->fp);
+   if (1 > fwrite(&actx->n->dat.i, SPL_OPCODE_SIZ, 1, actx->fp)) {
+      return false;
+   }
+   if (1 > fwrite(&p1->dat.i, SPL_VAR_SIZ, 1, actx->fp)) {
+      return false;
+   }
+   if (1 > fwrite(&p2->dat.i, SPL_VAR_SIZ, 1, actx->fp)) {
+      return false;
+   }
+   if (1 > fwrite(&p3->dat.i, SPL_VAR_SIZ, 1, actx->fp)) {
+      return false;
+   }
+
+   return true;
 }
 
-static void write_unary_op(asm_ctx_t *actx) {
+static bool write_unary_op(asm_ctx_t *actx) {
    irnode_t *p1, *p2;
 
    p1 = tree_chdat(actx->t, 0);
    p2 = tree_chdat(actx->t, 1);
 
-   safe_fwrite(&actx->n->dat.i, SPL_OPCODE_SIZ, 1, actx->fp);
-   safe_fwrite(&p1->dat.i, SPL_VAR_SIZ, 1, actx->fp);
-   safe_fwrite(&p2->dat.i, SPL_VAR_SIZ, 1, actx->fp);
+   if (1 < fwrite(&actx->n->dat.i, SPL_OPCODE_SIZ, 1, actx->fp)) {
+      return false;
+   }
+   if (1 < fwrite(&p1->dat.i, SPL_VAR_SIZ, 1, actx->fp)) {
+      return false;
+   }
+   if (1 < fwrite(&p2->dat.i, SPL_VAR_SIZ, 1, actx->fp)) {
+      return false;
+   }
+
+   return true;
 }
 
-static void write_goto(asm_ctx_t *actx) {
+static bool write_goto(asm_ctx_t *actx) {
    tree_t *root, *act, *scene, *block, *op;
    irnode_t *p1, *p2;
    irnode_t *act_dat, *op_dat;
@@ -316,11 +368,17 @@ static void write_goto(asm_ctx_t *actx) {
    }
    op_dat = tree_dat(op);
 
-   safe_fwrite(&actx->n->dat.i, SPL_OPCODE_SIZ, 1, actx->fp);
-   safe_fwrite(&op_dat->offset, SPL_ADDR_SIZ, 1, actx->fp);
+   if (1 < fwrite(&actx->n->dat.i, SPL_OPCODE_SIZ, 1, actx->fp)) {
+      return false;
+   }
+   if (1 < fwrite(&op_dat->offset, SPL_ADDR_SIZ, 1, actx->fp)) {
+      return false;
+   }
+
+   return true;
 }
 
-static void write_jumplike(asm_ctx_t *actx) {
+static bool write_jumplike(asm_ctx_t *actx) {
    tree_t *root, *act, *scene, *block, *op;
    irnode_t *p1;
    irnode_t *act_dat, *scene_dat, *block_dat, *op_dat;
@@ -357,8 +415,14 @@ static void write_jumplike(asm_ctx_t *actx) {
    op = find_nearest_opcode(root, a, s, b);
    op_dat = tree_dat(op);
 
-   safe_fwrite(&actx->n->dat.i, SPL_OPCODE_SIZ, 1, actx->fp);
-   safe_fwrite(&op_dat->offset, SPL_ADDR_SIZ, 1, actx->fp);
+   if (1 < fwrite(&actx->n->dat.i, SPL_OPCODE_SIZ, 1, actx->fp)) {
+      return false;
+   }
+   if (1 < fwrite(&op_dat->offset, SPL_ADDR_SIZ, 1, actx->fp)) {
+      return false;
+   }
+
+   return true;
 }
 
 static tree_t *find_nearest_opcode(tree_t *root, size_t a, size_t s, size_t b) {
@@ -431,25 +495,31 @@ static bool write_dbginfo_route(tree_t *t, size_t lv, void *ctx) {
    asm_ctx_t *actx;
 
    (void) lv;
-
    actx = ctx;
    n = tree_dat(t);
 
-   if (n->kind != IrnodekindOpcode)
+   if (n->kind != IrnodekindOpcode) {
       return true;
+   }
 
    // fixme: 프로젝트 전체적으로 lnum lpos 사이즈 spl_...로 통일
    // fixme: 프로젝트에서 size_t를 쓰는게 적절한곳엔 size_t 사용
-   safe_fwrite(&actx->offset, OBJFILE_DI_ET_OP, 1, actx->fp);
-   safe_fwrite(&n->lnum, OBJFILE_DI_ET_SL, 1, actx->fp);
-   safe_fwrite(&n->lpos, OBJFILE_DI_ET_SP, 1, actx->fp);
+   if (1 > fwrite(&actx->offset, OBJFILE_DI_ET_OP, 1, actx->fp)) {
+      return false;
+   }
+   if (1 > fwrite(&n->lnum, OBJFILE_DI_ET_SL, 1, actx->fp)) {
+      return false;
+   }
+   if (1 > fwrite(&n->lpos, OBJFILE_DI_ET_SP, 1, actx->fp)) {
+      return false;
+   }
 
    actx->offset += OBJFILE_DI_ETSIZ;
 
    return true;
 }
 
-static void write_srcfile(asm_ctx_t *actx) {
+static bool write_srcfile(asm_ctx_t *actx) {
    // fixme: 프로젝트 전역에서 쓰는 컨텍스트 구조체를 마련해서 거기서 값을 가져다쓰는게 나을듯
    size_t lls, cnt;
    line_t *l;
@@ -459,7 +529,9 @@ static void write_srcfile(asm_ctx_t *actx) {
 
    for (size_t i = 0; i < lls; i++) {
       l = array_peek(actx->ls, i);
-      safe_fwrite(l->run, 1, l->len, actx->fp);
+      if (1 > fwrite(l->run, 1, l->len, actx->fp)) {
+         return false;
+      }
    }
 
    for (size_t i = 0; i < lls; i++) {
@@ -467,9 +539,11 @@ static void write_srcfile(asm_ctx_t *actx) {
       cnt += l->len;
    }
    actx->offset += cnt;
+
+   return true;
 }
 
-static void write_header(bool debug_flag, asm_ctx_t *actx) {
+static bool write_header(bool debug_flag, asm_ctx_t *actx) {
    uint32_t fi, s0p, s1p;
 
    fi = OBJFILE_FI;
@@ -477,10 +551,24 @@ static void write_header(bool debug_flag, asm_ctx_t *actx) {
    s0p = 0;
    s1p = OBJFILE_HDSIZ;
 
-   safe_fwrite(&fi, sizeof fi, 1, actx->fp);
-   safe_fwrite(&debug_flag, 1, 1, actx->fp);
-   safe_fwrite(&s0p, sizeof s0p, 1, actx->fp);
-   safe_fwrite(&s1p, sizeof s1p, 1, actx->fp);
-   safe_fwrite(&actx->s2p, sizeof actx->s2p, 1, actx->fp);
-   safe_fwrite(&actx->s3p, sizeof actx->s3p, 1, actx->fp);
+   if (1 > fwrite(&fi, sizeof fi, 1, actx->fp)) {
+      return false;
+   }
+   if (1 > fwrite(&debug_flag, 1, 1, actx->fp)) {
+      return false;
+   }
+   if (1 > fwrite(&s0p, sizeof s0p, 1, actx->fp)) {
+      return false;
+   }
+   if (1 > fwrite(&s1p, sizeof s1p, 1, actx->fp)) {
+      return false;
+   }
+   if (1 > fwrite(&actx->s2p, sizeof actx->s2p, 1, actx->fp)) {
+      return false;
+   }
+   if (1 > fwrite(&actx->s3p, sizeof actx->s3p, 1, actx->fp)) {
+      return false;
+   }
+
+   return true;
 }
