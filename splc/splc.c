@@ -50,7 +50,8 @@ static void checkif_argc1(
 static bool compile(config_t *cfg) {
    compile_ctx_t cctx = {
       .cfg = cfg,
-      .arena = NULL
+      .arena = NULL,
+      .ferr = NULL
    };
    size_t total = array_size(cfg->source_files);
    bool ret = false;
@@ -64,14 +65,15 @@ static bool compile(config_t *cfg) {
 
    for (size_t i = 0; i < total; i++) {
       cctx.sourcefile = array_peek(cfg->source_files, i);
-      if (!(ret = loadfile_talkative(&cctx, cctx.sourcefile)))
+      if (!loadfile_talkative(&cctx, cctx.sourcefile))
          goto cleanup;
 
-      if (!(ret = lex(&cctx)))
+      if (!lex(&cctx))
          goto cleanup;
       parse(&cctx);
       typecheck(&cctx);
-      if (!ctxcheck(&cctx)) goto cleanup;
+      if (!ctxcheck(&cctx))
+         goto cleanup;
       irgenerate(&cctx);
 
       if (cfg->opt)
@@ -93,10 +95,23 @@ static bool compile(config_t *cfg) {
       cctx.ls = NULL;
    }
 
+   ret = true;
+
 cleanup:
    array_destroy(cctx.toks);
    array_destroy(cctx.ls);
    arena_destroy(cctx.arena);
+
+   if (!ret) {
+      if (!cctx.ferr) {
+         (void) fprintf(
+            stderr,
+            "fatal: %s. Aborting.\n",
+            cctx.ferr
+         );
+      }
+      // Print traces
+   }
 
    return ret;
 }

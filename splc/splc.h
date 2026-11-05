@@ -15,6 +15,7 @@ typedef struct {
    tree_t *irt;
    const char *sourcefile;
    arena_t *arena;
+   const char *ferr;
 } compile_ctx_t;
 
 #endif
