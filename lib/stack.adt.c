@@ -25,14 +25,23 @@ extern void stack_destroy(stack_t *s) {
    free(s);
 }
 
-// fixme: change to generic
-extern bool stack_push(stack_t *s, int v) {
-   stack_node_t *n;
+extern bool stack_push(stack_t *s, void *dat, size_t sz) {
+   stack_node_t *n = NULL;
+   void *ndat = NULL;
 
    if (!(n = malloc(sizeof *n))) {
-      return false;
+      goto err;
+   }
+   if (!(ndat = malloc(sizeof sz))) {
+      goto err;
    }
 
+   // Copy data
+   memcpy(ndat, dat, sz);
+   n->dat = ndat;
+   n->sz = sz;
+
+   // Put the node into stack
    if (stack_empty(s)) {
       s->top = n;
       n->next = n->prev = NULL;
@@ -43,12 +52,18 @@ extern bool stack_push(stack_t *s, int v) {
       n->next = NULL;
       s->top = n;
    }
-
-   n->v = v;
    s->siz++;
+
+   return true;
+
+err:
+   free(ndat);
+   free(n);
+
+   return false;
 }
 
-extern bool stack_pop(stack_t *stack, int *v) {
+extern bool stack_pop(stack_t *stack, void *dest) {
    stack_node_t *n;
 
    if (stack_empty(stack)) {
@@ -57,8 +72,9 @@ extern bool stack_pop(stack_t *stack, int *v) {
    }
 
    n = stack->top;
-   if (v) {
-      *v = n->v;
+
+   if (dest) {
+      memcpy(dest, n->dat, n->sz);
    }
 
    if (stack->siz == 1) {
@@ -71,4 +87,6 @@ extern bool stack_pop(stack_t *stack, int *v) {
 
    free(n);
    stack->siz--;
+
+   return true;
 }
