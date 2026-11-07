@@ -26,11 +26,19 @@
 #include "argp_drivers.h"
 
 static bool compile(config_t *cfg);
+
 static bool loadfile_talkative(compile_ctx_t *cctx, const char *filename);
+
 static void checkif_argc1(
    int argc,
    optmd_t table[],
    size_t table_len
 );
+
+static void panic(compile_ctx_t *cctx);
+
+static void panic_default(compile_ctx_t *cctx);
+
+static void ptrace(compile_ctx_t *cctx);
 
 #endif

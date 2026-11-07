@@ -48,17 +48,23 @@ static void checkif_argc1(
 }
 
 static bool compile(config_t *cfg) {
+   bool stat = false;
    compile_ctx_t cctx = {
       .cfg = cfg,
       .arena = NULL,
-      .ferr = NULL
+      .ptrace = NULL,
+      .perr = "unknown fatal error",
+      .phdlr = NULL
    };
    size_t total = array_size(cfg->source_files);
-   bool ret = false;
 
-   if ((cctx.arena = arena_create()) == NULL) {
-      return false;
+   if (!(cctx.arena = arena_create())) {
+      goto cleanup;
    }
+   if (!(cctx.ptrace = list_create(NULL))) {
+      goto cleanup;
+   }
+
    if (!arena_info(EXECNAME)) {
       return false;
    }
@@ -95,25 +101,20 @@ static bool compile(config_t *cfg) {
       cctx.ls = NULL;
    }
 
-   ret = true;
+   stat = true;
 
 cleanup:
    array_destroy(cctx.toks);
    array_destroy(cctx.ls);
+   list_destroy(cctx.ptrace);
    arena_destroy(cctx.arena);
 
-   if (!ret) {
-      if (!cctx.ferr) {
-         (void) fprintf(
-            stderr,
-            "fatal: %s. Aborting.\n",
-            cctx.ferr
-         );
-      }
-      // Print traces
+   if (!stat) {
+      panic(&cctx);
+      abort();
    }
 
-   return ret;
+   return stat;
 }
 
 static bool loadfile_talkative(compile_ctx_t *cctx, const char *filename) {
@@ -145,4 +146,44 @@ static bool loadfile_talkative(compile_ctx_t *cctx, const char *filename) {
    );
 
    return (0 <= nchar) ? true : false;
+}
+
+static void panic(compile_ctx_t *cctx) {
+   (void) fprintf(stderr, "PANIC! ");
+
+   if (cctx->phdlr) {
+      (*cctx->phdlr)(cctx);
+   }
+   else {
+      panic_default(cctx);
+   }
+
+   (void) fprintf(stderr, ". Aborting.\n");
+
+   ptrace(cctx);
+}
+
+static void panic_default(compile_ctx_t *cctx) {
+   (void) fprintf(
+      stderr,
+      "%s",
+      cctx->perr
+   );
+}
+
+static void ptrace(compile_ctx_t *cctx) {
+   size_t sz = list_size(cctx->ptrace);
+
+   ptrace_info_t *info;
+
+   for (size_t i = 0; i < sz; i++) {
+      info = list_peek(cctx->ptrace, i);
+      (void) fprintf(
+         stderr,
+         "\tcalled at %s:%s:%zu\n",
+         info->filename,
+         info->funcname,
+         info->ln
+      );
+   }
 }
