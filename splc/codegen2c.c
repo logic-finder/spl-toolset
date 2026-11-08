@@ -80,7 +80,7 @@ err:
    return false;
 }
 
-static const char *create_dest(cg2c_ctx_t *gctx) {
+static char *create_dest(cg2c_ctx_t *gctx) {
    char *destname = NULL;
 
    // Make destname: basename(srcname) + ".c"

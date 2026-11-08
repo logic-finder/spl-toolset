@@ -26,7 +26,7 @@ typedef struct {
 
 static const char *indent = "   ";
 
-static const char *create_dest(cg2c_ctx_t *gctx);
+static char *create_dest(cg2c_ctx_t *gctx);
 static bool write2dest(cg2c_ctx_t *gctx);
 
 static bool codegen_title(cg2c_ctx_t *gctx);
