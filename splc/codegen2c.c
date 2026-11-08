@@ -70,7 +70,6 @@ extern bool transpile2c(compile_ctx_t *cctx) {
    free(gctx->destname);
 
    // Normal execution path
-   PH_RESET(cctx);  // Reset panic handlers which have been modified
    return true;
 
 err:
