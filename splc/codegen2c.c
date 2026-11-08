@@ -2,33 +2,35 @@
 #include "codegen2c.internals.h"
 
 // fixme: use resolve_var
+// fixme: buffer에 작성하고 나중에 한꺼번에 dest에 fwrite하는 것이 좋겠음
 
 extern bool transpile2c(compile_ctx_t *cctx) {
-   bool transpile_stat = false;
-   char *destname = NULL;
+   bool fclosed = false;
+   cg2c_ctx_t *gctx = NULL;
 
-   cg2c_ctx_t gctx = {
-      .irt = cctx->irt,
-      .dp = tree_child(gctx.irt, 0),
-      .nrtv = tree_child(gctx.irt, 1),
-      .pt = cctx->pt,
-      .title = tree_child(gctx.pt, 0),
-      .pt_dp = tree_child(gctx.pt, 1),
-      .ferr = NULL
+   // Init gctx
+   if (!(gctx = malloc(sizeof *gctx))) {
+      cctx->perr = "failed to create gctx";
+      PTRACE(cctx);
+      return false;
    };
 
-   int nchar;
+   gctx->srcname = cctx->sourcefile;
+   gctx->destname = NULL;
+   gctx->irt = cctx->irt;
+   gctx->dp = tree_child(gctx->irt, 0);
+   gctx->nrtv = tree_child(gctx->irt, 1);
+   gctx->pt = cctx->pt;
+   gctx->title = tree_child(gctx->pt, 0);
+   gctx->pt_dp = tree_child(gctx->pt, 1);
+   gctx->ptrace = cctx->ptrace;
+   gctx->perr = NULL;
+   gctx->phdlr = NULL;
+   gctx->pnctx = NULL;
 
    // Create a destination file
-   if (!(destname = make_destname(cctx->sourcefile, C_EXTENSION))) {
-      goto cleanup;
-   }
-   if (destname == cctx->sourcefile) {
-      gctx.ferr = "empty filename";
-      goto cleanup;
-   }
-   if (!(gctx.fp = fopen(destname, "w"))) {
-      goto cleanup;
+   if (!create_dest(gctx)) {
+      goto err;
    }
 
    // Notify the start of the work
@@ -39,92 +41,162 @@ extern bool transpile2c(compile_ctx_t *cctx) {
    }
 
    // Write C codes into the desination
-   nchar = fprintf(gctx.fp, "#include <splrt/splrt.h>\n");
-   if (nchar < 0) {
-      goto fclose;
-   }
-
-   if (!codegen_title(&gctx)) {
-      goto fclose;
-   }
-
-   nchar = fprintf(gctx.fp, "int main(void) {\n");
-   if (nchar < 0) {
-      goto fclose;
-   }
-
-   if (!codegen_locals(&gctx)) {
-      goto fclose;
-   }
-
-   if (!tree_pre_traverse(gctx.nrtv, codegen_route, 0, &gctx)) {
-      goto fclose;
-   }
-
-   nchar = fprintf(
-      gctx.fp,
-      "\n%scleanup_runtime(rctx);\n",
-      indent
-   );
-   if (nchar < 0) {
-      goto fclose;
-   }
-
-   nchar = fprintf(
-      gctx.fp,
-      "%sreturn 0;\n",
-      indent
-   );
-   if (nchar < 0) {
-      goto fclose;
-   }
-
-   nchar = fprintf(gctx.fp, "}\n");
-   if (nchar < 0) {
-      goto fclose;
+   if (!write2dest(gctx)) {
+      goto err;
    }
 
    // Notify the end of the work
    if (cctx->cfg->vbs) {
       (void) printf(
          " " Cgreen "done!" Creset "\t(output=" Cbyellow "%s" Creset ")\n",
-         destname
+         gctx->destname
       );
    }
 
-   // Everything was successful
-   transpile_stat = true;
-
-fclose:
-   if (fclose(gctx.fp)) {
-      gctx.ferr = "failed to fclose";
-      goto cleanup;
+   // Clean up
+   if (fclose(gctx->fp)) {
+      fclosed = true;
+      gctx->perr = "failed to fclose";
+      goto err;
    }
+
    if (cctx->cfg->drn) {
-      if (remove(destname)) {
-         gctx.ferr = "failed to remove";
-         goto cleanup;
+      if (remove(gctx->destname)) {
+         gctx->perr = "failed to remove dest";
+         goto err;
       }
    }
-cleanup:
-   free(destname);
 
-   cctx->ferr = gctx.ferr;
-   return transpile_stat;
+   free(gctx->destname);
+
+   // Normal execution path
+   PH_RESET(cctx);
+   return true;
+
+err:
+   PTRACE(gctx);
+   PH_COPY(cctx, gctx);
+   FCLOSE_ERR_PATH(fclosed, gctx->fp);
+   return false;
+}
+
+static const char *create_dest(cg2c_ctx_t *gctx) {
+   char *destname = NULL;
+
+   // Make destname: basename(srcname) + ".c"
+   // i.e. "hello.spl" -> "hello.c"
+   if (!(destname = make_destname(gctx->srcname, C_EXTENSION))) {
+      gctx->perr = "failed to make_destname";
+      goto err;
+   }
+   if (destname == gctx->srcname) {
+      gctx->perr = "problematic srcname";
+      goto err;
+   }
+
+   // Fopen with destname
+   if (!(gctx->fp = fopen(destname, "w"))) {
+      gctx->perr = "failed fopen dest";
+      goto err;
+   }
+
+   return destname;
+
+err:
+   PTRACE(gctx);
+   return NULL;
+}
+
+static bool write2dest(cg2c_ctx_t *gctx) {
+   int nchar;
+
+   // This string is used in all panic situations
+   // which occurred while writing to dest unless
+   // overwritten to dedicated error message
+   gctx->perr = "error occurred while writing to dest";
+
+   /*
+    * Begin writing...
+    */
+
+   // Write header
+   nchar = fprintf(gctx->fp, "#include <splrt/splrt.h>\n");
+   if (nchar < 0) {
+      goto err;
+   }
+
+   // Write the title of spl program
+   if (!codegen_title(gctx)) {
+      goto err;
+   }
+
+   // Write the beginning of main
+   nchar = fprintf(gctx->fp, "int main(void) {\n");
+   if (nchar < 0) {
+      goto err;
+   }
+
+   // Write local variables
+   if (!codegen_locals(gctx)) {
+      goto err;
+   }
+
+   // Translate IR into C by iterating the IR tree
+   if (!tree_pre_traverse(gctx->nrtv, codegen_route, 0, gctx)) {
+      goto err;
+   }
+
+   // Write cleanup code
+   nchar = fprintf(
+      gctx->fp,
+      "\n%scleanup_runtime(rctx);\n",
+      indent
+   );
+   if (nchar < 0) {
+      goto err;
+   }
+
+   // Write return 0 for main
+   nchar = fprintf(
+      gctx->fp,
+      "%sreturn 0;\n",
+      indent
+   );
+   if (nchar < 0) {
+      goto err;
+   }
+
+   // Write the end of main
+   nchar = fprintf(gctx->fp, "}\n");
+   if (nchar < 0) {
+      goto err;
+   }
+
+   // DONE!
+   return true;
+
+err:
+   PTRACE(gctx);
+   return false;
 }
 
 static bool codegen_title(cg2c_ctx_t *gctx) {
-   node_t *n;
-   int nchar;
+   node_t *n = tree_dat(gctx->title);
 
-   n = tree_dat(gctx->title);
-   nchar = fprintf(
+   int nchar = fprintf(
       gctx->fp,
       "\n/* %s */\n\n",
       n->dat.s.run
    );
+   if (nchar < 0) {
+      goto err;
+   }
 
-   return (0 <= nchar) ? true : false;
+   return true;
+
+err:
+   PTRACE(gctx);
+   return false;
 }
 
 static bool codegen_locals(cg2c_ctx_t *gctx) {
@@ -142,7 +214,7 @@ static bool codegen_locals(cg2c_ctx_t *gctx) {
       irnode->dat.ui
    );
    if (nchar < 0) {
-      return false;
+      goto err;
    }
 
    for (size_t i = 0; i < dpsz; i++) {
@@ -155,27 +227,53 @@ static bool codegen_locals(cg2c_ctx_t *gctx) {
          node->dat.s.run
       );
       if (nchar < 0) {
-         return false;
+         goto err;
       }
    }
 
    return true;
+
+err:
+   PTRACE(gctx);
+   return false;
 }
 
 static bool codegen_route(tree_t *t, size_t lv, void *ctx) {
    cg2c_ctx_t *gctx = ctx;
+
+   bool hdlr_ret;
 
    (void) lv;
    gctx->t = t;
    gctx->n = tree_dat(t);
 
    switch (gctx->n->kind) {
-      case IrnodekindScene  : return handle_scene (gctx);
-      case IrnodekindBlock  : return handle_block (gctx);
-      case IrnodekindOpcode : return handle_opcode(gctx);
-      default: break;
+      case IrnodekindScene: {
+         hdlr_ret = handle_scene(gctx);
+         break;
+      }
+      case IrnodekindBlock: {
+         hdlr_ret = handle_block(gctx);
+         break;
+      }
+      case IrnodekindOpcode: {
+         hdlr_ret = handle_opcode(gctx);
+         break;
+      }
+      default: {
+         gctx->perr = "unknown irnodekind";
+         hdlr_ret = false;
+         break;
+      }
+   }
+   if (!hdlr_ret) {
+      goto err;
    }
 
+   return true;
+
+err:
+   PTRACE(gctx);
    return false;
 }
 
@@ -183,17 +281,22 @@ static bool handle_scene(cg2c_ctx_t *gctx) {
    tree_t *act = tree_parent(gctx->t);
    irnode_t *act_dat = tree_dat(act);
 
-   int nchar;
-
    // fixme: use KEYWRD_ACT _SCENE
-   nchar = fprintf(
+   int nchar = fprintf(
       gctx->fp,
       "\nAct_%s_Scene_%s:\n",
       act_dat->dat.s.run,
       gctx->n->dat.s.run
    );
+   if (nchar < 0) {
+      goto err;
+   }
 
-   return (0 <= nchar) ? true : false;
+   return true;
+
+err:
+   PTRACE(gctx);
+   return false;
 }
 
 static bool handle_block(cg2c_ctx_t *gctx) {
@@ -202,64 +305,173 @@ static bool handle_block(cg2c_ctx_t *gctx) {
    irnode_t *scene_dat = tree_dat(scene);
    irnode_t *act_dat = tree_dat(act);
 
-   int nchar;
-
    // Do not emit the label for the 0th block
    if (gctx->n->dat.ui == 0) {
       return false;
    }
 
    // Write the label for nth block
-   nchar = fprintf(
+   int nchar = fprintf(
       gctx->fp,
       "\nAct_%s_Scene_%s_L%u:\n",
       act_dat->dat.s.run,
       scene_dat->dat.s.run,
       gctx->n->dat.ui
    );
+   if (nchar < 0) {
+      goto err;
+   }
 
-   return (0 <= nchar) ? true : false;
+   return true;
+
+err:
+   PTRACE(gctx);
+   return false;
 }
 
 static bool handle_opcode(cg2c_ctx_t *gctx) {
-   // Route to each dedicated opcode handler
+   bool hdlr_ret;
+
    switch (gctx->n->dat.ui) {
-      case IropcodeSet    : return codegen_set(gctx);
-      case IropcodeAsgn   : return codegen_asgn(gctx);
-      case IropcodeEnter  : return codegen_enterlike(gctx, "enter");
-      case IropcodeExit   : return codegen_enterlike(gctx, "exit");
-      case IropcodeExeunt : return codegen_exeunt(gctx);
-      case IropcodeSpeak  : return codegen_speak(gctx);
-      case IropcodePush   : return codegen_push (gctx);
-      case IropcodePop    : return codegen_pop(gctx);
-      case IropcodeSum    : return codegen_binary_op(gctx, "sum");
-      case IropcodeDiff   : return codegen_binary_op(gctx, "diff");
-      case IropcodeProd   : return codegen_binary_op(gctx, "prod");
-      case IropcodeQuot   : return codegen_binary_op(gctx, "quot");
-      case IropcodeRem    : return codegen_binary_op(gctx, "rem");
-      case IropcodeSqrt   : return codegen_unary_op(gctx, "sqrt");
-      case IropcodeSqur   : return codegen_unary_op(gctx, "squr");
-      case IropcodeCube   : return codegen_unary_op(gctx, "cube");
-      case IropcodeFact   : return codegen_unary_op(gctx, "fact");
-      case Iropcode2x     : return codegen_twice(gctx);
-      case IropcodeOutN   : return codegen_io(gctx, "outn");
-      case IropcodeOutC   : return codegen_io(gctx, "outc");
-      case IropcodeInN    : return codegen_io(gctx, "inn");
-      case IropcodeInC    : return codegen_io(gctx, "inc");
-      case IropcodeGoto   : return codegen_goto(gctx);
-      case IropcodeEq     : return codegen_comp(gctx, "==");
-      case IropcodeGt     : return codegen_comp(gctx, ">");
-      case IropcodeLt     : return codegen_comp(gctx, "<");
-      case IropcodeRememb : return codegen_rememb(gctx);
-      case IropcodeRecall : return codegen_recall(gctx);
-      case IropcodeJumpT  : return codegen_jump(gctx, true);
-      case IropcodeJumpF  : return codegen_jump(gctx, false);
-      case IropcodeNegate : return codegen_negate(gctx);
+      case IropcodeSet: {
+         hdlr_ret = codegen_set(gctx);
+         break;
+      }
+      case IropcodeAsgn: {
+         hdlr_ret = codegen_asgn(gctx);
+         break;
+      }
+      case IropcodeEnter: {
+         hdlr_ret = codegen_enterlike(gctx, "enter");
+         break;
+      }
+      case IropcodeExit: {
+         hdlr_ret = codegen_enterlike(gctx, "exit");
+         break;
+      }
+      case IropcodeExeunt: {
+         hdlr_ret = codegen_exeunt(gctx);
+         break;
+      }
+      case IropcodeSpeak: {
+         hdlr_ret = codegen_speak(gctx);
+         break;
+      }
+      case IropcodePush: {
+         hdlr_ret = codegen_push(gctx);
+         break;
+      }
+      case IropcodePop: {
+         hdlr_ret = codegen_pop(gctx);
+         break;
+      }
+      case IropcodeSum: {
+         hdlr_ret = codegen_binary_op(gctx, "sum");
+         break;
+      }
+      case IropcodeDiff: {
+         hdlr_ret = codegen_binary_op(gctx, "diff");
+         break;
+      }
+      case IropcodeProd: {
+         hdlr_ret = codegen_binary_op(gctx, "prod");
+         break;
+      }
+      case IropcodeQuot: {
+         hdlr_ret = codegen_binary_op(gctx, "quot");
+         break;
+      }
+      case IropcodeRem: {
+         hdlr_ret = codegen_binary_op(gctx, "rem");
+         break;
+      }
+      case IropcodeSqrt: {
+         hdlr_ret = codegen_unary_op(gctx, "sqrt");
+         break;
+      }
+      case IropcodeSqur: {
+         hdlr_ret = codegen_unary_op(gctx, "squr");
+         break;
+      }
+      case IropcodeCube: {
+         hdlr_ret = codegen_unary_op(gctx, "cube");
+         break;
+      }
+      case IropcodeFact: {
+         hdlr_ret = codegen_unary_op(gctx, "fact");
+         break;
+      }
+      case Iropcode2x: {
+         hdlr_ret = codegen_twice(gctx);
+         break;
+      }
+      case IropcodeOutN: {
+         hdlr_ret = codegen_io(gctx, "outn");
+         break;
+      }
+      case IropcodeOutC: {
+         hdlr_ret = codegen_io(gctx, "outc");
+         break;
+      }
+      case IropcodeInN: {
+         hdlr_ret = codegen_io(gctx, "inn");
+         break;
+      }
+      case IropcodeInC: {
+         hdlr_ret = codegen_io(gctx, "inc");
+         break;
+      }
+      case IropcodeGoto: {
+         hdlr_ret = codegen_goto(gctx);
+         break;
+      }
+      case IropcodeEq: {
+         hdlr_ret = codegen_comp(gctx, "==");
+         break;
+      }
+      case IropcodeGt: {
+         hdlr_ret = codegen_comp(gctx, ">");
+         break;
+      }
+      case IropcodeLt: {
+         hdlr_ret = codegen_comp(gctx, "<");
+         break;
+      }
+      case IropcodeRememb: {
+         hdlr_ret = codegen_rememb(gctx);
+         break;
+      }
+      case IropcodeRecall: {
+         hdlr_ret = codegen_recall(gctx);
+         break;
+      }
+      case IropcodeJumpT: {
+         hdlr_ret = codegen_jump(gctx, true);
+         break;
+      }
+      case IropcodeJumpF: {
+         hdlr_ret = codegen_jump(gctx, false);
+         break;
+      }
+      case IropcodeNegate: {
+         hdlr_ret = codegen_negate(gctx);
+         break;
+      }
       default: {
-         gctx->ferr = "unknown opcode";
-         return false;
+         gctx->perr = "unknown opcode";
+         hdlr_ret = false;
+         break;
       }
    }
+   if (!hdlr_ret) {
+      goto err;
+   }
+
+   return true;
+
+err:
+   PTRACE(gctx);
+   return false;
 }
 
 static bool codegen_set(cg2c_ctx_t *gctx) {
@@ -272,82 +484,147 @@ static bool codegen_set(cg2c_ctx_t *gctx) {
       indent,
       p2->dat.i
    );
+   if (nchar < 0) {
+      goto err;
+   }
 
-   return (0 <= nchar) ? true : false;
+   return true;
+
+err:
+   PTRACE(gctx);
+   return false;
 }
 
 static bool codegen_asgn(cg2c_ctx_t *gctx) {
    // only possible: ASGN const X
    irnode_t *p2 = tree_chdat(gctx->t, 1);
 
-   int nchar;
+   bool hdlr_ret;
 
    switch (p2->kind) {
       case IrnodekindVar: {
-         switch (p2->dat.ui) {
-            case IrvarHearer: {
-               nchar = fprintf(
-                  gctx->fp,
-                  "%sset_hearer(rctx);\n",
-                  indent
-               );
-               if (nchar < 0) {
-                  return false;
-               }
-               nchar = fprintf(
-                  gctx->fp,
-                  "%srctx->cnst = rctx->dp[rctx->h];\n",
-                  indent
-               );
-               if (nchar < 0) {
-                  return false;
-               }
-            }
-            break;
-
-            case IrvarTeller: {
-               nchar = fprintf(
-                  gctx->fp,
-                  "%srctx->cnst = rctx->dp[rctx->t];\n",
-                  indent
-               );
-               if (nchar < 0) {
-                  return false;
-               }
-            }
-            break;
-
-            default: {
-               gctx->ferr = "unknown variable";
-               return false;
-            }
-         }
+         hdlr_ret = codegen_asgn_var(gctx, p2);
+         break;
       }
-      break;
-
       case IrnodekindPerson: {
-         // dp[0] is equal to irvar[dp_begin]
-         if (p2->dat.ui < Irvar_Dp_Begin) {
-            gctx->ferr = "corrupted dp[n]";
-            return false;
-         }
-         nchar = fprintf(
-            gctx->fp,
-            "%srctx->cnst = rctx->dp[%u];\n",
-            indent,
-            p2->dat.ui - Irvar_Dp_Begin
-         );
-         if (nchar < 0) {
-            return false;
-         }
+         hdlr_ret = codegen_asgn_person(gctx, p2);
+         break;
       }
-      break;
-
       default: {
-         gctx->ferr = "unknown p2->dat.ui";
-         return false;
+         gctx->perr = "unknown p2->dat.ui";
+         hdlr_ret = false;
+         break;
       }
    }
+   if (!hdlr_ret) {
+      goto err;
+   }
+
+   return true;
+
+err:
+   PTRACE(gctx);
+   return false;
+}
+
+static bool codegen_asgn_var(cg2c_ctx_t *gctx, irnode_t *p2) {
+   bool hdlr_ret;
+
+   switch (p2->dat.ui) {
+      case IrvarHearer: {
+         hdlr_ret = codegen_asgn_var_hearer(gctx);
+         break;
+      }
+      case IrvarTeller: {
+         hdlr_ret = codegen_asgn_var_teller(gctx);
+         break;
+      }
+      default: {
+         gctx->perr = "unknown variable";
+         hdlr_ret = false;
+         break;
+      }
+   }
+   if (!hdlr_ret) {
+      goto err;
+   }
+
+   return true;
+
+err:
+   PTRACE(gctx);
+   return false;
+}
+
+static bool codegen_asgn_var_hearer(cg2c_ctx_t *gctx) {
+   int nchar;
+
+   nchar = fprintf(
+      gctx->fp,
+      "%sset_hearer(rctx);\n",
+      indent
+   );
+   if (nchar < 0) {
+      goto err;
+   }
+
+   nchar = fprintf(
+      gctx->fp,
+      "%srctx->cnst = rctx->dp[rctx->h];\n",
+      indent
+   );
+   if (nchar < 0) {
+      goto err;
+   }
+
+   return true;
+
+err:
+   PTRACE(gctx);
+   return false;
+}
+
+static bool codegen_asgn_var_teller(cg2c_ctx_t *gctx) {
+   int nchar = fprintf(
+      gctx->fp,
+      "%srctx->cnst = rctx->dp[rctx->t];\n",
+      indent
+   );
+   if (nchar < 0) {
+      goto err;
+   }
+
+   return true;
+
+err:
+   PTRACE(gctx);
+   return false;
+}
+
+static bool codegen_asgn_person(cg2c_ctx_t *gctx, irnode_t *p2) {
+   int nchar;
+
+   // dp[0] is equal to irvar[dp_begin]
+   if (p2->dat.ui < Irvar_Dp_Begin) {
+      gctx->perr = "corrupted dp[n]";
+      goto err;
+   }
+
+   nchar = fprintf(
+      gctx->fp,
+      "%srctx->cnst = rctx->dp[%u];\n",
+      indent,
+      p2->dat.ui - Irvar_Dp_Begin
+   );
+   if (nchar < 0) {
+      goto err;
+   }
+
+   return true;
+
+err:
+   PTRACE(gctx);
+   return false;
 }
 
 static bool codegen_enterlike(cg2c_ctx_t *gctx, const char *op) {
@@ -360,8 +637,15 @@ static bool codegen_enterlike(cg2c_ctx_t *gctx, const char *op) {
       op,
       p1->dat.ui
    );
+   if (nchar < 0) {
+      goto err;
+   }
 
-   return (0 <= nchar) ? true : false;
+   return true;
+
+err:
+   PTRACE(gctx);
+   return false;
 }
 
 static bool codegen_exeunt(cg2c_ctx_t *gctx) {
@@ -370,8 +654,13 @@ static bool codegen_exeunt(cg2c_ctx_t *gctx) {
       "%sstage_exeunt(rctx->st);\n",
       indent
    );
+   if (nchar < 0) {
+      goto err;
+   }
 
-   return (0 <= nchar) ? true : false;
+err:
+   PTRACE(gctx);
+   return false;
 }
 
 static bool codegen_speak(cg2c_ctx_t *gctx) {
@@ -386,7 +675,7 @@ static bool codegen_speak(cg2c_ctx_t *gctx) {
       p1->dat.ui
    );
    if (nchar < 0) {
-      return false;
+      goto err;
    }
 
    nchar = fprintf(
@@ -396,10 +685,14 @@ static bool codegen_speak(cg2c_ctx_t *gctx) {
       p1->dat.ui
    );
    if (nchar < 0) {
-      return false;
+      goto err;
    }
 
    return true;
+
+err:
+   PTRACE(gctx);
+   return false;
 }
 
 static bool codegen_push(cg2c_ctx_t *gctx) {
@@ -407,7 +700,8 @@ static bool codegen_push(cg2c_ctx_t *gctx) {
    const char *var = resolve_var(gctx, p1->dat.ui);
 
    if (!var) {
-      return false;
+      gctx->perr = "unknown var";
+      goto err;
    }
 
    // only possible: PUSH teller|hearer|const
@@ -417,68 +711,115 @@ static bool codegen_push(cg2c_ctx_t *gctx) {
       indent,
       var
    );
+   if (nchar < 0) {
+      goto err;
+   }
 
-   return (0 <= nchar) ? true : false;
+   return true;
+
+err:
+   PTRACE(gctx);
+   return false;
 }
 
 static bool codegen_pop(cg2c_ctx_t *gctx) {
    irnode_t *p1 = tree_chdat(gctx->t, 0);
 
-   int nchar;
+   bool hdlr_ret;
 
    switch (p1->dat.ui) {
       case IrvarHearer: {
-         nchar = fprintf(
-            gctx->fp,
-            "%sset_hearer(rctx);\n",
-            indent
-         );
-         if (nchar < 0) {
-            return false;
-         }
-         nchar = fprintf(
-            gctx->fp,
-            "%sif (!stack_pop(rctx->s, &rctx->dp[rctx->h])) "
-            "goto cleanup;\n",
-            indent
-         );
-         if (nchar < 0) {
-            return false;
-         }
+         hdlr_ret = codegen_pop_hearer(gctx);
+         break;
       }
-      break;
-
       case IrvarOperandL: {
-         nchar = fprintf(
-            gctx->fp,
-            "%sif (!stack_pop(rctx->s, &rctx->ol)) "
-            "goto cleanup;\n",
-            indent
-         );
-         if (nchar < 0) {
-            return false;
-         }
+         hdlr_ret = codegen_pop_ol(gctx);
+         break;
       }
-      break;
-
       case IrvarOperandR: {
-         nchar = fprintf(
-            gctx->fp,
-            "%sif (!stack_pop(rctx->s, &rctx->or)) "
-            "goto cleanup;\n",
-            indent
-         );
-         if (nchar < 0) {
-            return false;
-         }
+         hdlr_ret = codegen_pop_or(gctx);
+         break;
       }
-      break;
-
       default: {
-         gctx->ferr = "unknown p1->dat.ui";
-         return false;
+         gctx->perr = "unknown p1->dat.ui";
+         hdlr_ret = false;
+         break;
       }
    }
+   if (!hdlr_ret) {
+      goto err;
+   }
+
+   return true;
+
+err:
+   PTRACE(gctx);
+   return false;
+}
+
+static bool codegen_pop_hearer(cg2c_ctx_t *gctx) {
+   int nchar;
+
+   nchar = fprintf(
+      gctx->fp,
+      "%sset_hearer(rctx);\n",
+      indent
+   );
+   if (nchar < 0) {
+      goto err;
+   }
+
+   nchar = fprintf(
+      gctx->fp,
+      "%sif (!stack_pop(rctx->s, &rctx->dp[rctx->h])) "
+      "goto cleanup;\n",
+      indent
+   );
+   if (nchar < 0) {
+      goto err;
+   }
+
+   return true;
+
+err:
+   PTRACE(gctx);
+   return false;
+}
+
+static bool codegen_pop_ol(cg2c_ctx_t *gctx) {
+   int nchar = fprintf(
+      gctx->fp,
+      "%sif (!stack_pop(rctx->s, &rctx->ol)) "
+      "goto cleanup;\n",
+      indent
+   );
+   if (nchar < 0) {
+      goto err;
+   }
+
+   return true;
+
+err:
+   PTRACE(gctx);
+   return false;
+}
+
+static bool codegen_pop_or(cg2c_ctx_t *gctx) {
+   int nchar = fprintf(
+      gctx->fp,
+      "%sif (!stack_pop(rctx->s, &rctx->or)) "
+      "goto cleanup;\n",
+      indent
+   );
+   if (nchar < 0) {
+      goto err;
+   }
+
+   return true;
+
+err:
+   PTRACE(gctx);
+   return false;
 }
 
 static bool codegen_binary_op(cg2c_ctx_t *gctx, const char *op) {
@@ -489,8 +830,15 @@ static bool codegen_binary_op(cg2c_ctx_t *gctx, const char *op) {
       indent,
       op
    );
+   if (nchar < 0) {
+      goto err;
+   }
 
-   return (0 <= nchar) ? true : false;
+   return true;
+
+err:
+   PTRACE(gctx);
+   return false;
 }
 
 static bool codegen_unary_op(cg2c_ctx_t *gctx, const char *op) {
@@ -500,8 +848,13 @@ static bool codegen_unary_op(cg2c_ctx_t *gctx, const char *op) {
       indent,
       op
    );
+   if (nchar < 0) {
+      goto err;
+   }
 
-   return (0 <= nchar) ? true : false;
+err:
+   PTRACE(gctx);
+   return false;
 }
 
 static bool codegen_twice(cg2c_ctx_t *gctx) {
@@ -509,7 +862,8 @@ static bool codegen_twice(cg2c_ctx_t *gctx) {
    const char *var = resolve_var(gctx, p2->dat.ui);
 
    if (!var) {
-      return false;
+      gctx->perr = "unknown var";
+      goto err;
    }
 
    int nchar = fprintf(
@@ -518,8 +872,15 @@ static bool codegen_twice(cg2c_ctx_t *gctx) {
       indent,
       var
    );
+   if (nchar < 0) {
+      goto err;
+   }
 
-   return (0 <= nchar) ? true : false;
+   return true;
+
+err:
+   PTRACE(gctx);
+   return false;
 }
 
 static bool codegen_io(cg2c_ctx_t *gctx, const char *op) {
@@ -529,58 +890,92 @@ static bool codegen_io(cg2c_ctx_t *gctx, const char *op) {
       indent,
       op
    );
+   if (nchar < 0) {
+      goto err;
+   }
 
-   return (0 <= nchar) ? true : false;
+   return true;
+
+err:
+   PTRACE(gctx);
+   return false;
 }
 
 static bool codegen_goto(cg2c_ctx_t *gctx) {
-   tree_t *act, *scene, *block;
-   irnode_t *p1, *p2, *act_dat;
-   int nchar;
+   irnode_t *p1 = tree_chdat(gctx->t, 0);
+   irnode_t *p2 = tree_chdat(gctx->t, 1);
 
-   p1 = tree_chdat(gctx->t, 0);
-   p2 = tree_chdat(gctx->t, 1);
+   bool hdlr_ret;
 
    switch (p1->dat.ui) {
       case NODEKIND_ACT: {
-         // fixme: use KEYWRD_ACT _SCENE
-         nchar = fprintf(
-            gctx->fp,
-            "%sgoto Act_%s_Scene_I;\n",
-            indent,
-            p2->dat.s.run
-         );
-         if (nchar < 0) {
-            return false;
-         }
+         hdlr_ret = codegen_goto_act(gctx, p2->dat.s.run);
+         break;
       }
-      break;
-
       case NODEKIND_SCENE: {
-         block = tree_parent(gctx->t);
-         scene = tree_parent(block);
-         act = tree_parent(scene);
-         act_dat = tree_dat(act);
-
-         // fixme: use KEYWRD_ACT _SCENE
-         nchar = fprintf(
-            gctx->fp,
-            "%sgoto Act_%s_Scene_%s;\n",
-            indent,
-            act_dat->dat.s.run,
-            p2->dat.s.run
-         );
-         if (nchar < 0) {
-            return false;
-         }
+         hdlr_ret = codegen_goto_scene(gctx, p2->dat.s.run);
+         break;
       }
-      break;
-
       default: {
-         gctx->ferr = "unknown p1->dat.ui";
-         return false;
+         gctx->perr = "unknown p1->dat.ui";
+         hdlr_ret = false;
+         break;
       }
    }
+   if (!hdlr_ret) {
+      goto err;
+   }
+
+   return true;
+
+err:
+   PTRACE(gctx);
+   return false;
+}
+
+static bool codegen_goto_act(cg2c_ctx_t *gctx, const char *romnum) {
+   // fixme: use KEYWRD_ACT _SCENE
+   int nchar = fprintf(
+      gctx->fp,
+      "%sgoto Act_%s_Scene_I;\n",
+      indent,
+      romnum
+   );
+   if (nchar < 0) {
+      goto err;
+   }
+
+   return true;
+
+err:
+   PTRACE(gctx);
+   return false;
+}
+
+static bool codegen_goto_scene(cg2c_ctx_t *gctx, const char *romnum) {
+   tree_t *block = tree_parent(gctx->t);
+   tree_t *scene = tree_parent(block);
+   tree_t *act = tree_parent(scene);
+
+   irnode_t *act_dat = tree_dat(act);
+
+   // fixme: use KEYWRD_ACT _SCENE
+   int nchar = fprintf(
+      gctx->fp,
+      "%sgoto Act_%s_Scene_%s;\n",
+      indent,
+      act_dat->dat.s.run,
+      romnum
+   );
+   if (nchar < 0) {
+      goto err;
+   }
+
+   return true;
+
+err:
+   PTRACE(gctx);
+   return false;
 }
 
 static bool codegen_comp(cg2c_ctx_t *gctx, const char *op) {
@@ -590,8 +985,15 @@ static bool codegen_comp(cg2c_ctx_t *gctx, const char *op) {
       indent,
       op
    );
+   if (nchar < 0) {
+      goto err;
+   }
 
-   return (0 <= nchar) ? true : false;
+   return true;
+
+err:
+   PTRACE(gctx);
+   return false;
 }
 
 static bool codegen_rememb(cg2c_ctx_t *gctx) {
@@ -599,7 +1001,8 @@ static bool codegen_rememb(cg2c_ctx_t *gctx) {
    const char *var = resolve_var(gctx, n->dat.ui);
 
    if (!var) {
-      return false;
+      gctx->perr = "unknown var";
+      goto err;
    }
 
    // only possible: REMEMB const
@@ -609,8 +1012,15 @@ static bool codegen_rememb(cg2c_ctx_t *gctx) {
       indent,
       var
    );
+   if (nchar < 0) {
+      goto err;
+   }
 
-   return (0 <= nchar) ? true : false;
+   return true;
+
+err:
+   PTRACE(gctx);
+   return false;
 }
 
 static bool codegen_recall(cg2c_ctx_t *gctx) {
@@ -619,8 +1029,15 @@ static bool codegen_recall(cg2c_ctx_t *gctx) {
       "%srecall(rctx);\n",
       indent
    );
+   if (nchar < 0) {
+      goto err;
+   }
 
-   return (0 <= nchar) ? true : false;
+   return true;
+
+err:
+   PTRACE(gctx);
+   return false;
 }
 
 static bool codegen_jump(cg2c_ctx_t *gctx, bool v) {
@@ -643,8 +1060,15 @@ static bool codegen_jump(cg2c_ctx_t *gctx, bool v) {
       scene_dat->dat.s.run,
       op_dat->dat.ui
    );
+   if (nchar < 0) {
+      goto err;
+   }
 
-   return (0 <= nchar) ? true : false;
+   return true;
+
+err:
+   PTRACE(gctx);
+   return false;
 }
 
 static bool codegen_negate(cg2c_ctx_t *gctx) {
@@ -653,19 +1077,50 @@ static bool codegen_negate(cg2c_ctx_t *gctx) {
       "%srctx->cond = !rctx->cond;\n",
       indent
    );
+   if (nchar < 0) {
+      goto err;
+   }
 
-   return (0 <= nchar) ? true : false;
+   return true;
+
+err:
+   PTRACE(gctx);
+   return false;
 }
 
 static const char *resolve_var(cg2c_ctx_t *gctx, irvar_t var) {
+   const char *ret;
+
    switch (var) {
-      case IrvarTeller   : return "rctx->dp[rctx->t]";
-      case IrvarHearer   : return "rctx->dp[rctx->h]";
-      case IrvarConst    : return "rctx->cnst";
-      case IrvarOperandL : return "rctx->ol";
+      case IrvarTeller: {
+         ret = "rctx->dp[rctx->t]";
+         break;
+      }
+      case IrvarHearer: {
+         ret = "rctx->dp[rctx->h]";
+         break;
+      }
+      case IrvarConst: {
+         ret = "rctx->cnst";
+         break;
+      }
+      case IrvarOperandL: {
+         ret = "rctx->ol";
+         break;
+      }
       default: {
-         gctx->ferr = "unknown variable";
-         return NULL;
+         gctx->perr = "unknown variable";
+         ret = NULL;
+         break;
       }
    }
+   if (!ret) {
+      goto err;
+   }
+
+   return ret;
+
+err:
+   PTRACE(gctx);
+   return NULL;
 }
