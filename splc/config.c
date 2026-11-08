@@ -25,24 +25,28 @@ extern void destroy_config(config_t *cfg) {
 }
 
 extern bool apply_config(compile_ctx_t *cctx, config_t *cfg) {
+   // Check for -hvvv first
    if (cfg->hlp && cfg->vsn >= 3) {
       if (!easter_egg(cctx)) {
          goto err;
       }
    }
 
+   // --help specified?
    if (cfg->hlp) {
       if (!print_manpage(cctx)) {
          goto err;
       }
    }
 
+   // --version specified?
    if (cfg->vsn) {
       if (!print_version(cctx)) {
          goto err;
       }
    }
 
+   // source files are not specified?
    if (array_size(cfg->source_files) == 0) {
       cctx->perr = "empty cfg->srcs";
       goto err;
@@ -62,6 +66,8 @@ extern bool apply_config(compile_ctx_t *cctx, config_t *cfg) {
       }
    }
 
+   // Normal execution path
+   PH_RESET(cctx);  // Reset panic handlers which have been modified
    return true;
 
 err:
@@ -81,12 +87,14 @@ static bool print_manpage(compile_ctx_t *cctx) {
    cctx->phdlr = panic_print_manpage;
    cctx->pnctx = manpage_dir;
 
-   // Open manpage & print it
+   // Open manpage
    if (!(fp = fopen(manpage_dir, "r"))) {
       cctx->perr = "failed to fopen";
-      goto err;
+      PTRACE(cctx);
+      return false;
    }
 
+   // Print manpage
    while (EOF != (ch = fgetc(fp))) {
       if (EOF == fputc(stdout, ch)) {
          cctx->perr = "failed to fputc";
@@ -98,33 +106,18 @@ static bool print_manpage(compile_ctx_t *cctx) {
       goto err;
    }
 
+   // Clean up
    if (fclose(fp)) {
       fclosed = true;
       cctx->perr = "failed to fclose";
       goto err;
    }
 
-   // Reset panic handlers
-   cctx->phdlr = NULL;
-   cctx->pnctx = NULL;
-
    return true;
 
 err:
    PTRACE(cctx);
-
-   if (!fclosed) {
-      if (fclose(fp)) {
-         (void) fprintf(
-            stderr,
-            "fatal: failed to fclose [%s:%s:%zu]\n",
-            __FILE__,
-            __func__,
-            __LINE__
-         );
-      }
-   }
-
+   FCLOSE_ERR_PATH(fclosed, fp);
    return false;
 }
 
