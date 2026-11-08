@@ -22,6 +22,20 @@
       ); \
    } while (false);
 
+#define PH_COPY(dest, src) \
+   do { \
+      dest->perr = src->perr; \
+      dest->phdlr = src->phdlr; \
+      dest->pnctx = src->pnctx; \
+   } while (false);
+
+#define PH_RESET(dest) \
+   do { \
+      dest->perr = NULL; \
+      dest->phdlr = NULL; \
+      dest->pnctx = NULL; \
+   } while (false);
+
 typedef struct {
    const char *funcname;
    const char *filename;
