@@ -4,7 +4,7 @@
 #include <stdbool.h>
 
 #include "splc.h"
-#include "global.h"
+#include "common.h"
 
 #define OBJFILE_FI 0x53504C4FUL
 

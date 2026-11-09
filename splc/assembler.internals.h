@@ -6,7 +6,6 @@
 #include "global.h"
 #include "tree.adt.h"
 #include "wrappers.h"
-#include "strutils.h"
 #include "typecheck.h"
 #include "assembler.h"
 
@@ -17,17 +16,26 @@
 #define SPL_ADDR_SIZ   4
 
 typedef struct {
+   const char *destname;
+   config_t *cfg;
    FILE *fp;
    bool le, be;
    spl_uint_t offset;
    uint32_t s2p, s3p;
    tree_t *nrtv;
    array_t *ls;
+   size_t lc;
    tree_t *t;
    irnode_t *n;
+   list_t *ptrace;
+   const char *perr;
+   panic_handler *phdlr;
+   void *pnctx;
 } asm_ctx_t;
 
 typedef bool writer_t(asm_ctx_t *actx);
+
+static bool write2dest(asm_ctx_t *actx);
 
 static tree_callback_t setoffset_route;
 static tree_callback_t write_route;
@@ -42,10 +50,16 @@ static writer_t write_unary_op;
 static writer_t write_goto;
 static writer_t write_jumplike;
 
-static tree_t *find_nearest_opcode(tree_t *root, size_t a, size_t s, size_t b);
+static tree_t *find_nearest_opcode(
+   asm_ctx_t *actx,
+   tree_t *root,
+   size_t a,
+   size_t s,
+   size_t b
+);
 
 static bool write_debug_info(asm_ctx_t *actx);
 static bool write_srcfile(asm_ctx_t *actx);
-static bool write_header(bool debug_flag, asm_ctx_t *actx);
+static bool write_header(asm_ctx_t *actx);
 
 #endif
