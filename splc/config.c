@@ -1,6 +1,10 @@
 #include "config.h"
 #include "config.internals.h"
 
+//=============================
+// cctx->perr 를 바로 수정하지 말고, 내부적으로 별도 변수를 정의했다가 copy하기
+//=============================
+
 extern bool init_config(compile_ctx_t *cctx, config_t *cfg) {
    if (!(cfg->source_files = array_create(NULL, NULL))) {
       cctx->perr = "failed to create cfg->srcs";

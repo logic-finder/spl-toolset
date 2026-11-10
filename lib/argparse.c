@@ -9,7 +9,18 @@ Improvement Ideas
    - support aliases
       .lname = { "message", "msg" }
       .sname = { 'm', 'M' }
+   - set "env" when registering an err
+      .env.filename = __FILE__
+      .env.funcname = __func__
+      .env.ln = __LINE__
+     if env == NULL, does not print env info when printing err
 */
+
+// TODO: errhandler가 설정되어 있지 않으면 기본값으로 argp_...사용하도록 하기
+// splc랑 argparse.c도 이에맞춰 수정 (argp default 사용한거 제거)
+// regerr 후 리셋할때 errhandler도 리셋해야 할듯
+//    리셋할때 그냥 err의 모든멤버를 다 초기화하는게 버그안날듯
+// splc/argp_driver.c에 있는 errhandle_unrecognized_value 이거 argparse.c로 옮기고 extern으로 바꾸는게 날듯
 
 extern bool parse_argv(
    int argc,
@@ -220,6 +231,10 @@ static argp_stat_t tokenize_argv(argp_ctx_t *actx) {
          continue;
       }
 
+      // fixme: if문 내 조건을 seek_*로 빼고
+      // seek_* 과 populate_*를 테이블로 묶어서
+      // for문으로 if...else if 대체하기
+
       if (!strcmp(actx->arg, "--")) {
          actx->eoe = true;
          if (!populate_as_dashdash(actx)) {
@@ -318,7 +333,7 @@ static argp_stat_t parse_argtoks(argp_ctx_t *actx) {
          }
 
          /* control never reaches default */
-         default: ;
+         default: ;  // fixme: err handle here
       }
       if (actx->preprocess_ret == false) {
          goto next;
@@ -764,7 +779,8 @@ static bool errhandle_unrecognized(argtok_t *tok, const char *reason, void *ctx)
          nchar = printf(Cbgreen "--%s" Creset "?\n", ret.alikes[0]);
          if (nchar < 0) goto cleanup;
       }
-      else {
+      else
+      if (ret.nmemb > 1) {
          nchar = printf("one of the following?\n\t" Cbgreen);
          if (nchar < 0) goto cleanup;
 
@@ -774,6 +790,9 @@ static bool errhandle_unrecognized(argtok_t *tok, const char *reason, void *ctx)
          }
          nchar = printf(Creset "\n");
          if (nchar < 0) goto cleanup;
+      }
+      else {
+         // fixme: error handle here
       }
    }
 
