@@ -90,4 +90,7 @@ inline char lastch(const char *line) {
    return (len != 0) ? line[len - 1] : '\0';
 }
 
+// External variables
+extern const char *whitespaces;
+
 #endif

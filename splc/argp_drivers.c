@@ -1,7 +1,7 @@
 #include "argp_drivers.h"
 #include "argp_drivers.internals.h"
 
-/* Note. it might be a good thing to get &cfg from the parameter */
+// TODO: it might be a good thing to get &cfg from the parameter
 
 static bool drive_help(argtok_t *tok, argerr_t *err) {
    (void) tok, (void) err;
@@ -11,7 +11,7 @@ static bool drive_help(argtok_t *tok, argerr_t *err) {
 
 static bool drive_version(argtok_t *tok, argerr_t *err) {
    (void) tok, (void) err;
-   cfg.vsn++;  /* assumes cfg.vsn has been initialized */
+   cfg.vsn++;  // assumes cfg.vsn has been initialized
    return true;
 }
 
@@ -61,43 +61,54 @@ static bool drive_job(argtok_t *tok, argerr_t *err) {
    char *end;
    unsigned long ret;
 
-   /* --job 128
-            ^~~
-            tok->value
-    */
+   // --job 128
+   //       ^~~
+   //       tok->value
 
+   // Check if tok->value begins with '-'
+   if ('-' == tok->value[strspn(tok->value, whitespaces)]) {
+      err->reason = "tok->value begins with '-'";
+      goto err;
+   }
+
+   // Parse tok->value
    errno = 0;
    ret = strtoul(tok->value, &end, 10);
 
-   err->errhandle = argp_errhandle_default;
-
-   if (errno == ERANGE || ret > ULONG_MAX) {
+   if (errno == ERANGE) {
       err->reason = "a value out of range";
-      return false;  /* parsing failed */
+      goto err;
    }
-   else
    if (end == tok->value) {
       err->reason = "conversion not performed";
-      return false;  /* parsing failed */
+      goto err;
    }
-   else
    if (end[0] != '\0') {
       err->reason = "value not fully consumed";
-      return false;  /* parsing failed */
+      goto err;
    }
 
    cfg.job = ret;
-   return true;  /* parsing ok */
+   return true;
+
+err:
+   err->errhandle = argp_errhandle_default;
+   return false;
 }
 
 static bool drive_output(argtok_t *tok, argerr_t *err) {
    (void) err;
 
    if (!(cfg.out = strdup(tok->value))) {
-      return false;
+      err->reason = "failed to strdup tok->value";
+      goto err;
    }
 
    return true;
+
+err:
+   err->errhandle = argp_errhandle_default;
+   return false;
 }
 
 static bool drive_standard(argtok_t *tok, argerr_t *err) {
@@ -122,7 +133,7 @@ static bool drive_standard(argtok_t *tok, argerr_t *err) {
       }
    }
 
-   /* error path */
+   // error path
    static const errhandle_unrecognized_value_ctx_t ctx = {
       .arr = accept_set,
       .nmemb = accept_set_len,
@@ -158,7 +169,7 @@ static bool drive_language(argtok_t *tok, argerr_t *err) {
       }
    }
 
-   /* error path */
+   // error path
    static const errhandle_unrecognized_value_ctx_t ctx = {
       .arr = accept_set,
       .nmemb = accept_set_len,
@@ -185,9 +196,9 @@ static bool drive_target(argtok_t *tok, argerr_t *err) {
 
    const mapper_t *map;
 
-   /* Note: since strcasecmp() is used, all the following
-      would be treated as the same:
-         haskell Haskell HASKELL etc... */
+   // Note: since strcasecmp() is used, all the following
+   // would be treated as the same:
+   //    haskell Haskell HASKELL etc...
 
    for (size_t i = 0; i < accept_set_len; i++) {
       map = &accept_set[i];
@@ -197,7 +208,7 @@ static bool drive_target(argtok_t *tok, argerr_t *err) {
       }
    }
 
-   /* error path */
+   // error path
    static const errhandle_unrecognized_value_ctx_t ctx = {
       .arr = accept_set,
       .nmemb = accept_set_len,
@@ -251,7 +262,7 @@ static bool drive_warning(argtok_t *tok, argerr_t *err) {
       }
    }
 
-   /* error path */
+   // error path
    static const errhandle_unrecognized_value_ctx_t ctx = {
       .arr = accept_set,
       .nmemb = accept_set_len,
@@ -270,9 +281,10 @@ static bool errhandle_unrecognized_value(
    const char *reason,
    void *ctx
 ) {
+   bool handle_ret = false;
    errhandle_unrecognized_value_ctx_t *ectx = ctx;
    find_alikes_ret_t ret = { .alikes = NULL };
-   bool handle_ret = false;
+
    int nchar;
 
    (void) reason;
@@ -284,33 +296,45 @@ static bool errhandle_unrecognized_value(
       ectx->offset
    );
    if (!ret.alikes) {
-      return false;  /* something wrong -- size or alloc issue */
+      goto cleanup;  // something wrong: size or alloc issue
    }
 
    nchar = printf(
       "%s: unrecognized value " Cbwhite "'%s'" Creset ".",
       tok->field, tok->value
    );
-   if (nchar < 0) goto cleanup;
+   if (nchar < 0) {
+      goto cleanup;
+   }
 
    nchar = printf(" Do you mean ");
-   if (nchar < 0) goto cleanup;
+   if (nchar < 0) {
+      goto cleanup;
+   }
 
    if (ret.nmemb == 1) {
       nchar = printf(Cbgreen "'%s'" Creset "?\n", ret.alikes[0]);
-      if (nchar < 0) goto cleanup;
+      if (nchar < 0) {
+         goto cleanup;
+      }
    }
    else {
       nchar = printf("one of the following?\n\t" Cbgreen);
-      if (nchar < 0) goto cleanup;
+      if (nchar < 0) {
+         goto cleanup;
+      }
 
       for (size_t i = 0; i < ret.nmemb; i++) {
          nchar = printf("%s  ", ret.alikes[i]);
-         if (nchar < 0) goto cleanup;
+         if (nchar < 0) {
+            goto cleanup;
+         }
       }
 
       nchar = printf(Creset "\n");
-      if (nchar < 0) goto cleanup;
+      if (nchar < 0) {
+         goto cleanup;
+      }
    }
 
    handle_ret = true;
@@ -318,5 +342,13 @@ static bool errhandle_unrecognized_value(
 cleanup:
    free(ret.alikes);
 
-   return handle_ret;
+   if (!handle_ret) {
+      goto err;
+   }
+
+   return true;
+
+err:
+   (void) fprintf(stderr, "fatal: failed to printf\n");
+   return false;
 }
