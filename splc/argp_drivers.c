@@ -124,16 +124,22 @@ static bool drive_standard(argtok_t *tok, argerr_t *err) {
    static const size_t accept_set_len = ARRLEN(accept_set);
 
    const mapper_t *map;
+   size_t i;
 
-   for (size_t i = 0; i < accept_set_len; i++) {
+   for (i = 0; i < accept_set_len; i++) {
       map = &accept_set[i];
       if (!strcmp(tok->value, map->spec)) {
          cfg.std = map->enum_val;
-         return true;
+         break;
       }
    }
+   if (i == accept_set_len) {
+      goto err;
+   }
 
-   // error path
+   return true;
+
+err:
    static const errhandle_unrecognized_value_ctx_t ctx = {
       .arr = accept_set,
       .nmemb = accept_set_len,
@@ -160,16 +166,22 @@ static bool drive_language(argtok_t *tok, argerr_t *err) {
    static const size_t accept_set_len = ARRLEN(accept_set);
 
    const mapper_t *map;
+   size_t i;
 
-   for (size_t i = 0; i < accept_set_len; i++) {
+   for (i = 0; i < accept_set_len; i++) {
       map = &accept_set[i];
       if (!strcmp(tok->value, map->lang)) {
          cfg.lng = map->enum_val;
-         return true;
+         break;
       }
    }
+   if (i == accept_set_len) {
+      goto err;
+   }
 
-   // error path
+   return true;
+
+err:
    static const errhandle_unrecognized_value_ctx_t ctx = {
       .arr = accept_set,
       .nmemb = accept_set_len,
@@ -195,20 +207,26 @@ static bool drive_target(argtok_t *tok, argerr_t *err) {
    static const size_t accept_set_len = ARRLEN(accept_set);
 
    const mapper_t *map;
+   size_t i;
 
    // Note: since strcasecmp() is used, all the following
    // would be treated as the same:
    //    haskell Haskell HASKELL etc...
 
-   for (size_t i = 0; i < accept_set_len; i++) {
+   for (i = 0; i < accept_set_len; i++) {
       map = &accept_set[i];
       if (!strcasecmp(tok->value, map->target)) {
          cfg.tgt = map->enum_val;
-         return true;
+         break;
       }
    }
+   if (i == accept_set_len) {
+      goto err;
+   }
 
-   // error path
+   return true;
+
+err:
    static const errhandle_unrecognized_value_ctx_t ctx = {
       .arr = accept_set,
       .nmemb = accept_set_len,
@@ -253,16 +271,22 @@ static bool drive_warning(argtok_t *tok, argerr_t *err) {
    static const size_t accept_set_len = ARRLEN(accept_set);
 
    const mapper_t *map;
+   size_t i;
 
-   for (size_t i = 0; i < accept_set_len; i++) {
+   for (i = 0; i < accept_set_len; i++) {
       map = &accept_set[i];
       if (!strcmp(tok->value, map->request)) {
          *map->addr = true;
-         return true;
+         break;
       }
    }
+   if (i == accept_set_len) {
+      goto err;
+   }
 
-   // error path
+   return true;
+
+err:
    static const errhandle_unrecognized_value_ctx_t ctx = {
       .arr = accept_set,
       .nmemb = accept_set_len,
@@ -286,6 +310,7 @@ static bool errhandle_unrecognized_value(
    find_alikes_ret_t ret = { .alikes = NULL };
 
    int nchar;
+   const char *err;
 
    (void) reason;
    ret = find_alikes(
@@ -296,8 +321,12 @@ static bool errhandle_unrecognized_value(
       ectx->offset
    );
    if (!ret.alikes) {
+      err = "failed to find alikes";
       goto cleanup;  // something wrong: size or alloc issue
    }
+
+   // Set common error message
+   err = "failed to printf";
 
    nchar = printf(
       "%s: unrecognized value " Cbwhite "'%s'" Creset ".",
@@ -349,6 +378,6 @@ cleanup:
    return true;
 
 err:
-   (void) fprintf(stderr, "fatal: failed to printf\n");
+   FATAL(err);
    return false;
 }
