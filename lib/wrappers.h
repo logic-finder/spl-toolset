@@ -129,6 +129,13 @@ void safe_fscanf(FILE *fp, const char *fmt, int n, ...);
 
 extern bool log(const char *fmt, ...);
 
+extern bool fwrite_safe(
+   void *src,
+   size_t siz,
+   unsigned int cnt,
+   FILE *dest
+);
+
 /*====================*
  | INLINE DEFINITIONS |
  *====================*/

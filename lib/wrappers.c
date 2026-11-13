@@ -264,3 +264,26 @@ cleanup:
 err:
    return false;
 }
+
+extern bool fwrite_safe(
+   void *src,
+   size_t siz,
+   unsigned int cnt,
+   FILE *dest
+) {
+   // https://en.cppreference.com/c/io/fwrite
+
+   if (siz == 0 || cnt == 0) {
+      goto ok;  // in this case, fwrite returns 0
+   }
+
+   if (cnt > fwrite(src, siz, cnt, dest)) {
+      goto err;
+   }
+
+ok:
+   return true;
+
+err:
+   return false;
+}
