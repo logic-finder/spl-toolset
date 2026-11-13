@@ -236,3 +236,31 @@ extern void safe_fscanf(FILE *fp, const char *fmt, int n, ...) {
       fatal("vfscanf error");
    va_end(ap);
 }
+
+extern bool log(const char *fmt, ...) {
+   bool stat = false;
+
+   va_list ap;
+   int nchar;
+
+   va_start(ap, fmt);
+
+   nchar = vprintf(fmt, ap);
+   if (nchar < 0) {
+      goto cleanup;
+   }
+
+   stat = true;
+
+cleanup:
+   va_end(ap);
+
+   if (!stat) {
+      goto err;
+   }
+
+   return true;
+
+err:
+   return false;
+}

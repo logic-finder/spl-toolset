@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <stdbool.h>
 
 typedef void safe_malloc_cb_t(int errcode, size_t sz);
 
@@ -125,6 +126,8 @@ void safe_fprintf(FILE *fp, const char *fmt, ...);
 
 [[deprecated]]
 void safe_fscanf(FILE *fp, const char *fmt, int n, ...);
+
+extern bool log(const char *fmt, ...);
 
 /*====================*
  | INLINE DEFINITIONS |
