@@ -136,6 +136,14 @@ extern bool fwrite_safe(
    FILE *dest
 );
 
+extern FILE *fopen_safe(
+   const char *filename,
+   const char *mode,
+   bool *fopened
+);
+
+extern bool fclose_wrap(FILE *fp);
+
 /*====================*
  | INLINE DEFINITIONS |
  *====================*/

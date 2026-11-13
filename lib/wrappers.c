@@ -287,3 +287,33 @@ ok:
 err:
    return false;
 }
+
+extern FILE *fopen_wrap(
+   const char *filename,
+   const char *mode,
+   bool *fopened
+) {
+   FILE *fp;
+
+   if (!(fp = fopen(filename, mode))) {
+      goto err;
+   }
+
+   if (fopened) *fopened = true;
+   return fp;
+
+err:
+   if (fopened) *fopened = false;
+   return NULL;
+}
+
+extern bool fclose_wrap(FILE *fp) {
+   if (fclose(fp) == EOF) {
+      goto err;
+   }
+
+   return true;
+
+err:
+   return false;
+}
