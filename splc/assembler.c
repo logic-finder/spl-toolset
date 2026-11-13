@@ -31,8 +31,7 @@ extern bool assemble(compile_ctx_t *cctx) {
    // Init actx
    if (!(actx = malloc(sizeof *actx))) {
       cctx->perr = "failed to create actx";
-      PTRACE(cctx);
-      return false;
+      goto end;
    }
 
    actx->destname = cctx->cfg->out;
@@ -55,10 +54,13 @@ extern bool assemble(compile_ctx_t *cctx) {
 
    // Notify the start of the work
    if (cctx->cfg->vbs) {
-      (void) printf(
-         ENPREFIX "generating object file " Cbyellow "\"%s\"" Creset "...",
+      if (!log(
+         ENPREFIX "generating object file "
+         Cbyellow "\"%s\"" Creset "... ",
          actx->destname
-      );
+      )) {
+         goto err;
+      }
    }
 
    // Write .splo into the destination
@@ -68,11 +70,13 @@ extern bool assemble(compile_ctx_t *cctx) {
 
    // Notify the end of the work
    if (cctx->cfg->vbs) {
-      (void) printf(
-         " " Cgreen "done!" Creset
-         " (total " Cbwhite "%" SPL_UINT_FMTSPC Creset " bytes) \n",
+      if (!log(
+         Cgreen "done! " Creset
+         "(total " Cbwhite "%" SPL_UINT_FMTSPC Creset " bytes)\n",
          actx->offset
-      );
+      )) {
+         goto err;
+      }
    }
 
    // Clean up
@@ -93,16 +97,18 @@ extern bool assemble(compile_ctx_t *cctx) {
    return true;
 
 err:
-   PTRACE(actx);
-   PH_COPY(cctx, actx);
    FCLOSE_ERR_PATH(fclosed, actx->fp);
+   PH_COPY(cctx, actx);
+end:
+   PTRACE(actx);
    return false;
 }
 
 static bool write2dest(asm_ctx_t *actx) {
-   // This string is used in all panic situations
-   // which occurred while writing to dest unless
-   // overwritten to dedicated error message
+   /* This string is used in all panic situations
+      which occurred while writing to dest unless
+      overwritten to dedicated error message
+    */
    actx->perr = "error occurred while writing to dest";
 
    // Fill opcode.offset
@@ -333,13 +339,13 @@ static bool write_set(asm_ctx_t *actx) {
    irnode_t *p1 = tree_chdat(actx->t, 0);
    irnode_t *p2 = tree_chdat(actx->t, 1);
 
-   if (1 > fwrite(&actx->n->dat.i, SPL_OPCODE_SIZ, 1, actx->fp)) {
+   if (fwrite_safe(&actx->n->dat.i, SPL_OPCODE_SIZ, 1, actx->fp)) {
       goto err;
    }
-   if (1 > fwrite(&p1->dat.i, SPL_VAR_SIZ, 1, actx->fp)) {
+   if (fwrite_safe(&p1->dat.i, SPL_VAR_SIZ, 1, actx->fp)) {
       goto err;
    }
-   if (1 > fwrite(&p2->dat.i, SPL_CONST_SIZ, 1, actx->fp)) {
+   if (fwrite_safe(&p2->dat.i, SPL_CONST_SIZ, 1, actx->fp)) {
       goto err;
    }
 
@@ -353,10 +359,10 @@ err:
 static bool write_enterlike(asm_ctx_t *actx) {
    irnode_t *p1 = tree_chdat(actx->t, 0);
 
-   if (1 > fwrite(&actx->n->dat.i, SPL_OPCODE_SIZ, 1, actx->fp)) {
+   if (fwrite_safe(&actx->n->dat.i, SPL_OPCODE_SIZ, 1, actx->fp)) {
       goto err;
    }
-   if (1 > fwrite(&p1->dat.i, SPL_PERSON_SIZ, 1, actx->fp)) {
+   if (fwrite_safe(&p1->dat.i, SPL_PERSON_SIZ, 1, actx->fp)) {
       goto err;
    }
 
@@ -368,9 +374,7 @@ err:
 }
 
 static bool write_paramless_opcode(asm_ctx_t *actx) {
-   size_t nmemb = fwrite(&actx->n->dat.i, SPL_OPCODE_SIZ, 1, actx->fp);
-
-   if (nmemb != 1) {
+   if (fwrite_safe(&actx->n->dat.i, SPL_OPCODE_SIZ, 1, actx->fp)) {
       goto err;
    }
 
@@ -384,10 +388,10 @@ err:
 static bool write_pushlike(asm_ctx_t *actx) {
    irnode_t *p1 = tree_chdat(actx->t, 0);
 
-   if (1 > fwrite(&actx->n->dat.i, SPL_OPCODE_SIZ, 1, actx->fp)) {
+   if (fwrite_safe(&actx->n->dat.i, SPL_OPCODE_SIZ, 1, actx->fp)) {
       goto err;
    }
-   if (1 > fwrite(&p1->dat.i, SPL_VAR_SIZ, 1, actx->fp)) {
+   if (fwrite_safe(&p1->dat.i, SPL_VAR_SIZ, 1, actx->fp)) {
       goto err;
    }
 
@@ -403,16 +407,16 @@ static bool write_binary_op(asm_ctx_t *actx) {
    irnode_t *p2 = tree_chdat(actx->t, 1);
    irnode_t *p3 = tree_chdat(actx->t, 2);
 
-   if (1 > fwrite(&actx->n->dat.i, SPL_OPCODE_SIZ, 1, actx->fp)) {
+   if (fwrite_safe(&actx->n->dat.i, SPL_OPCODE_SIZ, 1, actx->fp)) {
       goto err;
    }
-   if (1 > fwrite(&p1->dat.i, SPL_VAR_SIZ, 1, actx->fp)) {
+   if (fwrite_safe(&p1->dat.i, SPL_VAR_SIZ, 1, actx->fp)) {
       goto err;
    }
-   if (1 > fwrite(&p2->dat.i, SPL_VAR_SIZ, 1, actx->fp)) {
+   if (fwrite_safe(&p2->dat.i, SPL_VAR_SIZ, 1, actx->fp)) {
       goto err;
    }
-   if (1 > fwrite(&p3->dat.i, SPL_VAR_SIZ, 1, actx->fp)) {
+   if (fwrite_safe(&p3->dat.i, SPL_VAR_SIZ, 1, actx->fp)) {
       goto err;
    }
 
@@ -427,13 +431,13 @@ static bool write_unary_op(asm_ctx_t *actx) {
    irnode_t *p1 = tree_chdat(actx->t, 0);
    irnode_t *p2 = tree_chdat(actx->t, 1);
 
-   if (1 < fwrite(&actx->n->dat.i, SPL_OPCODE_SIZ, 1, actx->fp)) {
+   if (fwrite_safe(&actx->n->dat.i, SPL_OPCODE_SIZ, 1, actx->fp)) {
       goto err;
    }
-   if (1 < fwrite(&p1->dat.i, SPL_VAR_SIZ, 1, actx->fp)) {
+   if (fwrite_safe(&p1->dat.i, SPL_VAR_SIZ, 1, actx->fp)) {
       goto err;
    }
-   if (1 < fwrite(&p2->dat.i, SPL_VAR_SIZ, 1, actx->fp)) {
+   if (fwrite_safe(&p2->dat.i, SPL_VAR_SIZ, 1, actx->fp)) {
       goto err;
    }
 
@@ -484,10 +488,10 @@ static bool write_goto(asm_ctx_t *actx) {
 
    op_dat = tree_dat(op);
 
-   if (1 < fwrite(&actx->n->dat.i, SPL_OPCODE_SIZ, 1, actx->fp)) {
+   if (fwrite_safe(&actx->n->dat.i, SPL_OPCODE_SIZ, 1, actx->fp)) {
       goto err;
    }
-   if (1 < fwrite(&op_dat->offset, SPL_ADDR_SIZ, 1, actx->fp)) {
+   if (fwrite_safe(&op_dat->offset, SPL_ADDR_SIZ, 1, actx->fp)) {
       goto err;
    }
 
@@ -535,10 +539,10 @@ static bool write_jumplike(asm_ctx_t *actx) {
    }
    op_dat = tree_dat(op);
 
-   if (1 < fwrite(&actx->n->dat.i, SPL_OPCODE_SIZ, 1, actx->fp)) {
+   if (fwrite_safe(&actx->n->dat.i, SPL_OPCODE_SIZ, 1, actx->fp)) {
       goto err;
    }
-   if (1 < fwrite(&op_dat->offset, SPL_ADDR_SIZ, 1, actx->fp)) {
+   if (fwrite_safe(&op_dat->offset, SPL_ADDR_SIZ, 1, actx->fp)) {
       goto err;
    }
 
@@ -616,7 +620,7 @@ static bool write_debug_info(asm_ctx_t *actx) {
    if (actx->be) {
       ecnt = endrev32(ecnt);
    }
-   if (1 > fwrite(&ecnt, OBJFILE_DI_EC, 1, actx->fp)) {
+   if (fwrite_safe(&ecnt, OBJFILE_DI_EC, 1, actx->fp)) {
       goto err;
    }
    if (fsetpos(actx->fp, &eos_pos)) {
@@ -642,13 +646,13 @@ static bool write_dbginfo_route(tree_t *t, size_t lv, void *ctx) {
 
    // fixme: 프로젝트 전체적으로 lnum lpos 사이즈 spl_...로 통일
    // fixme: 프로젝트에서 size_t를 쓰는게 적절한곳엔 size_t 사용
-   if (1 > fwrite(&actx->offset, OBJFILE_DI_ET_OP, 1, actx->fp)) {
+   if (fwrite_safe(&actx->offset, OBJFILE_DI_ET_OP, 1, actx->fp)) {
       goto err;
    }
-   if (1 > fwrite(&n->lnum, OBJFILE_DI_ET_SL, 1, actx->fp)) {
+   if (fwrite_safe(&n->lnum, OBJFILE_DI_ET_SL, 1, actx->fp)) {
       goto err;
    }
-   if (1 > fwrite(&n->lpos, OBJFILE_DI_ET_SP, 1, actx->fp)) {
+   if (fwrite_safe(&n->lpos, OBJFILE_DI_ET_SP, 1, actx->fp)) {
       goto err;
    }
 
@@ -669,7 +673,7 @@ static bool write_srcfile(asm_ctx_t *actx) {
 
    for (size_t i = 0; i < lls; i++) {
       l = array_peek(actx->ls, i);
-      if (1 > fwrite(l->run, 1, l->len, actx->fp)) {
+      if (fwrite_safe(l->run, 1, l->len, actx->fp)) {
          goto err;
       }
    }
@@ -698,32 +702,32 @@ static bool write_header(asm_ctx_t *actx) {
    // Write in accordance with .splo file structure
 
    // format indicator
-   if (1 > fwrite(&fi, sizeof fi, 1, actx->fp)) {
+   if (fwrite_safe(&fi, sizeof fi, 1, actx->fp)) {
       goto err;
    }
 
    // debug flag
-   if (1 > fwrite(&actx->cfg->dbg, sizeof (char), 1, actx->fp)) {
+   if (fwrite_safe(&actx->cfg->dbg, sizeof (char), 1, actx->fp)) {
       goto err;
    }
 
    // section 0 position
-   if (1 > fwrite(&s0p, sizeof s0p, 1, actx->fp)) {
+   if (fwrite_safe(&s0p, sizeof s0p, 1, actx->fp)) {
       goto err;
    }
 
    // section 1 position
-   if (1 > fwrite(&s1p, sizeof s1p, 1, actx->fp)) {
+   if (fwrite_safe(&s1p, sizeof s1p, 1, actx->fp)) {
       goto err;
    }
 
    // section 2 position
-   if (1 > fwrite(&actx->s2p, sizeof actx->s2p, 1, actx->fp)) {
+   if (fwrite_safe(&actx->s2p, sizeof actx->s2p, 1, actx->fp)) {
       goto err;
    }
 
    // section 3 position
-   if (1 > fwrite(&actx->s3p, sizeof actx->s3p, 1, actx->fp)) {
+   if (fwrite_safe(&actx->s3p, sizeof actx->s3p, 1, actx->fp)) {
       goto err;
    }
 
