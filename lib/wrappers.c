@@ -277,7 +277,7 @@ extern bool fwrite_safe(
       goto ok;  // in this case, fwrite returns 0
    }
 
-   if (cnt > fwrite(src, siz, cnt, dest)) {
+   if (cnt != fwrite(src, siz, cnt, dest)) {
       goto err;
    }
 
