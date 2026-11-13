@@ -305,11 +305,10 @@ static bool errhandle_unrecognized_value(
    const char *reason,
    void *ctx
 ) {
-   bool handle_ret = false;
+   bool stat = false;
    errhandle_unrecognized_value_ctx_t *ectx = ctx;
    find_alikes_ret_t ret = { .alikes = NULL };
 
-   int nchar;
    const char *err;
 
    (void) reason;
@@ -328,50 +327,44 @@ static bool errhandle_unrecognized_value(
    // Set common error message
    err = "failed to printf";
 
-   nchar = printf(
+   if (!log(
       "%s: unrecognized value " Cbwhite "'%s'" Creset ".",
       tok->field, tok->value
-   );
-   if (nchar < 0) {
+   )) {
       goto cleanup;
    }
 
-   nchar = printf(" Do you mean ");
-   if (nchar < 0) {
+   if (!log(" Do you mean ")) {
       goto cleanup;
    }
 
    if (ret.nmemb == 1) {
-      nchar = printf(Cbgreen "'%s'" Creset "?\n", ret.alikes[0]);
-      if (nchar < 0) {
+      if (!log(Cbgreen "'%s'" Creset "?\n", ret.alikes[0])) {
          goto cleanup;
       }
    }
    else {
-      nchar = printf("one of the following?\n\t" Cbgreen);
-      if (nchar < 0) {
+      if (!log("one of the following?\n\t" Cbgreen)) {
          goto cleanup;
       }
 
       for (size_t i = 0; i < ret.nmemb; i++) {
-         nchar = printf("%s  ", ret.alikes[i]);
-         if (nchar < 0) {
+         if (!log("%s  ", ret.alikes[i])) {
             goto cleanup;
          }
       }
 
-      nchar = printf(Creset "\n");
-      if (nchar < 0) {
+      if (!log(Creset "\n")) {
          goto cleanup;
       }
    }
 
-   handle_ret = true;
+   stat = true;
 
 cleanup:
    free(ret.alikes);
 
-   if (!handle_ret) {
+   if (!stat) {
       goto err;
    }
 
