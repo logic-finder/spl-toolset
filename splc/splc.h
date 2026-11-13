@@ -9,32 +9,29 @@
 #include "arena.adt.h"
 #include "list.adt.h"
 
-#define PTRACE(ctx) \
-   do { \
-      list_push( \
-         ctx->ptrace, \
-         & (ptrace_info_t) { \
-               .funcname = __func__, \
-               .filename = __FILE__, \
-               .ln = __LINE__ \
-         }, \
-         sizeof (ptrace_info_t) \
-      ); \
-   } while (false);
+#define PTRACE(ctx) do {            \
+   list_push(                       \
+      ctx->ptrace,                  \
+      & (ptrace_info_t) {           \
+            .funcname = __func__,   \
+            .filename = __FILE__,   \
+            .ln = __LINE__          \
+      },                            \
+      sizeof (ptrace_info_t)        \
+   );                               \
+} while (0)
 
-#define PH_COPY(dest, src) \
-   do { \
-      dest->perr = src->perr; \
-      dest->phdlr = src->phdlr; \
-      dest->pnctx = src->pnctx; \
-   } while (false);
+#define PH_COPY(dest, src) do {  \
+   dest->perr = src->perr;       \
+   dest->phdlr = src->phdlr;     \
+   dest->pnctx = src->pnctx;     \
+} while (0)
 
-#define PH_RESET(dest) \
-   do { \
-      dest->perr = NULL; \
-      dest->phdlr = NULL; \
-      dest->pnctx = NULL; \
-   } while (false);
+#define PH_RESET(dest) do {   \
+   dest->perr = NULL;         \
+   dest->phdlr = NULL;        \
+   dest->pnctx = NULL;        \
+} while (0)
 
 typedef struct {
    const char *funcname;
